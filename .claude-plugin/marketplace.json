@@ -1,0 +1,12 @@
+{
+  "name": "claude-ux-skills",
+  "description": "UI/UX skills for Claude Code",
+  "owner": { "name": "viettdann" },
+  "plugins": [
+    {
+      "name": "arclight",
+      "source": "./plugins/arclight",
+      "description": "UI visual direction and tokens, interaction and state rules, and de-templating restyle"
+    }
+  ]
+}
