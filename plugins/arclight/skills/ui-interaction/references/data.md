@@ -2,6 +2,7 @@
 
 ## Tables
 
+- Width follows content: short fixed-format columns (status, date, amount) get room for their longest value plus padding, and spare width is spread across columns (table-auto, or proportional widths) rather than handed to a single name column that ends in empty space.
 - Choose columns by task, not by schema: what the user scans for and what they act on. Usually 4–7 columns; the rest goes to a detail view or a column picker.
 - Numeric columns are right-aligned with `font-variant-numeric: tabular-nums`; text is left-aligned; dates use one consistent format.
 - The header is sticky on vertical scroll; the first column is frozen on horizontal scroll.

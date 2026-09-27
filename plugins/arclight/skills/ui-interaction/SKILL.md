@@ -1,6 +1,6 @@
 ---
 name: ui-interaction
-description: "Behavior and state rules for interactive UI: forms and validation, submit, loading, errors, empty states, tables, selection, pagination, search, filters, overlays, menus, tabs, toasts, destructive actions, undo, autosave, settings, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see ui-visual)."
+description: "Behavior and state rules for interactive UI: forms and validation, submit, loading, errors, empty states, tables, selection, pagination, search, filters, overlays, menus, tabs, toasts, destructive actions, undo, autosave, settings, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
 ---
 
 # UI Interaction Rules

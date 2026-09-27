@@ -29,6 +29,8 @@
 - Honor `prefers-reduced-motion: reduce` for every animation and every transition that moves or scales (`transform`, `translate`, `scale`, position): replace the movement with an opacity change or nothing. Color and opacity transitions may stay.
 - Press/tap feedback appears within 100ms.
 - Exits are faster than entrances, roughly 60–70% of the entrance duration.
+- Animate `transform` and `opacity`, not `top`/`left`/`width`/`height`.
+- No `scroll` event listeners and no scroll position, pointer position, or animation frames stored in React (or other framework) state: each frame re-renders the tree. Use `IntersectionObserver`, CSS scroll-driven animations, or the animation library's motion values (`useScroll`, `useMotionValue`, GSAP `ScrollTrigger`), and clean them up on unmount.
 
 ## Platform CSS worth using
 
@@ -45,4 +47,5 @@
 - [ ] No clickable `div`/`span`.
 - [ ] No action depends on hover, right-click, or swipe alone.
 - [ ] Every moving animation or transition has a `prefers-reduced-motion: reduce` override.
+- [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.

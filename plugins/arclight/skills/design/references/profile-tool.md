@@ -24,6 +24,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Layout
 
+- App content fills the space the shell leaves (beside the sidebar, below the top bar), with consistent padding. Don't cap the main area with a centered `max-w-*` container; limit width only for prose, forms, and settings columns.
 - Labels and text left-aligned, numbers and dates right-aligned with `tabular-nums`, 16px icons centered on the text line, nothing centered inside tables.
 - Radius small to medium: 4–6px on controls, 8–12px on panels.
 - Show keyboard shortcuts next to commands in menus and tooltips; provide a ⌘K palette for apps with many destinations.

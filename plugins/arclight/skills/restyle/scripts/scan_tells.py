@@ -28,7 +28,25 @@ RULES = [
     ("4-surface", "glassmorphism", re.compile(r"\bbackdrop-blur(?:-\w+)?\b|backdrop-filter:")),
     ("5-copy", "greeting / filler", re.compile(r"welcome back|good (?:morning|afternoon|evening)|here'?s what'?s happening|hello,|hi there", re.I)),
     ("5-copy", "emoji in UI text", EMOJI),
+    ("5-copy", "filler verb", re.compile(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer)\b", re.I)),
+    ("5-copy", "placeholder name/text", re.compile(r"lorem ipsum|\bjohn doe\b|\bjane doe\b|\bacme\b", re.I)),
+    ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*\w")),
+    ("6-marketing", "scroll cue", re.compile(r"scroll (?:to|down)|↓\s*scroll|>\s*scroll\s*<", re.I)),
+    ("7-code", "100vh (use min-h-dvh)", re.compile(r"(?<![\w-])h-screen\b|(?<![\w-])height:\s*100vh")),
+    ("7-code", "scroll event listener", re.compile(r"addEventListener\(\s*['\"]scroll")),
+    ("7-code", "escalated z-index", re.compile(r"\bz-\[\d{3,}\]|z-index:\s*\d{3,}")),
 ]
+
+MARKUP_EXTS = {".html", ".htm", ".jsx", ".tsx", ".vue", ".svelte", ".astro", ".erb", ".php"}
+DASH = re.compile("[\u2014\u2013]")
+COMMENT = re.compile(r"^\s*(?://|/\*|\*|<!--|#)")
+EYEBROW = re.compile(r"\buppercase\b[^\"'`]*\btracking-(?:wide|wider|widest|\[)|\btracking-(?:wide|wider|widest|\[)[^\"'`]*\buppercase\b")
+SECTION = re.compile(r"<section\b")
+CTA_INTENTS = {
+    "contact": ["get in touch", "contact us", "contact sales", "let's talk", "talk to us", "reach out", "book a call"],
+    "signup": ["get started", "sign up", "try free", "try it free", "start free", "start for free", "start your trial", "create account"],
+    "demo": ["book a demo", "request a demo", "get a demo", "see a demo", "schedule a demo"],
+}
 
 DELTA = re.compile(r"[+\-−]\s?\d+(?:\.\d+)?%")
 NUMERIC_HINT = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b")
@@ -51,6 +69,7 @@ def scan(paths):
     deltas = Counter()
     delta_locs = defaultdict(list)
     tabular_files, numeric_files = set(), set()
+    cta_seen = defaultdict(lambda: defaultdict(list))
 
     for path in iter_files(paths):
         try:
@@ -61,11 +80,26 @@ def scan(paths):
         text = "".join(lines)
         if "tabular-nums" in text or "font-variant-numeric" in text:
             tabular_files.add(path)
+        markup = os.path.splitext(path)[1] in MARKUP_EXTS
+        if markup:
+            sections = len(SECTION.findall(text))
+            eyebrows = [i for i, l in enumerate(lines, 1) if EYEBROW.search(l)]
+            if sections >= 3 and len(eyebrows) > -(-sections // 3):
+                hits["6-marketing"].append({"file": path, "line": eyebrows[0],
+                                            "tell": f"{len(eyebrows)} uppercase tracked labels for {sections} sections (eyebrow on every section?)",
+                                            "snippet": "lines " + ", ".join(map(str, eyebrows[:8]))})
+            low = text.lower()
+            for intent, labels in CTA_INTENTS.items():
+                for lab in labels:
+                    if re.search(r">\s*" + re.escape(lab) + r"\b", low):
+                        cta_seen[intent][lab].append(path)
         for i, line in enumerate(lines, 1):
             snippet = line.strip()[:140]
             for principle, label, rx in RULES:
                 if rx.search(line):
                     hits[principle].append({"file": path, "line": i, "tell": label, "snippet": snippet})
+            if markup and DASH.search(line) and not COMMENT.match(line):
+                hits["6-marketing"].append({"file": path, "line": i, "tell": "em/en dash in copy", "snippet": snippet})
             for d in DELTA.findall(line):
                 key = d.replace(" ", "").replace("−", "-")
                 deltas[key] += 1
@@ -77,6 +111,11 @@ def scan(paths):
         if n >= 3:
             hits["5-copy"].append({"file": delta_locs[key][0].rsplit(":", 1)[0], "line": int(delta_locs[key][0].rsplit(":", 1)[1]),
                                    "tell": f"identical delta '{key}' x{n} (placeholder?)", "snippet": ", ".join(delta_locs[key][:5])})
+    for intent, labs in cta_seen.items():
+        if len(labs) >= 2:
+            first = next(iter(labs.values()))[0]
+            hits["6-marketing"].append({"file": first, "line": 0,
+                                        "tell": f"several labels for one CTA intent ({intent})", "snippet": ", ".join(sorted(labs))})
     for f in sorted(numeric_files - tabular_files):
         hits["5-copy"].append({"file": f, "line": 0, "tell": "numbers without tabular-nums", "snippet": ""})
     return hits
@@ -104,7 +143,8 @@ def main():
             loc = f"{h['file']}:{h['line']}" if h["line"] else h["file"]
             print(f"  {loc}  [{h['tell']}]  {h['snippet']}")
         print()
-    print("Not detectable by grep: identical card grids (principle 3), decorative icons without tinted tiles, missing baselines/units on deltas.")
+    print("Not detectable by grep: identical card grids (principle 3), decorative icons without tinted tiles, missing baselines/units on deltas,"
+          " repeated section layouts, div-built fake screenshots, awkward copy.")
 
 
 if __name__ == "__main__":

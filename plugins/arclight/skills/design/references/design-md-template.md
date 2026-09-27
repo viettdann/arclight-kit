@@ -8,11 +8,11 @@ Write this file at the repo root. It records decisions and their reasons; exact 
 ## Product
 - What it is, who uses it, the most frequent task, the costliest mistake a user can make.
 
-## Surfaces and profiles
-| Surface | Path/route | Profile |
-| --- | --- | --- |
-| App | src/app/(app) | tool |
-| Marketing | src/app/(marketing) | marketing |
+## Surfaces, profiles, styles
+| Surface | Path/route | Profile | Style |
+| --- | --- | --- | --- |
+| App | src/app/(app) | tool | none |
+| Marketing | src/app/(marketing) | marketing | editorial-minimal |
 
 ## Tokens
 - Source: `src/styles/tokens.css` (or Tailwind `@theme` file). Components use semantic tokens only.

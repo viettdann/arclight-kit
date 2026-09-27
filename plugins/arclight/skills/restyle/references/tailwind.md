@@ -32,7 +32,7 @@ Keep: `shadow-*` on modal, popover, dropdown, toast, tooltip.
 
 ## 2. Tokens
 
-Centralize so the scale is enforced. Tailwind v3 (`tailwind.config.js`):
+Centralize so the scale is enforced. The teal below is a placeholder for "the accent", not a recommendation: use the project's brand color, or pick one that fits the product. Tailwind v3 (`tailwind.config.js`):
 
 ```js
 theme: {
@@ -60,9 +60,7 @@ Tailwind v4 (CSS):
 }
 ```
 
-With the Tailwind CDN / no config, use the literal classes (`rounded-md`=6px, `rounded-lg`=8px, `rounded-xl`=12px are already the defaults) and a single arbitrary accent like `bg-teal-400`.
-
-If the project already has a brand color, map `accent` to it instead of teal.
+With the Tailwind CDN / no config, use the literal classes (`rounded-md`=6px, `rounded-lg`=8px, `rounded-xl`=12px are already the defaults) and one accent from the palette used consistently (`bg-<accent>-500`).
 
 ## 3. Primary + secondary metric layout
 
@@ -90,8 +88,8 @@ After:
     </div>
   </section>
 
-  <!-- secondary, stacked -->
-  <div class="grid gap-3">
+  <!-- secondary, stacked: auto-rows-fr splits the primary's height so both columns end flush -->
+  <div class="grid auto-rows-fr gap-3">
     <section class="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900 px-4 py-3">
       <div><p class="text-sm text-zinc-400">Conversion</p><p class="text-2xl font-semibold tabular-nums">3.8%</p></div>
       <p class="text-sm text-zinc-400 tabular-nums">+0.4 pt</p>
@@ -166,6 +164,7 @@ function Sparkline({ data, className = "h-8 w-32 text-accent" }: { data: number[
 ## 5. Tables and numbers
 
 - Numeric columns: `text-right tabular-nums`; header of that column also `text-right`. Order columns `Status | Customer | Date | Amount` — status at the leading edge, the numeric column last at the right edge. Status cell: `<span class="inline-flex items-center gap-1.5 text-zinc-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Paid</span>` (dot color carries the state; text stays neutral except for errors).
+- Column widths: let `table-auto` size columns from content, or give proportional widths; don't pin status/date/amount to narrow fixed widths so the name column absorbs all spare space.
 - Row separation: `divide-y divide-white/10` on `tbody`, not zebra stripes + shadows.
 - Currency with consistent decimals in a column (`$86.00`, not `$86`).
 - Percent-of-a-rate changes → `pt`.

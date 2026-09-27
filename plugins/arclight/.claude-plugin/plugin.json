@@ -1,6 +1,8 @@
 {
   "name": "arclight",
-  "version": "0.1.0",
-  "description": "UI visual direction and tokens (ui-visual), interaction and state rules (ui-interaction), and de-templating an existing screen (restyle).",
-  "author": { "name": "viettdann" }
+  "version": "0.2.0",
+  "description": "Design new UI with profiles and styles (design), give existing UI a new look (redesign), remove the generated look (restyle), and interaction and state rules (ui-interaction).",
+  "author": {
+    "name": "viettdann"
+  }
 }
