@@ -6,7 +6,7 @@ One family (plus a monospace where useful) used as a system: every size, weight,
 
 - Build the scale from the base size and one ratio, not hand-picked values: tool 1.2–1.25, marketing 1.25–1.333. At 1.25 from 13px: 13, 16, 20, 25, 32.
 - Round each step to a whole pixel. About five steps for a tool, plus one display step for marketing. A size between steps is off-scale.
-- Size ranks blocks (page title, section heading, body). Inside a block or a row, rank with ink and weight instead of another size.
+- Size ranks blocks (page title, section heading, body). Inside a block or a row, rank with ink and weight instead of another size; a metric's value is its own step and may be larger than its label.
 
 ## Ink
 
@@ -18,7 +18,7 @@ Three text inks carry the hierarchy within a line:
 | `text-muted` | Supporting, still read | Invoice id, secondary label |
 | `text-subtle` | Present but quiet | Date, metadata, caption |
 
-All three pass 4.5:1 on every surface they sit on; check them with `scripts/contrast.mjs`. `text-disabled` is for disabled controls only, never a way to make text quiet, and still reaches 3:1 so the label of an unavailable action can be read.
+All three pass 4.5:1 on every surface they sit on; check them with the design skill's `scripts/contrast.mjs`. `text-disabled` is for disabled controls only, never a way to make text quiet, and still reaches 3:1 so the label of an unavailable action can be read.
 
 ## Weight
 
@@ -62,14 +62,14 @@ Real content is longer than the sample: a 40-character name, an email on a long 
 - Negatives use a real minus (`−`, U+2212) or the locale's accounting format, never a hyphen.
 - Big numbers are compact where they summarize (stat cards, charts, counts in nav): `Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 })` gives "3.4M", never a hand-rolled `/ 1000 + "K"`. Below 10,000 show the exact value. The exact value stays reachable (a tooltip on a focusable element, or `aria-label`), since hover alone misses touch and keyboard.
 - Exact where people compare, reconcile, or pay: table columns, invoices, balances, anything they typed.
-- Past events read as relative under a day ("just now", "5m ago", "2h ago") and absolute after that ("Mar 3", with the year when it isn't the current one), in `<time datetime>` with the full timestamp on hover. Relative labels refresh on a timer. Due dates and scheduled times stay absolute.
+- Past events read as relative under a day ("just now", "5m ago", "2h ago") and absolute after that ("Mar 3", with the year when it isn't the current one), in `<time datetime>` with the full timestamp on hover. Relative labels refresh on a timer. Due dates, scheduled times, and dates people reconcile (booked, posted, invoiced) stay absolute.
 
 ## Checks
 
 - [ ] Every font size is a step of the scale; no arbitrary sizes.
 - [ ] Two weights, 400 and 600, unless the style lists another.
 - [ ] Rank inside a row comes from ink, and all three inks pass 4.5:1.
-- [ ] Line-height drops as size rises; tracking only above 24px and on small caps.
+- [ ] Line-height drops as size rises; tracking only from ~25px up and on uppercase labels.
 - [ ] Prose is capped at 45–75ch.
 - [ ] Every text slot holds a long value and an unbroken string: it truncates in CSS (middle when both ends matter, the full value reachable) or wraps, and nothing pushes past its container.
 - [ ] Stacked and live numbers are tabular with one precision per column; compact only where it summarizes, with the exact value reachable; relative time only under a day.

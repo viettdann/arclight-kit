@@ -15,9 +15,9 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 
 ## Three inks from one white
 
-- Text is one off-white color at three alphas, never pure white: `text` about 87%, `text-muted` about 73%, `text-subtle` about 60%. Alpha keeps the same rank on every layer.
+- Text is white (or a brand-tinted off-white) at three alphas, never opaque `#FFF`: `text` about 87%, `text-muted` about 73%, `text-subtle` about 60%. Alpha keeps the same rank on every layer.
 - The floor for readable text is about 50%; below that it fails 4.5:1 on the lighter layers. `text-disabled` (about 38%) misses 4.5:1 by design but stays above 3:1, and is for disabled controls only (`typography.md`).
-- Check each ink on the darkest and the lightest surface it sits on with `scripts/contrast.mjs` (8-digit hex for alpha: `#ffffffde|<surface>|text`).
+- Check each ink on the darkest and the lightest surface it sits on with the design skill's `scripts/contrast.mjs` (8-digit hex for alpha: `#ffffffde|<surface>|text`).
 
 ## Calm the accent
 
@@ -37,7 +37,7 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 
 ## Checks
 
-- [ ] No `#000` surface and no `#FFF` text; surfaces step up in lightness by what they sit on.
+- [ ] No `#000` surface and no opaque `#FFF` text; surfaces step up in lightness by what they sit on.
 - [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.
 - [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on.
 - [ ] Accent calmed in chroma, with `on-accent` re-checked.

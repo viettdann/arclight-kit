@@ -6,7 +6,7 @@ A confirmation dialog on everything punishes every user for the rare mistake and
 
 | Case | Pattern |
 | --- | --- |
-| Reversible (archive, move, remove item, delete to trash) | Execute immediately, then an undo toast with a visible countdown (5–10s); soft delete underneath |
+| Reversible (archive, move, remove item, delete to trash) | Execute immediately, then an undo toast with a visible countdown (8–10s); soft delete underneath |
 | Irreversible, small blast radius | Confirmation dialog naming the action and its consequence ("Delete 3 invoices? This can't be undone."), buttons "Delete invoices" / "Cancel", initial focus on Cancel |
 | Irreversible, large blast radius (project, workspace, account, data wipe) | Type the resource name to confirm, placed in a danger zone (`settings.md`); prefer scheduled deletion with a cancelable grace period (e.g. 14–30 days) |
 | Send or publish | Delayed send with an undo window where feasible |

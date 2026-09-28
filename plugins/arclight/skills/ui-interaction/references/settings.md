@@ -33,7 +33,7 @@ Choose per section, by what a change costs:
 
 - Destructive and hard-to-undo actions live in one danger zone at the bottom of the page they belong to, set apart by a danger-colored border and heading. Nothing destructive sits among ordinary settings.
 - One row per action: what it does, what it affects, and an outlined danger button naming it ("Transfer ownership", "Archive workspace", "Delete workspace"). Order by severity, delete last.
-- Friction follows `destructive.md`: the largest actions open a dialog that states the consequence and asks for the resource name. The confirm button stays unavailable until the typed text matches exactly (trimmed), and the prompt above the field shows the name to type, so the reason is in view.
+- Friction follows `destructive.md`: the largest actions open a dialog that states the consequence and asks for the resource name. The confirm button is `aria-disabled` until the typed text matches exactly (trimmed); a click before that focuses the field and repeats the name to type, which the prompt above the field already shows.
 - Account and workspace deletion re-asks for the password or second factor when the session is old.
 
 ## Checks

@@ -4,7 +4,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Density and type
 
-- Base text 13–14px (13px only with strong contrast), row height 32–40px, control height 28–36px. Tables expose density as a token.
+- Base text 13–14px (13px only with strong contrast), row height 32–40px (48px for the comfortable density), control height 28–36px. Tables expose density as a token.
 - Rows keep one fixed height: content stays on one line and truncates with an ellipsis, with the full text in a tooltip or the detail view. A row never grows because its title is long.
 - One family plus a monospace for ids, code, and numbers when useful. Scale ratio 1.2–1.25; weights, line-heights, and tracking follow `typography.md`.
 
@@ -16,7 +16,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Color
 
-- Neutral UI. The accent appears on the primary button, the current selection, and focus, nowhere else.
+- Neutral UI. The accent appears on the primary button and the current selection, plus the one hero data series on a dashboard, nowhere else. Focus uses its own `focus-ring` token so "where I am" never looks like "what is chosen".
 - Status is a small icon or dot plus text, not a saturated pill on every row.
 - Tags and priority are neutral too: grey chips, priority as an icon rather than a colored word. Ids are monospace in muted text, not styled as links when the whole row is the link. Color is left for the one state that needs attention (urgent, overdue, error).
 
@@ -27,7 +27,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 ## Layout
 
 - App content fills the space the shell leaves (beside the sidebar, below the top bar), with consistent padding. Don't cap the main area with a centered `max-w-*` container; limit width only for prose, forms, and settings columns.
-- Labels and text left-aligned, numbers and dates right-aligned with `tabular-nums`, 16px icons centered on the text line, nothing centered inside tables.
+- Labels and text left-aligned, numbers right-aligned (`typography.md`), 16px icons centered on the text line, nothing centered inside tables.
 - Radius scale (roles and rules in `radius.md`): `sm` 4px for chips and badges, `md` 6px for buttons, inputs, and popovers, `lg` 12px for cards, panels, and modals. No `xl`.
 - Show keyboard shortcuts next to commands in menus and tooltips, and as a small key hint on the buttons for the main actions ("New issue `C`"); provide a ⌘K palette for apps with many destinations.
 

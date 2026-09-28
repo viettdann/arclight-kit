@@ -13,7 +13,7 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
   | Element | Override |
   |---|---|
   | Double-bezel shell (one or two per page) | 20–24px; core = shell − padding |
-  | Full-width band or large panel | 20px |
+  | Band inside the container, large panel | 20px (full-bleed bands stay square) |
   | Card, demo window, pricing tier, modal | 16px when the short side is over ~320px, otherwise the profile's 12px |
   | Primary CTA, floating nav | full pill |
 

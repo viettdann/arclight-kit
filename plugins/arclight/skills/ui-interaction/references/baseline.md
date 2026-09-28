@@ -15,11 +15,13 @@
 
 ## Pointer and touch
 
-- Touch targets are at least 44×44px for primary controls, never below 24×24px. Pad the hit area, the visible glyph can stay 16–20px.
+- Under `@media (pointer: coarse)`, primary controls have a 44×44px target; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this). Pad the hit area and keep the glyph at 16–20px.
 - Hover styles live under `@media (hover: hover)`; enlarge controls under `@media (pointer: coarse)`. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
 ## Unavailable actions: explain, don't disable
+
+*Disabled* means the native `disabled` attribute; *unavailable* means focusable with `aria-disabled="true"` and a stated reason.
 
 A grey button that does nothing and says nothing is a dead end. `disabled` removes the control from the tab order, blocks the pointer events a tooltip needs, and gives no reason.
 
@@ -32,7 +34,7 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 
 ## Color and text
 
-- Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px bold) and for UI boundaries, icons, and focus rings.
+- Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px at weight 700; 600 doesn't count) and for UI boundaries, icons, and focus rings.
 - Never carry meaning by color alone: pair it with an icon, text, or shape.
 
 ## Server side

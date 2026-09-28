@@ -25,7 +25,7 @@
 - There is no header row, so label what is ambiguous: a date gets its meaning ("Due Mar 04"), while a currency amount explains itself. Sort moves into the toolbar ("Sort · Due date").
 - Hidden isn't deleted. A chevron on the right shows the row expands; tapping it opens the row inline with the hidden fields and the row's actions. The full record opens in a bottom sheet (`overlays.md`), never a separate page, so the list keeps its place.
 - The row is a disclosure (`<button aria-expanded>`) and the actions sit in the expanded region, outside the button. The whole row is the touch target, about 64–72px tall.
-- The one-line fixed row height in `profile-tool.md` applies to the wide layout; narrow rows are two lines by design.
+- Wide rows stay one line and truncate; narrow rows are two lines by design.
 
 ## Clickable cards
 
@@ -48,7 +48,7 @@
 
 - Use cursor pagination for data that changes, offset only for static data.
 - Page or cursor, filters, sort, and search live in the URL so refresh and shared links reproduce the view.
-- Returning from a detail view restores the list's scroll position and state (see "Scroll position in client-side routing" in `overlays.md`).
+- Returning from a detail view restores the list's scroll position and state (see "Scroll position in client-side routing" in `navigation.md`).
 - Numbered pagination shows first, last, current, and its neighbors, with ellipses for gaps. Infinite scroll is for feeds only; anything with a footer or a need to find an item again uses "Load more" or numbers.
 
 ## Search
@@ -61,7 +61,7 @@
 
 ## Filters
 
-- Chips have distinct idle, active (filled plus check), and disabled (would give no results) states.
+- Chips have distinct idle, active (filled plus check), and empty states: an option with no results stays focusable and shows its `0` count.
 - The logic is visible: OR within a group, AND across groups.
 - The result count updates in the same frame as the change.
 - Whenever a filter is active there is a single "Clear all" and a visible summary of what is applied.

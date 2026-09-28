@@ -21,15 +21,23 @@ const oklchToRgb = (L, C, H, a) => {
   return { r: enc(lin[0]), g: enc(lin[1]), b: enc(lin[2]), a };
 };
 
+const NUM = String.raw`(\d*\.?\d+)`;
+const alpha = (v, pct) => (v === undefined ? 1 : Math.min(1, Math.max(0, pct ? v / 100 : +v)));
+
 const parse = (input) => {
   const s = input.trim().toLowerCase();
   if (s === "white") return { r: 255, g: 255, b: 255, a: 1 };
   if (s === "black") return { r: 0, g: 0, b: 0, a: 1 };
-  const ok = s.match(/^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:deg)?\s*(?:\/\s*([\d.]+)(%?))?\s*\)$/);
+  const ok = s.match(new RegExp(String.raw`^oklch\(\s*${NUM}(%?)\s+${NUM}\s+${NUM}(?:deg)?\s*(?:\/\s*${NUM}(%?))?\s*\)$`));
   if (ok) {
     const L = ok[2] ? ok[1] / 100 : +ok[1];
-    const a = ok[5] === undefined ? 1 : ok[6] ? ok[5] / 100 : +ok[5];
-    return oklchToRgb(L, +ok[3], +ok[4], a);
+    return oklchToRgb(Math.min(1, L), +ok[3], +ok[4], alpha(ok[5], ok[6]));
+  }
+  // rgb(255 255 255 / 0.08) and rgba(255, 255, 255, 0.08), as the dark-mode reference writes borders.
+  const rgb = s.match(new RegExp(String.raw`^rgba?\(\s*${NUM}\s*[,\s]\s*${NUM}\s*[,\s]\s*${NUM}\s*(?:[,/]\s*${NUM}(%?))?\s*\)$`));
+  if (rgb) {
+    const c = (v) => Math.min(255, +v);
+    return { r: c(rgb[1]), g: c(rgb[2]), b: c(rgb[3]), a: alpha(rgb[4], rgb[5]) };
   }
   let h = s.replace(/^#/, "");
   if (h.length === 3 || h.length === 4) h = [...h].map((c) => c + c).join("");
@@ -56,17 +64,18 @@ const THRESHOLDS = { text: 4.5, large: 3, ui: 3 };
 
 const pairs = process.argv.slice(2);
 if (pairs.length === 0) {
-  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), white, black)');
+  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), white, black)');
   process.exit(2);
 }
 
 let failed = false;
 for (const pair of pairs) {
-  const [fgHex, bgHex, kind = "text"] = pair.split("|");
+  const [fgHex, bgHex, rawKind = "text"] = pair.split("|");
+  const kind = rawKind.trim().toLowerCase();
   let fg, bg;
   try {
     if (!bgHex) throw new Error(`Expected "<fg>|<bg>", got: ${pair}`);
-    if (!(kind in THRESHOLDS)) throw new Error(`Unknown kind "${kind}", use text, large or ui`);
+    if (!Object.hasOwn(THRESHOLDS, kind)) throw new Error(`Unknown kind "${kind}", use text, large or ui`);
     [fg, bg] = [parse(fgHex), parse(bgHex)];
     if (bg.a !== 1) throw new Error(`Background must be opaque: ${bgHex}`);
   } catch (e) {
@@ -77,7 +86,9 @@ for (const pair of pairs) {
   const ratio = (l1 + 0.05) / (l2 + 0.05);
   const min = THRESHOLDS[kind];
   const ok = ratio >= min;
+  // A failing ratio never prints as the threshold itself: 4.495 shows 4.49, not 4.50.
+  const shown = (!ok && +ratio.toFixed(2) >= min ? Math.floor(ratio * 100) / 100 : ratio).toFixed(2);
   if (!ok) failed = true;
-  console.log(`${ok ? "pass" : "FAIL"}  ${ratio.toFixed(2).padStart(5)}:1  (${kind} needs ${min}:1)  ${fgHex} on ${bgHex}`);
+  console.log(`${ok ? "pass" : "FAIL"}  ${shown.padStart(5)}:1  (${kind} needs ${min}:1)  ${fgHex} on ${bgHex}`);
 }
 process.exit(failed ? 1 : 0);

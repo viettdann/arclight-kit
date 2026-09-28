@@ -10,20 +10,23 @@
 
 ## 1. Class mappings
 
+Values are for tool surfaces; on marketing surfaces take radius from the marketing profile (button and input `rounded-lg`, chip `rounded-md`, band inside the container `rounded-2xl`). Sizes are Tailwind defaults standing in for the project's type scale, and zinc literals stand in for the dark tokens: in a project with tokens use `bg`/`surface`, `text`/`text-muted`/`text-subtle`, and `border` instead.
+
 | Tell | Replace with |
 |---|---|
 | `bg-gradient-to-r from-violet-600 to-blue-500` (header/surface) | same surface as page (`bg-zinc-950`) + `border-b border-white/10` |
-| gradient button | `bg-accent text-accent-foreground hover:bg-accent/90` (flat) |
+| gradient button | the project's primary token, flat: `bg-primary text-primary-foreground hover:bg-primary/90` in shadcn projects (where `accent` is the neutral hover grey), otherwise `bg-accent text-on-accent` |
 | `bg-clip-text text-transparent bg-gradient-*` | `text-zinc-50` (or `text-zinc-900` light) |
 | `rounded-2xl` / `rounded-3xl` on card | `rounded-xl` |
 | `rounded-xl`/`rounded-full` on text input | `rounded-md` (same step as the button beside it) |
 | `rounded-xl`/`rounded-full` on button | `rounded-md` |
-| `shadow-md/lg/xl/2xl` on card/input/button | remove; add `border border-white/10` (dark) / `border-zinc-200` (light) |
+| `shadow-md/lg/xl/2xl` on card/button | remove; add `border border-white/10` (dark) / `border-zinc-200` (light) |
+| `shadow-*` on input/select | remove; add `border border-white/35` (dark) / `border-zinc-500` (light), 3:1 against the surface |
 | `shadow-violet-500/30`, `ring` glows | remove |
 | `backdrop-blur-*` + `bg-white/5` on in-page card | `bg-zinc-900 border border-white/10` (opaque) |
 | icon tile `p-2 rounded-lg bg-blue-500/10 text-blue-400` next to title | remove the tile + icon |
 | label `text-base font-medium text-white` | `text-sm text-zinc-400` |
-| value `text-2xl font-bold` | primary: `text-5xl font-semibold tracking-tight tabular-nums`; secondary: `text-2xl font-semibold tabular-nums` |
+| value `text-2xl font-bold` | primary: `text-3xl font-semibold tracking-tight tabular-nums` (the largest step in use); secondary: `text-xl font-semibold tabular-nums` |
 | delta pill `bg-emerald-500/10 text-emerald-400 rounded-full px-2` on every card | `text-sm text-zinc-400 tabular-nums` with baseline text |
 | status badge saturated fill (in a table) | dot + text: `inline-flex items-center gap-1.5` with a `h-1.5 w-1.5 rounded-full` colored dot; see §5 |
 | status badge saturated fill (standalone tag) | `rounded border border-white/10 px-1.5 py-0.5 text-xs text-zinc-300`; tint text only for real warnings/errors |
@@ -38,11 +41,8 @@ Centralize so the scale is enforced. The teal below is a placeholder for "the ac
 theme: {
   extend: {
     colors: {
-      accent: { DEFAULT: '#14b8a6', foreground: '#042f2e' },
-    },
-    borderRadius: {
-      // chip 4, button and input 6, card 12
-      DEFAULT: '4px', md: '6px', xl: '12px',
+      accent: { DEFAULT: '#14b8a6' },
+      'on-accent': '#042f2e',
     },
   },
 }
@@ -53,14 +53,11 @@ Tailwind v4 (CSS):
 ```css
 @theme {
   --color-accent: #14b8a6;
-  --color-accent-foreground: #042f2e;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-xl: 12px;
+  --color-on-accent: #042f2e;
 }
 ```
 
-With the Tailwind CDN / no config, use the literal classes (chip `rounded`=4px, `rounded-md`=6px, `rounded-xl`=12px are already the defaults) and one accent from the palette used consistently (`bg-<accent>-500`).
+Radius needs no tokens: the default classes already match (chip `rounded` in v3 or `rounded-sm` in v4 = 4px, button and input `rounded-md` = 6px, card `rounded-xl` = 12px); don't redefine them. With the Tailwind CDN / no config, use one accent step consistently, chosen so its text passes 4.5:1 (check with the design skill's `contrast.mjs`; `-500` often fails with white text).
 
 ## 3. Primary + secondary metric layout
 
@@ -77,7 +74,7 @@ After:
     <div class="flex items-start justify-between gap-6">
       <div>
         <p class="text-sm text-zinc-400">Revenue</p>
-        <p class="mt-1 text-5xl font-semibold tracking-tight tabular-nums text-zinc-50">$48,250</p>
+        <p class="mt-1 text-3xl font-semibold tracking-tight tabular-nums text-zinc-50">$48,250</p>
         <p class="mt-2 text-sm text-zinc-400 tabular-nums">+12.5% vs Jul</p>
       </div>
       <!-- sparkline (section 4) -->
@@ -91,7 +88,7 @@ After:
   <!-- secondary, stacked: auto-rows-fr splits the primary's height so both columns end flush -->
   <div class="grid auto-rows-fr gap-3">
     <section class="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900 px-4 py-3">
-      <div><p class="text-sm text-zinc-400">Conversion</p><p class="text-2xl font-semibold tabular-nums">3.8%</p></div>
+      <div><p class="text-sm text-zinc-400">Conversion</p><p class="text-xl font-semibold tabular-nums">3.8%</p></div>
       <p class="text-sm text-zinc-400 tabular-nums">+0.4 pt</p>
     </section>
     <!-- … -->
@@ -107,8 +104,8 @@ If every metric is only label + value + delta, don't invent a primary. One borde
 <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 xl:grid-cols-4">
   <div class="bg-white px-5 py-4">
     <dt class="text-sm text-zinc-500">Revenue</dt>
-    <dd class="mt-1 text-2xl font-semibold tracking-tight tabular-nums text-zinc-900">$48,250</dd>
-    <dd class="mt-1 text-xs tabular-nums text-zinc-500">+12.5% vs Jul</dd>
+    <dd class="mt-1 text-2xl font-semibold tabular-nums text-zinc-900">$48,250</dd>
+    <dd class="mt-1 text-sm tabular-nums text-zinc-500">+12.5% vs Jul</dd>
   </div>
   <!-- … same structure for the rest … -->
 </dl>
@@ -124,7 +121,7 @@ Keep them in sequence; mark the current one in place.
 <div class="grid gap-3 md:grid-cols-3">
   <section class="rounded-xl border border-zinc-200 bg-white p-5">…Starter · Downgrade…</section>
   <section class="rounded-xl border border-accent bg-white p-5 ring-1 ring-accent">
-    <p class="text-xs font-semibold text-accent">Current plan</p> …Pro…
+    <p class="text-xs font-semibold text-zinc-900">Current plan</p> …Pro…
   </section>
   <section class="rounded-xl border border-zinc-200 bg-white p-5">…Enterprise · Upgrade…</section>
 </div>

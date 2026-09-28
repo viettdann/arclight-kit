@@ -22,7 +22,7 @@ Never a full-strength border and a shadow together; the two edges read as a doub
 
 ## Never nest
 
-- A card never contains a card, and a panel, modal, or drawer never contains boxed groups. Inside a surface, groups are separated by a heading and a divider.
+- A card never contains a card, and a panel, modal, or drawer never contains boxed groups. Inside a surface, groups are separated by a heading and a divider. The one exception is a settings danger zone (ui-interaction `settings.md`).
 - Each inner box stacks another round of padding and radius, eating width and adding lines that say nothing.
 
 ## Media

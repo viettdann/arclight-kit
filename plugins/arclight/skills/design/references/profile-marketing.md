@@ -2,9 +2,11 @@
 
 For pages that have seconds to explain something and win a decision. Concrete beats decorative: a generated page decorates because it has nothing specific to show.
 
+Contents: Design read · Page structure · Layout rules · Pricing · Imagery · Copy · Generic tells · Visual (type, radius, elevation, motion) · Avoid · Checks
+
 ## Design read
 
-Before markup, write one line in the summary: **page kind · audience · visual language · the one move that makes it this brand's page.** Example: "Launch page for procurement leads · calm, document-like · the product's approval trail runs down the page as the spine."
+Before markup, decide one line, and open the summary with it: **page kind · audience · visual language · the one move that makes it this brand's page.** Example: "Launch page for procurement leads · calm, document-like · the product's approval trail runs down the page as the spine."
 
 - The audience picks the language, not habit. Public-sector, regulated, or accessibility-first audiences override aesthetic ambition.
 - Pick one **second-read moment**: a single unobvious but legible motif used once (an oversized number for a result the reader should remember, one material or color switch, a macro crop of the product). It must help scanning or brand recall. Restraint alone produces a clean page nobody remembers.

@@ -17,9 +17,9 @@ Never mix the two modes on one surface.
 
 ## Decisions
 
-- **Type:** display `clamp(3rem, 8vw, 10rem)`, tracking -0.03 to -0.05em, line-height 0.9, uppercase. Micro labels in mono 11–13px with +0.05em tracking. Body text stays readable: at least 14px mono or 16px sans, 4.5:1.
+- **Type (overrides `typography.md` for display):** display weight 700–900, `clamp(3rem, 8vw, 10rem)`, tracking -0.03 to -0.05em, line-height 0.9, uppercase. Micro labels in mono 11–13px with +0.05em tracking. Body text stays readable: at least 14px mono or 16px sans, 4.5:1.
 - **Grid:** the grid is visible: 1–2px solid rules between cells and sections, aligned to real columns. Lines organize content; a line that separates nothing is removed.
-- **Shape and depth:** radius 0 everywhere; no shadows, no gradients, no blur. Depth comes from rules and inversion (a black block with light text).
+- **Shape and depth:** radius 0 everywhere except the `full` roles (avatars, dots, toggles); no shadows, no gradients, no blur. Depth comes from rules and inversion (a black block with light text).
 - **Numbers:** large numerals only for real quantities (metrics, prices, counts), tabular.
 - **Motion:** none, instant state changes, or stepped transitions (`steps()`), never soft easing.
 

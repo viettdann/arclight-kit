@@ -1,6 +1,6 @@
 ---
 name: ui-interaction
-description: "Behavior and state rules for interactive UI: forms and validation, submit, loading, errors, success and confirmation screens, empty states, tables, selection, pagination, search, filters, overlays, menus, tabs, toasts, destructive actions, undo, autosave, settings, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
+description: "Behavior and state rules for interactive UI: forms and validation, inline edit, submit, loading, errors, success and confirmation screens, empty states, tables (including narrow widths), selection and bulk actions, pagination, search, filters, modals, menus and context menus, tabs, navigation and scroll restoration, toasts, badges, copy to clipboard, destructive actions, undo, autosave, settings pages, drag and drop, resizable panes, pull to refresh, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
 ---
 
 # UI Interaction Rules
@@ -9,13 +9,15 @@ Generated UI tends to render only the happy path: every column in the table, a d
 
 ## Workflow
 
-1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules. A surface that matches several rows of the table below needs each of their references: a modal holding a form needs `overlays.md` and `forms.md`.
+1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules. A surface that matches several rows of the table below needs each of their references: a modal holding a form needs `overlays.md` and `forms.md`. When a reference points to the design skill (`typography.md`, `avatars.md`, `profile-tool.md`), those files are in `${CLAUDE_PLUGIN_ROOT}/skills/design/references/`; read one only when you build what it covers.
 
 | Surface you create or change | Load |
 | --- | --- |
 | Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle, inline edit, file upload | `references/forms.md` |
 | Tables (including tables on phones and in narrow panels), lists, clickable cards, selection, bulk actions, pagination, search, filters, command palette | `references/data.md` |
-| Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips, tabs, accordions, navigation, scroll restoration, sticky headers and jump links, resizable panes and split handles, drag and drop, swipe, pull to refresh | `references/overlays.md` |
+| Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips | `references/overlays.md` |
+| Tabs, accordions, navigation, scroll restoration, sticky headers and jump links | `references/navigation.md` |
+| Drag and drop, resizable panes and split handles, swipe, pull to refresh | `references/gestures.md` |
 | Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy | `references/feedback.md` |
 | Delete, irreversible actions, undo | `references/destructive.md` |
 | Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |

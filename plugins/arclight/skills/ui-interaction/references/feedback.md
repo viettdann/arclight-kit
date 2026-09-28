@@ -50,7 +50,7 @@ Distinguish first run, no results, filtered out, and error (see `data.md`). Each
 - Toasts:
   - Position: bottom-right (or bottom-center) on desktop, one consistent edge on mobile, never over the center of the content.
   - Stacking: at most 3 visible, the rest queue.
-  - Timing: info and success auto-dismiss after ~4–6s, toasts with an action (Undo, Retry) stay longer, errors stay until dismissed, and timers pause on hover and focus.
+  - Timing: info and success auto-dismiss after ~4–6s, toasts with an action (Undo, Retry) stay 8–10s, errors stay until dismissed, and timers pause on hover and focus.
   - Controls: always a close button, plus swipe to dismiss on touch.
   - Semantics: `role="status"`, or `role="alert"` for errors, plus an icon and text so color isn't the only signal.
 

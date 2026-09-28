@@ -30,7 +30,7 @@ Write this file at the repo root. It records decisions and their reasons; exact 
 - Destructive actions: <undo vs confirm policy>.
 - Toasts: <position, durations>.
 - Forms: <validation timing, label placement>.
-- Inline edit: <blur saves or discards>.
+- Inline edit: blur commits (ui-interaction default); list exceptions.
 
 ## Components
 - Library: <shadcn/Radix/own>, location of primitives, rule for when to create a new component.

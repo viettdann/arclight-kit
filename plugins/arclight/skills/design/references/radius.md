@@ -13,6 +13,7 @@ Rounded corners everywhere don't make a system: one radius on everything, or a v
 | `full` | Avatar, dot, toggle, icon-only round button |
 
 - Values come from the profile: tool `sm` 4px, `md` 6px, `lg` 12px, no `xl` (a bottom sheet takes `lg`); marketing from its radius table. A style may override rows.
+- In Tailwind, roles are not class names: role `lg` (12px) is `rounded-xl`. Use the default class with the same value (4 `rounded`/v4 `rounded-sm`, 6 `rounded-md`, 8 `rounded-lg`, 12 `rounded-xl`, 16 `rounded-2xl`) or add role tokens (`--radius-chip`, `--radius-control`, `--radius-card`); never redefine `--radius-sm/md/lg`.
 - Radius grows with size: a larger element never gets a smaller step than a smaller element beside it.
 - Elements that sit side by side at one height share a step: a button next to an input, a select next to a search field.
 
