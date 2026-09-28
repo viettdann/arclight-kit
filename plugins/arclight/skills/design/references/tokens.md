@@ -10,15 +10,15 @@
 
 | Category | Tokens |
 | --- | --- |
-| Surfaces | `bg`, `surface`, `surface-raised`, `overlay` (scrim) |
+| Surfaces | `bg`, `surface`, `surface-raised`, `surface-floating` (a layer opened from a raised one), `overlay` (scrim) |
 | Borders | `border`, `border-strong` |
 | Text | `text`, `text-muted`, `text-subtle`, `text-disabled` |
 | Accent | `accent`, `accent-hover`, `accent-active`, `on-accent` (text on accent) |
 | Status | `success`, `warning`, `danger`, `info`, each with `-fg`, `-bg`, `-border` |
 | Focus | `focus-ring` |
-| Typography | family (sans, mono), size scale, line-heights, weights, tracking |
+| Typography | family (sans, mono), size scale, line-heights, weights, tracking (values from `typography.md`) |
 | Space | 4px base: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96 |
-| Radius | none, sm, md, lg, xl, full; values per profile |
+| Radius | none, sm, md, lg, xl, full; values per profile (roles and rules in `radius.md`) |
 | Elevation | shadow levels 0–3, plus z-index layers: base, dropdown, sticky, overlay, modal, toast, tooltip |
 | Motion | durations 100, 150, 200, 300, 400ms; easings with explicit curves (below) |
 | Layout | breakpoints, container widths, density (compact, default, comfortable) |
@@ -54,6 +54,7 @@ Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate):
 
 - `:root { color-scheme: light dark; }`; semantic tokens per `[data-theme="dark"]` and/or `@media (prefers-color-scheme: dark)`; `light-dark()` where supported.
 - Verify contrast in each theme separately.
+- The dark set follows `dark-mode.md`: surfaces stepped in lightness, inks and borders as alphas of one white.
 
 ## Minimal example
 

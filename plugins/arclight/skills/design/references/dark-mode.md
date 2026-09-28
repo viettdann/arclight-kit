@@ -1,0 +1,45 @@
+# Dark Mode
+
+A black background with white text is not a dark theme: `#000` and `#FFF` leave no room for layers, so the page has no depth and reads as a terminal. Dark mode is its own token set, built from lightness steps, alpha inks, and a calmer accent.
+
+## Near-black, with room for layers
+
+- The page is near-black, never `#000`: a dark neutral tinted slightly toward the brand hue (see `tokens.md`), so lighter layers have room above it.
+- Surfaces step up in even OKLCH lightness increments with the same hue and chroma: page, surface, raised, floating. Pick the steps once; don't hand-pick a hex per component.
+- The step follows what a layer sits on, not what kind of element it is: a card sits one step above the page, a popover or modal one step above what it opens from, and a menu opened inside a modal one step above the modal.
+
+## Lightness is elevation
+
+- Raise with lightness, not shadow. A black shadow on a near-black page is invisible, so it can't be the elevation cue.
+- In-page surfaces carry no shadow. Floating layers are told apart by their lighter surface plus a hairline; a shadow may stay under them for overlap, not as the signal.
+
+## Three inks from one white
+
+- Text is one off-white color at three alphas, never pure white: `text` about 87%, `text-muted` about 73%, `text-subtle` about 60%. Alpha keeps the same rank on every layer.
+- The floor for readable text is about 50%; below that it fails 4.5:1 on the lighter layers. `text-disabled` (about 38%) misses 4.5:1 by design but stays above 3:1, and is for disabled controls only (`typography.md`).
+- Check each ink on the darkest and the lightest surface it sits on with `scripts/contrast.mjs` (8-digit hex for alpha: `#ffffffde|<surface>|text`).
+
+## Calm the accent
+
+- A saturated accent glows past its edges on dark. Keep the hue, raise the lightness, lower the chroma in OKLCH until it sits calmly on the surfaces.
+- A lighter accent flips its foreground: white text on a calmed accent usually fails, so `on-accent` becomes the near-black. Verify the pair.
+- Status colors follow the same rule, with text steps lighter than their fills.
+
+## Alpha hairlines
+
+- Borders are white at low alpha (about 6–10%, for example `rgb(255 255 255 / 0.08)`), not a fixed grey hex: the same token reads one step lighter on every layer, where a hex disappears on one surface and glares on another.
+- A hairline is decorative, around 1.2:1. A boundary that identifies a control (text input, select, checkbox) needs 3:1 against its surface, so inputs use `border-strong`, checked with `contrast.mjs` as `ui`.
+
+## Images
+
+- Photos are dimmed so they don't take the attention: `filter: brightness(0.8)` in the dark theme.
+- Illustrations, diagrams, and logos get a dark variant, never `filter: invert()`. If the theme is set by a class or `data-theme`, swap them by that selector; `<picture media="(prefers-color-scheme: dark)">` follows only the OS setting.
+
+## Checks
+
+- [ ] No `#000` surface and no `#FFF` text; surfaces step up in lightness by what they sit on.
+- [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.
+- [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on.
+- [ ] Accent calmed in chroma, with `on-accent` re-checked.
+- [ ] Hairlines are alpha; input boundaries pass 3:1.
+- [ ] Photos dimmed; illustrations and logos have dark variants.

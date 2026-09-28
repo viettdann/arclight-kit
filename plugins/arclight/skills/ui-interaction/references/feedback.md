@@ -1,4 +1,4 @@
-# Feedback: Loading, Errors, Notifications
+# Feedback: Loading, Errors, Success, Notifications
 
 ## Loading by what you know about the wait
 
@@ -31,6 +31,14 @@ Don't mix skeletons and spinners in one region.
 - Every error has a way forward: retry, edit, go back, or contact.
 - User input survives every error.
 
+## Success
+
+- Say what happened with server data: the object, where it went, and the key values ("INV-2051 sent to Northwind Labs · €2,400 · due Oct 12"). Never a bare "Success!".
+- Surface follows stakes: routine, reversible changes get an inline state change or a toast (with Undo when possible); payments, sends, bookings, and account changes get a confirmation page with a reference number that survives refresh and never resubmits.
+- A done screen offers one primary next action and one way back. No dead end, no OK-only dialog.
+- When the outcome continues asynchronously (delivery, payment, review), show the current stage and how the user will learn about the next one.
+- Routine success stays quiet: the state change is the feedback. Celebration is reserved for a user's first real milestone (first payment received), shown once, never blocking, and static under reduced motion.
+
 ## Empty states
 
 Distinguish first run, no results, filtered out, and error (see `data.md`). Each gets specific copy and one next action. No bare "No data".
@@ -45,6 +53,24 @@ Distinguish first run, no results, filtered out, and error (see `data.md`). Each
   - Timing: info and success auto-dismiss after ~4–6s, toasts with an action (Undo, Retry) stay longer, errors stay until dismissed, and timers pause on hover and focus.
   - Controls: always a close button, plus swipe to dismiss on touch.
   - Semantics: `role="status"`, or `role="alert"` for errors, plus an icon and text so color isn't the only signal.
+
+### Badges
+
+- Badge the decisions, not everything: only what needs the user's action gets a count. "New" labels on every nav item and feature leave nothing to notice.
+- A count and a status are different signals with different rules. A count is a number of things to act on, and clears when they are handled. A status is a dot with no number (changed, live), and opening doesn't clear it; presence on an avatar is its ring (see the design skill's `avatars.md`). Counts use one color across the app, never a status color; a status dot has a text alternative (`aria-label`, tooltip).
+- One signal per row: a dot or a number, never both.
+- The count is capped (99+, or 9+ on a small badge) so its width is bounded. Use `tabular-nums`, a min-width equal to its height so one digit is a circle, and hide it at zero. The full number goes on the control for screen readers ("Notifications, 348 unread") with the badge itself `aria-hidden`.
+- The badge pins to the corner: `absolute` on a `relative` wrapper, anchored by its right edge so it grows leftward, with a 2px ring in the surface color to separate it from the icon. The icon and the button never move or grow.
+- Opening clears it. Opening the panel clears the count of unseen items; each item keeps its own unread state until read, with "Mark all read". Clear optimistically and sync across tabs. A badge that never clears trains people to ignore it.
+- The count changes in place and never blinks: outside the user's own actions it doesn't drop to zero and come back. Keep the last known value while refetching; with no value yet, show no badge rather than "0". No pulse.
+
+## Copy to clipboard
+
+- The check reports the write, not the click: `await navigator.clipboard.writeText(value)`, then flip the icon. The promise resolves within a frame, so no spinner and no delay; on rejection there is no check.
+- Flip in place: the icon swaps at the same size, and a label ("Copy" → "Copied") reserves the width of the longer word so nothing shifts. Announce "Copied" through a polite live region; the button's name says what it copies ("Copy API key").
+- Reset after about 2s so the next copy signals again; a repeat click restarts the timer.
+- Copy the raw value from its source (state or a `data-` attribute), never the rendered text: line breaks from wrapping, grouping spaces in card numbers or IBANs, zero-width characters, a masked "••••", a `$` prompt, or line numbers break whatever it is pasted into.
+- Fall back, don't lie. The Clipboard API needs a secure context (HTTPS or localhost), a user gesture, and `allow="clipboard-write"` inside iframes. When it rejects, try `document.execCommand("copy")` on a temporary textarea and check its return value; if that fails too, select the value and say so ("Couldn't copy. Press ⌘C"), never a check.
 
 ## Autosave
 
@@ -64,3 +90,6 @@ Distinguish first run, no results, filtered out, and error (see `data.md`). Each
 - [ ] Loaders are delayed for fast responses, and the skeleton matches the final layout.
 - [ ] Every mutation's failure branch keeps the input, shows a specific message, and offers a retry.
 - [ ] Every list and search has distinct loading, empty, and error states.
+- [ ] Every success message names what happened, and every done screen has a next action and a way back.
+- [ ] Copy buttons show the check only after the write resolves, copy the raw value, reset after ~2s, and have a fallback that admits failure.
+- [ ] Badges are capped, pinned to the corner, cleared on open, and never flash to zero on refetch; counts and status dots don't share a color or a row.

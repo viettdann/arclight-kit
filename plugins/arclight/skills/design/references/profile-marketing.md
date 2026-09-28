@@ -17,7 +17,7 @@ Before markup, write one line in the summary: **page kind · audience · visual 
 - Proof is attributable: a named person, their role, and a measurable result. Logos only if real and recognizable.
 - Aggregate numbers anywhere on the page (customer counts, "median close time", "% auto-matched", "9 in 10") appear only when the user supplied them. An invented plausible stat reads as proof and ships by accident; while drafting, write a visible placeholder like `[median close time]` and list it in the notes.
 - Benefits are outcomes, at most three per section. Annotate real product UI instead of an icon grid.
-- Pricing highlights one recommended plan with more than color (badge, border or elevation, position); the others stay calm and identical.
+- Pricing follows the Pricing section below.
 - The most important message goes first and last; the middle is remembered least.
 - Flows end on a success screen with a next step, not a flat confirmation.
 
@@ -32,6 +32,14 @@ Before markup, write one line in the summary: **page kind · audience · visual 
 - Display-size numbers are for quantities worth remembering (a result, a price), not for labels such as times, dates, or step numbers; those stay at heading size. Large type never overlaps or crowds neighboring text at any width.
 - All sections share one container width and edges. A block narrower than the container (prose at 65ch) is placed deliberately, not left hugging one side with the rest empty.
 - One theme for the whole page. A light section inside a dark page (or the reverse) reads as a pasted-in block unless it is one deliberate, single switch.
+
+## Pricing
+
+- One recommended tier, marked with more than color (border or elevation, position, a badge). The others step back by losing border and elevation, never by fading their text; prices keep full contrast.
+- One badge on the page, on the recommended tier; no runner-up labels. "Most popular" is a claim about real data: use it only when the user supplied it, otherwise "Recommended".
+- Feature lists show the difference: the first tier lists its 4–6 key features, each next tier opens with "Everything in Starter, plus" and lists only what it adds. A full feature matrix, if needed, goes in a comparison table below the tiers.
+- One filled button, on the recommended tier; the others are secondary or outlined, and none is a gradient. CTA labels follow one pattern across tiers ("Choose Starter", "Choose Team"); a tier that goes to sales says "Talk to sales".
+- The annual saving is written in money, not percent: "Save $98/year", computed from the page's own monthly and annual prices, with the billed total beside the price ("$41/mo, billed $490 yearly"). If the annual price isn't given, leave a visible placeholder like `[annual price]`. The saving label uses the accent or neutral text, never the danger color.
 
 ## Imagery
 
@@ -74,9 +82,20 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 
 ## Visual
 
-- Body 16–18px with line-height 1.5–1.7, prose width 60–75ch. Headings at least ~2× body, line-height 1.1–1.2, slightly tightened tracking at large sizes. Italic display words with descenders (g, j, p, q, y) need line-height ≥ 1.1 or they clip.
+- Body 16–18px with line-height 1.5–1.7, prose width 60–75ch. Scale ratio 1.25–1.333 with a display step; headings at least ~2× body. Weights, heading line-heights, and tracking follow `typography.md`. Italic display words with descenders (g, j, p, q, y) need line-height ≥ 1.1 or they clip.
 - Generous space: section padding 64–128px on desktop; hero top padding no more than ~96px, or the content floats halfway down the viewport.
-- Radius medium to large and consistent: 8–12px controls, 16–24px large cards. One documented rule, applied everywhere.
+- Radius from this table, looked up per element rather than chosen by feel; an element not listed takes the row of the closest size. A style may override rows (its file says which); everything else stays. Record the result in `DESIGN.md` as tokens.
+
+  | Element | Radius |
+  |---|---|
+  | Band inside the container, large panel, bottom sheet (top corners only) | 16px |
+  | Card, demo window, pricing tier, modal | 12px |
+  | Surface nested in padding (inner panel, media frame in a card) | outer − padding, never below 6px |
+  | Button (primary and secondary), input, segmented control, popover, tooltip | 8px |
+  | Chip, tag, badge, small control under 28px tall | 6px |
+  | Dot, avatar, icon-only round button | full |
+
+  A full-bleed band is square: sides flush with an edge take no radius (`radius.md`). No pills by default. A pill-shaped button, chip, or tag appears only when the chosen style lists it.
 - Elevation from layered shadows (a tight contact shadow plus a soft ambient one), tinted toward the background hue rather than pure black, used only where lift carries meaning.
 - Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms ease-out. Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
 - Motion: entrances 200–300ms ease-out, exits faster, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
@@ -93,4 +112,5 @@ Hero carousels, autoplaying video with sound, parallax that moves text, more tha
 - [ ] No layout family repeated; no empty grid cells.
 - [ ] No div-built fake screenshots; missing images are labeled slots listed in the summary.
 - [ ] Every visible string re-read; one label per CTA intent; no em dashes in copy.
+- [ ] Pricing has one highlighted tier, one badge, one filled button, diff-only feature lists, and the saving in money.
 - [ ] `scan_tells.py` leaves no `6-marketing` hit unexplained.

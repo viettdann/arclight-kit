@@ -16,7 +16,7 @@
 | gradient button | `bg-accent text-accent-foreground hover:bg-accent/90` (flat) |
 | `bg-clip-text text-transparent bg-gradient-*` | `text-zinc-50` (or `text-zinc-900` light) |
 | `rounded-2xl` / `rounded-3xl` on card | `rounded-xl` |
-| `rounded-xl`/`rounded-full` on text input | `rounded-lg` |
+| `rounded-xl`/`rounded-full` on text input | `rounded-md` (same step as the button beside it) |
 | `rounded-xl`/`rounded-full` on button | `rounded-md` |
 | `shadow-md/lg/xl/2xl` on card/input/button | remove; add `border border-white/10` (dark) / `border-zinc-200` (light) |
 | `shadow-violet-500/30`, `ring` glows | remove |
@@ -26,7 +26,7 @@
 | value `text-2xl font-bold` | primary: `text-5xl font-semibold tracking-tight tabular-nums`; secondary: `text-2xl font-semibold tabular-nums` |
 | delta pill `bg-emerald-500/10 text-emerald-400 rounded-full px-2` on every card | `text-sm text-zinc-400 tabular-nums` with baseline text |
 | status badge saturated fill (in a table) | dot + text: `inline-flex items-center gap-1.5` with a `h-1.5 w-1.5 rounded-full` colored dot; see §5 |
-| status badge saturated fill (standalone tag) | `rounded-md border border-white/10 px-1.5 py-0.5 text-xs text-zinc-300`; tint text only for real warnings/errors |
+| status badge saturated fill (standalone tag) | `rounded border border-white/10 px-1.5 py-0.5 text-xs text-zinc-300`; tint text only for real warnings/errors |
 
 Keep: `shadow-*` on modal, popover, dropdown, toast, tooltip.
 
@@ -41,8 +41,8 @@ theme: {
       accent: { DEFAULT: '#14b8a6', foreground: '#042f2e' },
     },
     borderRadius: {
-      // button 6, input 8, card 12
-      md: '6px', lg: '8px', xl: '12px',
+      // chip 4, button and input 6, card 12
+      DEFAULT: '4px', md: '6px', xl: '12px',
     },
   },
 }
@@ -54,13 +54,13 @@ Tailwind v4 (CSS):
 @theme {
   --color-accent: #14b8a6;
   --color-accent-foreground: #042f2e;
+  --radius-sm: 4px;
   --radius-md: 6px;
-  --radius-lg: 8px;
   --radius-xl: 12px;
 }
 ```
 
-With the Tailwind CDN / no config, use the literal classes (`rounded-md`=6px, `rounded-lg`=8px, `rounded-xl`=12px are already the defaults) and one accent from the palette used consistently (`bg-<accent>-500`).
+With the Tailwind CDN / no config, use the literal classes (chip `rounded`=4px, `rounded-md`=6px, `rounded-xl`=12px are already the defaults) and one accent from the palette used consistently (`bg-<accent>-500`).
 
 ## 3. Primary + secondary metric layout
 
@@ -69,7 +69,7 @@ Before: `grid grid-cols-2 gap-4` of four identical cards.
 After:
 
 ```html
-<p class="text-sm text-zinc-400"><span class="font-medium text-zinc-100">Revenue</span> · Aug 1 to Aug 31, 2026</p>
+<p class="text-sm text-zinc-400"><span class="font-semibold text-zinc-100">Revenue</span> · Aug 1 to Aug 31, 2026</p>
 
 <div class="mt-3 grid gap-3 lg:grid-cols-[2fr_1fr]">
   <!-- primary -->
@@ -124,7 +124,7 @@ Keep them in sequence; mark the current one in place.
 <div class="grid gap-3 md:grid-cols-3">
   <section class="rounded-xl border border-zinc-200 bg-white p-5">…Starter · Downgrade…</section>
   <section class="rounded-xl border border-accent bg-white p-5 ring-1 ring-accent">
-    <p class="text-xs font-medium text-accent">Current plan</p> …Pro…
+    <p class="text-xs font-semibold text-accent">Current plan</p> …Pro…
   </section>
   <section class="rounded-xl border border-zinc-200 bg-white p-5">…Enterprise · Upgrade…</section>
 </div>

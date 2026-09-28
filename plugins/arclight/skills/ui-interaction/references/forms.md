@@ -32,8 +32,17 @@
 - **Date:** date ranges lead with presets (Today, Last 7 days, Last 30 days, This quarter) and keep a custom range for the rest. Show two months side by side for ranges. The date can be typed. The grid is keyboard navigable (arrows, Page Up/Down for month, Enter, Escape). On mobile use a full-screen sheet or the native input.
 - **Slider:** filled track, live value readout, snaps to steps, hit area spans the row height, arrows/Home/End/Page keys work, two thumbs for ranges. Pair with a number input when exact values matter.
 - **Toggle:** `role="switch"` with `aria-checked`, Space toggles. It applies immediately; a toggle inside a form that waits for Save should be a checkbox instead. Async toggles flip optimistically, show pending inside the knob, and roll back with a message on failure.
-- **Inline edit:** editability is signaled on hover and focus (pencil or background tint). The input matches the text's font, size, and padding exactly so nothing shifts. Enter commits and Escape cancels; blur behavior is one rule across the whole app. Save optimistically, and on failure roll back while keeping the draft.
+- **Inline edit:** see the section below.
 - **File upload:** the dropzone reacts on drag-over (border, background, copy). Type and size are checked before uploading, with a specific message. Each file gets its own progress (percent, plus time remaining for large files) and its own retry that doesn't require re-selecting. Show a preview or thumbnail with type and size as proof of the right file.
+
+## Inline edit
+
+- **Match the mode to the cost of a typo.** Click-to-edit is for fields where a slip is cheap and undone in a keystroke: a title, a name, a label. Fields whose change means something or triggers something (status, amount, dates that bill or notify, permissions) open an explicit edit (an Edit button, then Save and Cancel). In a grid, a single click selects the cell and editing starts with Enter, F2, typing, or a double-click, so a stray click never writes.
+- **Say it's editable.** On hover and focus the text gets a soft background tint and a pencil. The pencil is a real `<button>` ("Rename"), so keyboard users reach it; on touch (`@media (hover: none)`), where hover never fires, it stays visible. Clicking the text is a shortcut to the same edit.
+- **Same box, different chrome.** The input takes the text's font, size, weight, line-height, tracking, and padding. The border exists in both states, transparent at rest and visible while editing, so the box doesn't grow by its width. A value that can wrap becomes a `<textarea>` that grows with its content (`field-sizing: content`, or a measured height), never a one-line input that collapses two lines into one.
+- **Keys.** Enter commits and Escape restores the original; both return focus to the text or its pencil. In a multi-line field Enter adds a line and Cmd/Ctrl+Enter commits. Enter pressed while an IME is composing (`event.isComposing`) finishes the word, not the edit.
+- **Blur commits, everywhere.** Clicking away saves, as in docs and spreadsheets, so work is never lost to a stray click. Pick this once for the whole app and never vary it. An unchanged value sends no request; an empty required value reverts to the saved one.
+- **Save optimistically** (`feedback.md`): the new value shows at once. If the server rejects it, the text rolls back to the saved value, the draft is kept, and the message says why and offers a retry ("Couldn't save, your draft is kept · Retry"); reopening the edit restores the draft.
 
 ## Checks
 
@@ -42,3 +51,4 @@
 - [ ] Errors appear on blur, not while typing, and clear live once fixed.
 - [ ] Submit is never disabled for validity, and a double submit is impossible.
 - [ ] Paste works in password, OTP, and masked fields.
+- [ ] Inline edit is used only where a typo is cheap; entering edit moves nothing; Enter, Escape, and blur behave the same everywhere; a rejected save rolls back and keeps the draft.

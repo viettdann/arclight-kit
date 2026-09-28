@@ -1,6 +1,6 @@
 ---
 name: ui-interaction
-description: "Behavior and state rules for interactive UI: forms and validation, submit, loading, errors, empty states, tables, selection, pagination, search, filters, overlays, menus, tabs, toasts, destructive actions, undo, autosave, settings, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
+description: "Behavior and state rules for interactive UI: forms and validation, submit, loading, errors, success and confirmation screens, empty states, tables, selection, pagination, search, filters, overlays, menus, tabs, toasts, destructive actions, undo, autosave, settings, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
 ---
 
 # UI Interaction Rules
@@ -14,10 +14,11 @@ Generated UI tends to render only the happy path: every column in the table, a d
 | Surface you create or change | Load |
 | --- | --- |
 | Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle, inline edit, file upload | `references/forms.md` |
-| Tables, lists, selection, bulk actions, pagination, search, filters, command palette | `references/data.md` |
-| Modals, sheets, drawers, popovers, menus, dropdowns, tooltips, tabs, accordions, navigation, drag and drop, swipe | `references/overlays.md` |
-| Loading, errors, empty states, toasts, notifications, optimistic updates, autosave, microcopy | `references/feedback.md` |
-| Delete, irreversible actions, undo, settings pages | `references/destructive.md` |
+| Tables (including tables on phones and in narrow panels), lists, clickable cards, selection, bulk actions, pagination, search, filters, command palette | `references/data.md` |
+| Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips, tabs, accordions, navigation, scroll restoration, sticky headers and jump links, resizable panes and split handles, drag and drop, swipe, pull to refresh | `references/overlays.md` |
+| Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy | `references/feedback.md` |
+| Delete, irreversible actions, undo | `references/destructive.md` |
+| Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |
 
 2. For each new component, or existing component that gains a new async state, note in one or two lines which states apply and which you skip and why, e.g. "UserTable: loading skeleton, empty (no users / no match), error with retry; skipped bulk selection (not requested)." Put it in the summary or PR description, not in code comments. Skip the note when the change adds no new component and no new async state.
 3. Build what was asked. Don't add surfaces nobody requested (offline banner, bulk selection, settings panel); suggest them instead.

@@ -1,6 +1,6 @@
 {
   "name": "arclight",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Design new UI with profiles and styles (design), give existing UI a new look (redesign), remove the generated look (restyle), and interaction and state rules (ui-interaction).",
   "author": {
     "name": "viettdann"

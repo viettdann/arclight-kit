@@ -21,7 +21,7 @@ The result should still be polished — this is restraint, not brutalism. Keep t
    If Python isn't available, skip the scan and read the code. It is a heuristic grep, not a verdict — a `shadow-lg` on a modal is correct, a `shadow-lg` on a card is a tell. Read the code yourself too; hierarchy and copy problems don't show up in a grep.
 
 2. **Decide before editing:**
-   - **The profile.** App/tool surface (dashboard, admin, settings, billing) or marketing surface (landing, pricing page, portfolio, storefront)? The five principles apply to both, but on a marketing surface the radius and elevation values come from the design marketing profile (`${CLAUDE_SKILL_DIR}/../design/references/profile-marketing.md`: 16–24px large cards, tinted layered shadows where lift means something) instead of principle 4's tool values, and its layout, imagery, and copy tells join the audit.
+   - **The profile.** App/tool surface (dashboard, admin, settings, billing) or marketing surface (landing, pricing page, portfolio, storefront)? The five principles apply to both, but on a marketing surface the radius and elevation values come from the design marketing profile (`${CLAUDE_SKILL_DIR}/../design/references/profile-marketing.md`: its per-element radius table, tinted layered shadows where lift means something) instead of principle 4's tool values, and its layout, imagery, and copy tells join the audit.
    - **The primary thing on the page.** What is this screen for? On a revenue dashboard it's revenue; on a billing page it's the current plan; on a settings page it's the form. This drives hierarchy (principle 3) and where the accent goes (principle 1).
    - **The accent.** Reuse the existing brand color if there is one (look in tailwind config / CSS vars / the primary button). Otherwise pick one flat color that fits the product, not a house default. Everything else is neutral.
 
@@ -62,14 +62,18 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 
 **Size follows content, and the row ends flush.** A primary is as big as its content, never padded out with empty space. Blocks side by side share top and bottom edges: stacked secondaries divide the primary's height between them (`grid auto-rows-fr`, or `flex-1` on each), so neither column ends with blank space under it.
 
+**Type carries the rest of the hierarchy.** Follow `${CLAUDE_SKILL_DIR}/../design/references/typography.md`: sizes from one scale, weights 400 and 600 only, and rank inside a row by ink, not by another size. Text slots survive long values (its Long text section: `min-w-0` for the ellipsis, middle truncation, `overflow-wrap: anywhere`). Bold on every label and a new size for every element are the type versions of identical cards.
+
 **Why:** equal weight forces the reader to decide what matters; the layout should already have decided — but only where importance really differs.
 
 ### 4. Borders and a radius scale; shadows only for things that float
 **Tell:** `rounded-2xl`/`rounded-3xl` (16px+) and `shadow-*` on every card, input, and button; glassmorphism (`backdrop-blur`, translucent cards) on in-page surfaces; colored glows.
 **Fix** (values for app/tool surfaces; marketing surfaces take theirs from the marketing profile, but the "not everything elevated" rule holds):
 - In-page surfaces (cards, panels, tables, inputs): 1px subtle border, no shadow. Dark: `border-white/10` on `bg-zinc-900`-ish; light: `border-zinc-200` on `bg-white`.
-- Radius scale, smaller and consistent: **button 6px** (`rounded-md`), **input 8px** (`rounded-lg`), **card 12px** (`rounded-xl`). Badges `rounded-md`, or `rounded-full` if the project already uses pill badges. Nested elements never have a larger radius than their container.
+- Dark themes follow `${CLAUDE_SKILL_DIR}/../design/references/dark-mode.md`: `bg-black` becomes a near-black with lighter layers, pure-white text becomes three alpha inks, a saturated accent is calmed (and its foreground re-checked), photos are dimmed.
+- Radius scale, smaller and consistent: **chip and badge 4px**, **button and input 6px** (`rounded-md`, the same step so they line up side by side), **card, panel, modal 12px** (`rounded-xl`). Badges may stay `rounded-full` if the project already uses pill badges, but only on one line. Nested corners are outer − padding; sides flush with an edge (bottom sheet, sidebar) lose their corners. Roles and rules: `${CLAUDE_SKILL_DIR}/../design/references/radius.md`.
 - Shadow is reserved for layers that sit *above* the page: modal, popover, dropdown menu, toast, tooltip. Keep those shadows.
+- Cards follow `${CLAUDE_SKILL_DIR}/../design/references/cards.md`: groups without an entity of their own (settings groups, form sections) lose their box and become sections, nested boxes flatten into dividers, and card media shares one ratio.
 **Why:** shadow means "elevated." When everything is elevated, nothing is, and the page looks soft and templated.
 
 ### 5. Copy and numbers carry information
@@ -81,7 +85,7 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 - Deltas are specific and state the baseline: `+12.5% vs Jul`.
 - Correct units: a change in a rate is in **percentage points** — conversion 3.4% → 3.8% is `+0.4 pt`, not `+11.8%`. Counts and money use `%` or absolute change.
 - Delta color: neutral text by default. Only color by *good/bad* (not up/down) when it's unambiguous — churn going down is good, so a red "down" arrow is wrong. When in doubt, neutral.
-- `tabular-nums` on all numeric values; right-align numeric table columns; consistent decimals per column.
+- `tabular-nums` on all numeric values; right-align numeric table columns; consistent decimals per column. Compact values, currency symbols, and relative time follow the Numbers section of `${CLAUDE_SKILL_DIR}/../design/references/typography.md`.
 - Tables: the right-aligned numeric column goes **last**, flush with the right edge (right-aligned followed by left-aligned pinches the row in the middle). Status sits at an **edge**, never mid-row: leading column by default (`Status | Customer | Date | Amount`), shown as a colored dot + text label rather than a pill. Pills stay for standalone tags outside tables.
 - A sparkline on the primary metric only when the trend data already exists *and* the block has a natural slot (beside body content, or a full-width strip at the bottom). Never a new prop just to feed it, never in a compact cell; when in doubt, leave it out. Details in `references/tailwind.md` §4–5.
 

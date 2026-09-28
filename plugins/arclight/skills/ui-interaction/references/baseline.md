@@ -19,6 +19,17 @@
 - Hover styles live under `@media (hover: hover)`; enlarge controls under `@media (pointer: coarse)`. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
+## Unavailable actions: explain, don't disable
+
+A grey button that does nothing and says nothing is a dead end. `disabled` removes the control from the tab order, blocks the pointer events a tooltip needs, and gives no reason.
+
+- Keep `disabled` for controls whose reason is obvious in context (Next on the last page, Bold with no text selected).
+- Invalid input: keep submit enabled, validate on click, mark the fields, focus the first one (`forms.md`).
+- Missing permission, a plan limit, or the wrong state: keep the control focusable with `aria-disabled="true"`, styled as unavailable, and on click, hover, or focus say why and what unlocks it ("Only admins can delete projects", "Export is on Pro"). `aria-disabled` blocks nothing by itself: the handler checks the state and shows the reason instead of acting, and a submit button stops the form too. If the user can never get the action, hide it.
+- A tooltip that explains never sits on a `disabled` element, which fires no pointer events; put it on an `aria-disabled` control or a focusable wrapper.
+- Busy is not disabled: an async button keeps focus and stays in the tab order with `aria-busy="true"`, ignores repeat clicks through state, names the progress ("Creating…"), then the result ("Project created"). Setting `disabled` mid-request drops focus to the body.
+- Disabled controls are exempt from WCAG contrast, but one shown in order to explain must stay readable: its label at least 3:1.
+
 ## Color and text
 
 - Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px bold) and for UI boundaries, icons, and focus rings.
@@ -53,3 +64,4 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - [ ] Every moving animation or transition has a `prefers-reduced-motion: reduce` override.
 - [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.
+- [ ] No control is disabled without an obvious reason: unavailable actions explain themselves, busy buttons keep focus.
