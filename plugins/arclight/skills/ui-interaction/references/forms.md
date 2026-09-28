@@ -21,7 +21,7 @@
 - Don't disable submit (or a wizard's Next) to signal invalid input: disabled buttons leave the tab order, can't show a tooltip, and don't say why. Keep them enabled, validate on click, mark the fields, focus the first one.
 - While a request is in flight the button is busy, not disabled: spinner plus label, `aria-busy="true"`, repeat clicks ignored, focus kept.
 - On failure every typed value stays. The message distinguishes network failure, validation rejection, and server error, and offers a retry.
-- The server re-runs every validation and recomputes prices and totals from its own data. Client validation exists for speed, not trust.
+- The server recomputes prices and totals from its own data, never from the submitted values.
 - The label names the outcome ("Create account", "Send invoice"), not "Submit".
 
 ## Specific inputs

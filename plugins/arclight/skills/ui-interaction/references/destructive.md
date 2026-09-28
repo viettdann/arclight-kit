@@ -39,7 +39,7 @@ Hold-to-confirm is an acceptable alternative on touch if it shows progress and h
 
 ## Server side
 
-The UI's safeguards are not security. The server re-checks authorization and validation, destructive endpoints are idempotent, and multi-row writes run in one transaction.
+Destructive endpoints are idempotent, and multi-row writes run in one transaction.
 
 ## Checks
 

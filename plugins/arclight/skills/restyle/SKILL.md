@@ -16,20 +16,24 @@ The result should still be polished — this is restraint, not brutalism. Keep t
 
 1. **Find the UI.** Locate the files that render the target screen (components, pages, templates, global CSS, `tailwind.config.*`). Run the scanner to get a first list of candidates:
    ```bash
-   python3 <skill-dir>/scripts/scan_tells.py <path-to-src-or-file>
+   python3 ${CLAUDE_SKILL_DIR}/scripts/scan_tells.py <path-to-src-or-file>
    ```
    If Python isn't available, skip the scan and read the code. It is a heuristic grep, not a verdict — a `shadow-lg` on a modal is correct, a `shadow-lg` on a card is a tell. Read the code yourself too; hierarchy and copy problems don't show up in a grep.
 
 2. **Decide before editing:**
-   - **The profile.** App/tool surface (dashboard, admin, settings, billing) or marketing surface (landing, pricing page, portfolio, storefront)? The five principles apply to both, but on a marketing surface the radius and elevation values come from the design marketing profile (`<skill-dir>/../design/references/profile-marketing.md`: 16–24px large cards, tinted layered shadows where lift means something) instead of principle 4's tool values, and its layout, imagery, and copy tells join the audit.
+   - **The profile.** App/tool surface (dashboard, admin, settings, billing) or marketing surface (landing, pricing page, portfolio, storefront)? The five principles apply to both, but on a marketing surface the radius and elevation values come from the design marketing profile (`${CLAUDE_SKILL_DIR}/../design/references/profile-marketing.md`: 16–24px large cards, tinted layered shadows where lift means something) instead of principle 4's tool values, and its layout, imagery, and copy tells join the audit.
    - **The primary thing on the page.** What is this screen for? On a revenue dashboard it's revenue; on a billing page it's the current plan; on a settings page it's the form. This drives hierarchy (principle 3) and where the accent goes (principle 1).
    - **The accent.** Reuse the existing brand color if there is one (look in tailwind config / CSS vars / the primary button). Otherwise pick one flat color that fits the product, not a house default. Everything else is neutral.
 
-3. **Write the audit** (in the user's language), grouped by principle. For each finding: `file:line` → what it is → the fix. Keep it scannable — a table works well. This is what teaches the user *why*, so include the one-line reason per principle.
+3. **Write the audit** (in the user's language) as one table with the columns `principle | file:line | tell | fix`, rows grouped by principle (`marketing` for tells from the marketing profile). Under the table, give a one-line reason for each principle that has findings, so the user learns *why*.
 
 4. **Apply the fixes.** Prefer fixing at the source of truth: if radius/shadow/colors are set in a shared component or config, change it there rather than patching every usage. Don't change data fetching, props, event handlers, or routes. Also keep, unless the user asks: URLs and anchor ids, nav labels, form field `name`s and order, ids or labels that analytics may track, the logo, and legal or consent copy. Restyling changes how it looks, not what it says or where it lives.
 
-5. **Verify.** Re-run the scanner and confirm the remaining hits are intentional (overlay shadows, semantic status colors). Then look at the rendered result — code that passes every rule can still look wrong. If a browser or headless Chrome is available, screenshot it (`"<chrome>" --headless=new --screenshot=out.png --window-size=1280,1000 --virtual-time-budget=5000 file:///abs/path.html`) and check specifically: blocks with large empty areas, elements floating detached from what they describe, and ordered sets that lost their order. Finally re-read every visible string you wrote or kept (headings, labels, buttons, captions) and fix anything awkward or vague.
+5. **Verify.** Re-run the scanner and confirm the remaining hits are intentional (overlay shadows, semantic status colors). Then look at the rendered result — code that passes every rule can still look wrong. Look for headless Chrome as `google-chrome`, `chromium`, `chromium-browser`, or `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` on macOS, and screenshot the page:
+   ```bash
+   "<chrome>" --headless=new --screenshot=out.png --window-size=1280,1000 --virtual-time-budget=5000 file:///abs/path.html
+   ```
+   For a component that isn't a static file, use the URL of a dev server that is already running. With no Chrome or no running server, skip the screenshot and say so. Check specifically: blocks with large empty areas, elements floating detached from what they describe, and ordered sets that lost their order. Finally re-read every visible string you wrote or kept (headings, labels, buttons, captions) and fix anything awkward or vague.
 
 6. **Report** briefly: what changed per principle, and anything you flagged instead of changed (see "Don't invent data").
 
@@ -48,15 +52,15 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 
 ### 3. Hierarchy, not identical cards
 **Tell:** a uniform grid of N separately floating, decorated cards with the same size, weight, and structure when their importance isn't equal (the 2×2 or 4-across KPI row is the classic).
-**First ask: does the primary have more to say?** Hierarchy needs substance. A primary block is justified only when the most important item carries *real extra content* the others don't — a breakdown, a chart, a target, an absolute baseline value — already present in the data.
-- **Yes** → one primary block, the rest secondary. The primary gets the large value plus that extra content; secondaries are compact (label, value, delta), stacked beside it or in a row beneath.
-- **No** — every item is just label + value + delta → keep them equal. A single bordered strip divided into cells (`divide-x`, or `gap-px` over a border-colored background) is the honest layout; put the most important metric first, since reading order already carries priority. What made the original look generated was the decoration (tiles, shadows, colors, fake deltas), not the equal sizes. Enlarging one cell with nothing to fill it creates empty space that looks worse than the grid did, at every width.
+**Decide in this order** (a billing page usually matches the first two):
 
-**Size follows content, and the row ends flush.** A primary is as big as its content, never padded out with empty space. Blocks side by side share top and bottom edges: stacked secondaries divide the primary's height between them (`grid auto-rows-fr`, or `flex-1` on each), so neither column ends with blank space under it. Check the rendered result before settling.
+1. **Is this a state page?** When a page exists to show the user's current situation — billing, subscription, account, usage — that state is the primary: put a summary block at the top with the plan/tier name and price (or the key quantity) large, plus the next relevant fact (renewal date, next invoice) and the main action. This is what the user came to see. Don't fold it into a subtitle line. Then apply 2 or 3 to what sits below it.
+2. **Are the items ordered peers?** Items that are *compared against each other* and have a natural order — pricing tiers, steps, versions, time periods — keep their sequence side by side (Starter | Pro | Enterprise), because position itself tells the reader where each sits. Mark the current/recommended one in place (accent border or small label) instead of pulling it out of the row; replacing the comparison with a list is not OK.
+3. **Otherwise, does the primary have more to say?** Hierarchy needs substance. A primary block is justified only when the most important item carries *real extra content* the others don't — a breakdown, a chart, a target, an absolute baseline value — already present in the data.
+   - **Yes** → one primary block, the rest secondary. The primary gets the large value plus that extra content; secondaries are compact (label, value, delta), stacked beside it or in a row beneath.
+   - **No** — every item is just label + value + delta → keep them equal. A single bordered strip divided into cells (`divide-x`, or `gap-px` over a border-colored background) is the honest layout; put the most important metric first, since reading order already carries priority. What made the original look generated was the decoration (tiles, shadows, colors, fake deltas), not the equal sizes; enlarging one cell with nothing to fill it only adds empty space.
 
-**Ordered peers stay in order.** "One primary + N secondary" is for items of *unequal importance*. Items that are *compared against each other* and have a natural order — pricing tiers, steps, versions, time periods — keep their sequence side by side (Starter | Pro | Enterprise), because position itself tells the reader where each sits. Mark the current/recommended one in place (accent border or small label) instead of pulling it out of the row; replacing the comparison with a list is not OK.
-
-**State pages lead with the state.** When a page exists to show the user's current situation — billing, subscription, account, usage — that state is the primary: put a summary block at the top with the plan/tier name and price (or the key quantity) large, plus the next relevant fact (renewal date, next invoice) and the main action. This is what the user came to see. Don't fold it into a subtitle line. The ordered comparison (tiers) sits below it.
+**Size follows content, and the row ends flush.** A primary is as big as its content, never padded out with empty space. Blocks side by side share top and bottom edges: stacked secondaries divide the primary's height between them (`grid auto-rows-fr`, or `flex-1` on each), so neither column ends with blank space under it.
 
 **Why:** equal weight forces the reader to decide what matters; the layout should already have decided — but only where importance really differs.
 
@@ -64,7 +68,7 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 **Tell:** `rounded-2xl`/`rounded-3xl` (16px+) and `shadow-*` on every card, input, and button; glassmorphism (`backdrop-blur`, translucent cards) on in-page surfaces; colored glows.
 **Fix** (values for app/tool surfaces; marketing surfaces take theirs from the marketing profile, but the "not everything elevated" rule holds):
 - In-page surfaces (cards, panels, tables, inputs): 1px subtle border, no shadow. Dark: `border-white/10` on `bg-zinc-900`-ish; light: `border-zinc-200` on `bg-white`.
-- Radius scale, smaller and consistent: **button 6px** (`rounded-md`), **input 8px** (`rounded-lg`), **card 12px** (`rounded-xl`). Badges `rounded-md` or `rounded-full` — pick one. Nested elements never have a larger radius than their container.
+- Radius scale, smaller and consistent: **button 6px** (`rounded-md`), **input 8px** (`rounded-lg`), **card 12px** (`rounded-xl`). Badges `rounded-md`, or `rounded-full` if the project already uses pill badges. Nested elements never have a larger radius than their container.
 - Shadow is reserved for layers that sit *above* the page: modal, popover, dropdown menu, toast, tooltip. Keep those shadows.
 **Why:** shadow means "elevated." When everything is elevated, nothing is, and the page looks soft and templated.
 
@@ -86,7 +90,9 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 **Why:** filler copy and identical fake deltas are the fastest way a reader spots a template.
 
 ## Don't invent data
-When values are hardcoded placeholders, it's fine to make them plausible and varied (and to add a small breakdown or baseline label). The exception is proof on marketing pages (customer counts, percentages, ratings, testimonials): never add new ones; replace invented ones with a visible placeholder like `[customer count]` only if the user wants that, otherwise keep them and flag them. When values come from props/API/state, don't fabricate new fields: restyle what exists, and if the design wants something missing (a comparison baseline, a breakdown series for a sparkline), add an optional prop or leave a clear `TODO` and mention it in the report.
+- **Hardcoded placeholder values:** fine to make them plausible and varied (and to add a small breakdown or baseline label).
+- **Proof on marketing pages** (customer counts, percentages, ratings, testimonials): never add new ones. Keep existing ones and flag them in the report; replace them with a visible placeholder like `[customer count]` only if the user asks.
+- **Values from props/API/state:** don't fabricate new fields; restyle what exists. If the design wants something missing (a comparison baseline, a breakdown series for a sparkline), leave a clear `TODO` and mention it in the report. Add an optional prop only if the user asks, since step 4 keeps props unchanged.
 
 ## Don't overcorrect
 - Keep status colors that encode real status; just mute them.
@@ -97,5 +103,5 @@ When values are hardcoded placeholders, it's fine to make them plausible and var
 
 ## References
 - `references/tailwind.md` — class-level before/after mappings, a token setup snippet, the primary+secondary metric layout, and an inline SVG sparkline. Read it when applying fixes in Tailwind code.
-- `<skill-dir>/../design/references/profile-marketing.md` — layout, imagery, and copy tells plus values for marketing surfaces. Read it when the profile is marketing.
-- `scripts/scan_tells.py` — heuristic scanner; `--help` for options.
+- `${CLAUDE_SKILL_DIR}/../design/references/profile-marketing.md` — layout, imagery, and copy tells plus values for marketing surfaces. Read it when the profile is marketing.
+- `${CLAUDE_SKILL_DIR}/scripts/scan_tells.py` — heuristic scanner; `--help` for options.

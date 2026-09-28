@@ -14,7 +14,7 @@ Never stack modals. Never put primary navigation in a blocking overlay. Reach fo
 
 ## Modal
 
-- Focus trap, Escape closes, focus returns to the trigger, scrim behind, body scroll locked, titled via `aria-labelledby`.
+- Beyond the baseline focus rules: scrim behind, body scroll locked, titled via `aria-labelledby`.
 - Initial focus goes to the first field, or to the least destructive button in a confirmation.
 - A scrim click closes only if there is no unsaved input.
 
@@ -73,4 +73,3 @@ Never stack modals. Never put primary navigation in a blocking overlay. Reach fo
 
 - [ ] Every overlay closes with Escape and returns focus.
 - [ ] Menus, popovers, and tooltips never clip at viewport edges.
-- [ ] Nothing is reachable only through hover, right-click, or swipe.

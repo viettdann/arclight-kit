@@ -93,4 +93,4 @@ Hero carousels, autoplaying video with sound, parallax that moves text, more tha
 - [ ] No layout family repeated; no empty grid cells.
 - [ ] No div-built fake screenshots; missing images are labeled slots listed in the summary.
 - [ ] Every visible string re-read; one label per CTA intent; no em dashes in copy.
-- [ ] If `python3` is available, `python3 <skill-dir>/../restyle/scripts/scan_tells.py <page files>` leaves no `6-marketing` hit unexplained.
+- [ ] `scan_tells.py` leaves no `6-marketing` hit unexplained.

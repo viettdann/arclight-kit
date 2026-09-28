@@ -9,7 +9,7 @@
 | Unknown duration, short (under ~3s) | Inline spinner on the element doing the work, not a full-page overlay |
 | Known progress, long (over ~3s) | Progress bar with percent, and time remaining when estimable |
 
-Don't mix skeletons and spinners in one region. Pressed state appears within 100ms regardless of the network.
+Don't mix skeletons and spinners in one region.
 
 ## Optimistic updates
 

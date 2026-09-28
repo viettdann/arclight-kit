@@ -167,7 +167,6 @@ function Sparkline({ data, className = "h-8 w-32 text-accent" }: { data: number[
 - Column widths: let `table-auto` size columns from content, or give proportional widths; don't pin status/date/amount to narrow fixed widths so the name column absorbs all spare space.
 - Row separation: `divide-y divide-white/10` on `tbody`, not zebra stripes + shadows.
 - Currency with consistent decimals in a column (`$86.00`, not `$86`).
-- Percent-of-a-rate changes → `pt`.
 
 ## 6. Charts
 

@@ -9,7 +9,7 @@ Generated UI tends to render only the happy path: every column in the table, a d
 
 ## Workflow
 
-1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules.
+1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules. A surface that matches several rows of the table below needs each of their references: a modal holding a form needs `overlays.md` and `forms.md`.
 
 | Surface you create or change | Load |
 | --- | --- |
@@ -19,10 +19,16 @@ Generated UI tends to render only the happy path: every column in the table, a d
 | Loading, errors, empty states, toasts, notifications, optimistic updates, autosave, microcopy | `references/feedback.md` |
 | Delete, irreversible actions, undo, settings pages | `references/destructive.md` |
 
-2. For each new component, note in one or two lines which states apply and which you skip and why. Put it in the summary or PR description, not in code comments. Skip this for small changes.
+2. For each new component, or existing component that gains a new async state, note in one or two lines which states apply and which you skip and why, e.g. "UserTable: loading skeleton, empty (no users / no match), error with retry; skipped bulk selection (not requested)." Put it in the summary or PR description, not in code comments. Skip the note when the change adds no new component and no new async state.
 3. Build what was asked. Don't add surfaces nobody requested (offline banner, bulk selection, settings panel); suggest them instead.
-4. Check the code against the `Checks` of the loaded references and fix what fails. If the project already has a fast typecheck or lint command, run it on the changed files; run tests only when a test covers the changed code. Don't install tooling or launch browsers unless asked. If nothing was run, say so.
-5. End with a short list of what needs manual verification (screen reader, touch, real network).
+4. Verify:
+   - Check the code against the `Checks` of the loaded references and fix what fails.
+   - Run the project's existing typecheck or lint command on the changed files, if there is one.
+   - Run tests only if a test covers the changed code.
+   - Say in the summary what was run, or that nothing was.
+5. End with a short list of what needs manual verification, each naming the component and the behavior, e.g. "InvoiceTable: screen reader announces the new sort", "Upload: retry after dropping the network mid-file".
+
+Don't install tooling or launch browsers unless asked.
 
 ## When rules conflict
 

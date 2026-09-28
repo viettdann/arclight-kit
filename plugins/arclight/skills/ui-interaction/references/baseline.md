@@ -24,10 +24,14 @@
 - Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px bold) and for UI boundaries, icons, and focus rings.
 - Never carry meaning by color alone: pair it with an icon, text, or shape.
 
+## Server side
+
+Client-side checks exist for speed, not trust: the server re-runs validation and re-checks authorization for every action.
+
 ## Motion
 
 - Honor `prefers-reduced-motion: reduce` for every animation and every transition that moves or scales (`transform`, `translate`, `scale`, position): replace the movement with an opacity change or nothing. Color and opacity transitions may stay.
-- Press/tap feedback appears within 100ms.
+- Press/tap feedback appears within 100ms, regardless of the network.
 - Exits are faster than entrances, roughly 60–70% of the entrance duration.
 - Animate `transform` and `opacity`, not `top`/`left`/`width`/`height`.
 - No `scroll` event listeners and no scroll position, pointer position, or animation frames stored in React (or other framework) state: each frame re-renders the tree. Use `IntersectionObserver`, CSS scroll-driven animations, or the animation library's motion values (`useScroll`, `useMotionValue`, GSAP `ScrollTrigger`), and clean them up on unmount.
