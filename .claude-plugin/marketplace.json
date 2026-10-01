@@ -1,6 +1,6 @@
 {
-  "name": "claude-ux-skills",
-  "description": "UI/UX skills for Claude Code",
+  "name": "arclight-kit",
+  "description": "viettdann's Claude Code plugins",
   "owner": {
     "name": "viettdann"
   },
@@ -8,7 +8,7 @@
     {
       "name": "arclight",
       "source": "./plugins/arclight",
-      "description": "UI design from scratch, redesign, restyle, and interaction and state rules"
+      "description": "UI design from scratch, redesign, restyle, interaction and state rules, and session working rules"
     }
   ]
 }

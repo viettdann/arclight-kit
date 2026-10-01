@@ -1,4 +1,4 @@
-# claude-ux-skills
+# arclight-kit
 
 Claude Code marketplace with one plugin, `arclight`.
 
@@ -25,8 +25,8 @@ No style named → the profile alone is the direction.
 ## Install
 
 ```bash
-claude plugin marketplace add viettdann/claude-ux-skills
-claude plugin install arclight@claude-ux-skills
+claude plugin marketplace add viettdann/arclight-kit
+claude plugin install arclight@arclight-kit
 ```
 
 Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked.
