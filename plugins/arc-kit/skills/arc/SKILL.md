@@ -59,4 +59,4 @@ These rules apply from now until the session ends, including after compaction. W
 
 **Name migrations by hand.** When creating a migration, generate it through the project's migration script with an explicit snake_case name that states the schema change (`add_db_users_table`), never the generator's random name. Never edit or rename a migration that has been applied.
 
-**UI carries no generator tells.** No accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label. For a full pass on an existing screen, use `arclight:restyle`.
+**UI carries no generator tells.** No accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label. For a full pass on an existing screen, use `arc-design:restyle` when the `arc-design` plugin is installed.

@@ -1,16 +1,19 @@
 # arclight-kit
 
-Claude Code marketplace with one plugin, `arclight`.
+Claude Code marketplace with two plugins:
+
+- `arc-design`: UI design, redesign, restyle, and interaction rules.
+- `arc-kit`: session working rules.
 
 ## Which skill
 
 | Situation | Skill |
 | --- | --- |
-| Nothing exists yet: new page, screen, or project; tokens, themes, dark mode, `DESIGN.md` | `arclight:design` |
-| It exists and you want a new look (new style or direction), keeping content, URLs, and behavior | `arclight:redesign` |
-| It exists and looks generated; keep the layout, remove the AI tells | `arclight:restyle` |
-| Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arclight:ui-interaction` (used alongside the others) |
-| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI) | `/arclight:arc` (user-invoked only) |
+| Nothing exists yet: new page, screen, or project; tokens, themes, dark mode, `DESIGN.md` | `arc-design:design` |
+| It exists and you want a new look (new style or direction), keeping content, URLs, and behavior | `arc-design:redesign` |
+| It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
+| Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
+| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI) | `/arc-kit:arc` (user-invoked only) |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 
@@ -26,13 +29,17 @@ No style named → the profile alone is the direction.
 
 ```bash
 claude plugin marketplace add viettdann/arclight-kit
-claude plugin install arclight@arclight-kit
+claude plugin install arc-design@arclight-kit
+claude plugin install arc-kit@arclight-kit
 ```
+
+Install either one alone; they don't depend on each other. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
 Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked.
 
 ## Changes
 
+- **0.5.0**: Split `arclight` into `arc-design` (`design`, `redesign`, `restyle`, `ui-interaction`) and `arc-kit` (`arc`, now `/arc-kit:arc`). Skills are unchanged apart from the namespace.
 - **0.4.1**: `design`, `redesign`, and `restyle` get a Sources rule: read only the brief, `DESIGN.md`, tokens, and the current working tree; git history, other branches, other repos, and earlier attempts only when the user names them. Existing screens give values, not markup or copy. The brief of the current turn wins over `DESIGN.md`. Each skill's rules replace an earlier design skill's in the same session. `redesign` deletes its snapshot after verifying. Style signature moves are examples, not a menu.
 - **0.4.0**: Add `arc` skill (`/arclight:arc`, user-invoked only): the arclight projects' shared working rules plus three new ones: an answer is not a go-ahead, a go-ahead covers everything recommended and not dropped, an explicit command is the confirmation.
 - **0.3.2**: Add `design/scripts/screenshot.mjs` (any width, several widths per call, `--full`, `--eval`, `--root`, exit 1 on horizontal overflow); `restyle` step 5 and `redesign` step 7 check the rendered page with it. `contrast.mjs` takes hex, `rgb()`, and `oklch()` as written. `restyle` drops the audit table; `redesign`'s audit becomes working notes; reports list only flagged behavior, changes to protected items, placeholders, and checks that couldn't run.

@@ -1,0 +1,8 @@
+{
+  "name": "arc-kit",
+  "version": "0.5.0",
+  "description": "The user's session working rules (arc): communication, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI.",
+  "author": {
+    "name": "viettdann"
+  }
+}

@@ -6,9 +6,14 @@
   },
   "plugins": [
     {
-      "name": "arclight",
-      "source": "./plugins/arclight",
-      "description": "UI design from scratch, redesign, restyle, interaction and state rules, and session working rules"
+      "name": "arc-design",
+      "source": "./plugins/arc-design",
+      "description": "UI design from scratch, redesign, restyle, and interaction and state rules"
+    },
+    {
+      "name": "arc-kit",
+      "source": "./plugins/arc-kit",
+      "description": "Session working rules"
     }
   ]
 }
