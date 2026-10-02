@@ -1,0 +1,17 @@
+{
+  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by Edit/Write",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/comment-lint.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

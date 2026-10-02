@@ -13,7 +13,7 @@
     {
       "name": "arc-kit",
       "source": "./plugins/arc-kit",
-      "description": "Session working rules"
+      "description": "Session working rules, plan-to-commit workflow skills, refactor, fresh-air, and comment-lint hook"
     },
     {
       "name": "mgi-kit",

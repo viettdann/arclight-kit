@@ -57,6 +57,10 @@ These rules apply from now until the session ends, including after compaction. W
 
 ## Code
 
+**No placeholders.** Requested code is written in full and runs as delivered. Banned: `// ...`, `// rest of code`, `// implement here`, `// similar to above`, a bare `...` standing in for omitted code, a skeleton when an implementation was asked for, one example plus "the rest follows the same pattern", and describing code instead of writing it. A `TODO` stays only when the user or the active skill calls for one. If a deliverable can't be finished in one response, stop at a clean boundary (end of a function or file) and name what is left; never compress the remainder to fit.
+
+**Code is found by grep.** New exported names carry their object (`validateSmtpConfig`, not `validate`). One concept, one spelling: reuse the term the codebase already uses (`orgId` or `organizationId`, whichever is there). Write event names, flags, error codes, and log keys as whole literals, never assembled by interpolation. Start error messages with a unique literal prefix so a log line greps back to its throw site. A name that no longer matches its behavior is renamed in the same change, unless it is a serialized or string-based contract name; those stay frozen.
+
 **Name migrations by hand.** When creating a migration, generate it through the project's migration script with an explicit snake_case name that states the schema change (`add_db_users_table`), never the generator's random name. Never edit or rename a migration that has been applied.
 
 **UI carries no generator tells.** No accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label. For a full pass on an existing screen, use `arc-design:restyle` when the `arc-design` plugin is installed.
