@@ -22,7 +22,9 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
 - **Space:** section padding 96–160px on desktop; one idea per section.
 - **Motion:** slow and weighted: entrances 400–700ms with a long ease-out (`cubic-bezier(0.32, 0.72, 0, 1)`), a single 16px fade-up per block, run once; press feedback `scale(0.98)`. Every animation still needs a reason (see the marketing profile).
 
-## Signature moves (pick one or two)
+## Signature moves (examples)
+
+These show the style's spirit; they are not a menu. Derive the surface's distinctive move from the product first, and use one of these only when it fits better. Never more than two per page.
 
 - **Double bezel** for the hero media or one feature: an outer shell (subtle tinted background, hairline ring, 6–8px padding, shell radius from the table) holding an inner core (own background, inset top highlight, radius = outer − padding). Use it on one or two objects, not on every card.
 - **Pill CTA with a nested icon:** the trailing arrow sits in its own small circle flush with the button's inner padding and shifts slightly on hover.

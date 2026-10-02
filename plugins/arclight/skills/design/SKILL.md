@@ -10,16 +10,26 @@ Without an explicit direction, generated UI falls back to framework defaults (Ta
 
 ## Match the effort to the task
 
-- **Small change** (tweak a component, add a button or column, adjust spacing): use the tokens and patterns already in the code. Skip `DESIGN.md`, profile and style references, and questions. Check contrast only for color pairs you introduced.
+- **Small change** (tweak a component, add a button or column, adjust spacing): use the tokens and the shared components already in the code. Skip `DESIGN.md`, profile and style references, and questions. Check contrast only for color pairs you introduced.
 - **New surface or token work** (new page or screen, new project, setting up or reworking tokens or themes, or the user asks for a direction): follow the workflow below.
 
 A change inside an existing surface (a new section, a modal) is a small change if it uses only existing tokens; if it needs a color, font, or scale value the tokens don't have, it's token work.
 
+## Sources
+
+The brief decides what to build; the code decides only which values to reuse. Carry over only what the user names.
+
+- **Read:** the brief and the skill's arguments, `DESIGN.md`, token and theme files (Tailwind config or `@theme`, CSS variables), the component library and shared primitives, all in the current working tree.
+- **Don't read** unless the user names the exact source in this conversation: git history (`git log`, `git show`, `git diff` against old commits), other branches, stashes, other repos, worktrees, or sibling project folders, redesign snapshots in a temp dir, and earlier attempts at the same surface. A previous version of the surface is not a reference; it is the thing being replaced.
+- **Existing screens give values, not content.** Read them for tokens, conventions, and which shared components exist. Write the new surface's markup, section structure, and copy from the brief; don't copy them from another page, file, or commit.
+- **Precedence:** the arguments and brief of this turn, then `DESIGN.md`, then the code. Where the brief departs from `DESIGN.md`, follow the brief and list the departure in the summary.
+- **This skill's rules replace any other design skill run earlier in the session.** Rules from redesign or restyle (keep the content, rebuild from what exists) don't carry into a design run.
+
 ## Workflow
 
 0. If the skill was invoked with arguments and the first word is a style name (`editorial-minimal`, `soft-premium`, `brutalist`) or `none`, that is the user's style choice for step 4; the rest is the brief.
-1. If `DESIGN.md` exists at the repo root, follow it. To change it, propose the change instead of silently diverging.
-2. If it doesn't exist and this is a project (not a one-off file), derive decisions from the code first: Tailwind config or `@theme`, CSS variables, theme files, component library, one or two existing screens. Write `DESIGN.md` from `references/design-md-template.md`. Don't stop to ask: choose where the code is silent and list those choices as assumptions at the end of the summary, so the user can correct them. Ask first only when a wrong guess would be costly to undo.
+1. If `DESIGN.md` exists at the repo root, follow it where the brief is silent. Where the brief asks for something else (another style, profile, or direction), follow the brief and propose the matching `DESIGN.md` change in the summary instead of silently diverging.
+2. If it doesn't exist and this is a project (not a one-off file), derive token decisions from the sources allowed above: Tailwind config or `@theme`, CSS variables, theme files, component library, and one or two existing screens for their values only. Write `DESIGN.md` from `references/design-md-template.md`. Don't stop to ask: choose where the code is silent and list those choices as assumptions at the end of the summary, so the user can correct them. Ask first only when a wrong guess would be costly to undo.
 3. Pick the **profile** per surface (one product can use both). The profile sets density, type size, and how depth is made:
    - **Tool** (admin, dashboard, editor, internal or B2B app): `references/profile-tool.md`.
    - **Marketing/consumer** (landing, pricing, onboarding, storefront, consumer app): `references/profile-marketing.md`.
@@ -31,7 +41,7 @@ A change inside an existing surface (a new section, a modal) is a small change i
    | `references/styles/soft-premium.md` | premium, luxury, wellness, Apple-like, expensive, soft | marketing |
    | `references/styles/brutalist.md` | brutalist, Swiss, raw, terminal, technical, blueprint | tool, marketing |
 
-   Read only the chosen style file. If you wrote `DESIGN.md` in step 2, record profile and style there; if it already existed and doesn't match, propose the change (step 1).
+   Read only the chosen style file. Its signature moves are examples of the style's spirit, not a menu: take the surface's distinctive move from this product (its data, workflow, or brand), and use a listed move only when it fits that product better than anything derived from it. If you wrote `DESIGN.md` in step 2, record profile and style there; if it already existed and doesn't match, propose the change (step 1).
 5. Tokens before markup, following `references/tokens.md`, `references/typography.md`, and `references/radius.md`; components reference semantic tokens only. If the surface has cards, panels, or grouped sections, follow `references/cards.md`. If it shows people (avatars, member lists, comments), follow `references/avatars.md`. If there is a dark theme, follow `references/dark-mode.md`.
 6. Check contrast in each theme for the pairs you added or changed, in one command. Include muted, placeholder, link, and status text (where failures hide), plus UI boundaries and focus rings: `node ${CLAUDE_SKILL_DIR}/scripts/contrast.mjs "#6b6b66|#ffffff|text" "#0f766e|#ffffff|ui"`. Pairs are `fg|bg|kind`; colors are hex (8-digit for alpha), `rgb()`, or `oklch()`, passed as written in the CSS without converting them first; kind is `text` (4.5:1, default), `large` or `ui` (3:1: large text, UI boundaries, icons, focus rings). It exits 1 if any pair fails. Fix and re-run once; if pairs still fail, list them with their ratios in the summary. If `node` isn't available, compute the WCAG ratio another way or say in the summary that contrast wasn't machine-checked.
    For a marketing surface, also run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/restyle/scripts/scan_tells.py <page files>`: fix each `6-marketing` hit or explain it in the summary. If `python3` or the script isn't available, skip it and say so.

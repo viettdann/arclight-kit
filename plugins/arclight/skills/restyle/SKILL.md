@@ -14,6 +14,8 @@ The result should still be polished: this is restraint, not brutalism. Keep the 
 
 ## Workflow
 
+This skill's rules replace any other design skill run earlier in the session. Read only the target's current files and the sources the design skill allows (`${CLAUDE_PLUGIN_ROOT}/skills/design/SKILL.md`, Sources); git history, other branches, other repos, and earlier attempts are off limits unless the user names them.
+
 1. **Find the UI.** Locate the files that render the target screen (components, pages, templates, global CSS, `tailwind.config.*`). Run the scanner to get a first list of candidates:
    ```bash
    python3 ${CLAUDE_SKILL_DIR}/scripts/scan_tells.py <path-to-src-or-file>

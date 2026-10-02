@@ -23,7 +23,9 @@ Never mix the two modes on one surface.
 - **Numbers:** large numerals only for real quantities (metrics, prices, counts), tabular.
 - **Motion:** none, instant state changes, or stepped transitions (`steps()`), never soft easing.
 
-## Signature moves (pick one or two)
+## Signature moves (examples)
+
+These show the style's spirit; they are not a menu. Derive the surface's distinctive move from the product first, and use one of these only when it fits better. Never more than two per page.
 
 - A viewport-bleeding headline or numeral that the grid is built around.
 - Bracketed labels (`[ STATUS ]`, `> run`) in terminal mode, for real commands and states only.

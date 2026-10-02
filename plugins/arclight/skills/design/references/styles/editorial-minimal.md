@@ -12,7 +12,9 @@ Document-like interfaces where typography and whitespace do the work and color i
 - **Structure:** 1px hairline borders at 6–10% of the text color separate everything; no shadows on in-page surfaces. Radius overrides the profile's values: chips and tags 4px, buttons and inputs 6px, cards and panels 8px, no pills. Generous vertical space between groups; on marketing, content column `max-w-4xl`/`5xl`.
 - **Motion:** almost invisible: 150–250ms fades and 8–12px rises, hover changes surface value, nothing loops.
 
-## Signature moves (pick one or two)
+## Signature moves (examples)
+
+These show the style's spirit; they are not a menu. Derive the surface's distinctive move from the product first, and use one of these only when it fits better. Never more than two per page.
 
 - Keyboard shortcuts rendered as keycaps (`<kbd>` with a hairline border, mono, slightly tinted background).
 - A flat bento: mixed cell sizes, hairline borders, no shadows, one cell carrying a real image or product crop.
