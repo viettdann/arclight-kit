@@ -1,166 +1,95 @@
 #!/usr/bin/env node
 // Screenshot a page in headless Chrome over the DevTools protocol, at any width (the --screenshot flag clamps windows to ~500px).
-// Usage: node screenshot.mjs <url|file> <out.png> [--width 1280,390] [--height 900] [--full] [--eval "js"] [--wait 500] [--root dir]
-//   --width   one or more comma-separated widths; widths under 700 emulate a mobile device. With several widths, files are named out-<width>.png.
-//   --full    capture the whole page instead of one viewport.
-//   --eval    JS run after load, before the shot (reveal a step, add `.visible` to scroll-in content, stub fetch). Awaited if it returns a promise.
-//   --wait    extra ms after load and fonts (default 500).
-//   --root    a local file is served over http from this directory (default: the file's directory), so root-relative assets (href="/style.css") load.
+// Usage: node screenshot.mjs <url|file> <out.png> [--width 1280,390] [--height 900] [--full] [--scheme light,dark] [--media list]
+//          [--wait-for css] [--eval "js"] [--focus css] [--hover css] [--selector css] [--wait 500] [--root dir]
+//   --width     one or more comma-separated widths; widths under 700 emulate a mobile device.
+//   --scheme    prefers-color-scheme per shot, one or both of light,dark (default light, whatever the OS uses). Several widths or schemes name the files out-<width>-<scheme>.png.
+//   --media     media features for every shot: reduced-motion, contrast-more, reduced-transparency, forced-colors.
+//   --full      capture the whole page instead of one viewport.
+//   --wait-for  wait until this element exists and has a size (async chart, fetched data); exit 2 after 10s.
+//   --eval      JS run after load, before the shot (reveal a step, set a data-theme class, stub fetch). Awaited if it returns a promise.
+//   --focus     focus this element as a keyboard user would, so :focus-visible applies.
+//   --hover     move the real pointer over this element (a script can't trigger :hover).
+//   --selector  capture only this element's box instead of the viewport.
+//   --wait      extra ms after load and fonts (default 500).
+//   --root      a local file is served over http from this directory (default: the file's directory), so root-relative assets (href="/style.css") load.
 // Prints one line per width: file, page size, and "overflow" when the page is wider than the viewport.
 // Exit 0 ok, 1 shots written but some width overflows horizontally, 2 no shot (usage, no Chrome, Node < 22, navigation or HTTP error, eval error, timeout).
-import { spawn, execFileSync } from 'node:child_process';
-import { createServer } from 'node:http';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, extname, join, relative, resolve, sep } from 'node:path';
+import { writeFileSync } from 'node:fs';
+import { MEDIA, emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from './cdp.mjs';
 
-const USAGE = 'Usage: node screenshot.mjs <url|file> <out.png> [--width 1280,390] [--height 900] [--full] [--eval "js"] [--wait 500] [--root dir]';
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let chrome, profile, server;
-const cleanup = async () => {
-  server?.close();
-  if (chrome && chrome.exitCode === null && chrome.signalCode === null) {
-    const exited = new Promise((r) => chrome.once('exit', r));
-    chrome.kill();
-    await Promise.race([exited, sleep(3000)]);
-    if (chrome.exitCode === null && chrome.signalCode === null) chrome.kill('SIGKILL');
-  }
-  if (profile) try { rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
-};
-const fail = async (msg) => { console.error(msg); await cleanup(); process.exit(2); };
-process.on('uncaughtException', (e) => fail(e?.message ?? String(e)));
-process.on('unhandledRejection', (e) => fail(e?.message ?? String(e)));
-
-const args = process.argv.slice(2);
-const opt = { width: '1280', height: '900', wait: '500', eval: '', root: '', full: false };
-const pos = [];
-for (let i = 0; i < args.length; i++) {
-  const a = args[i];
-  if (a === '--full') { opt.full = true; continue; }
-  if (!a.startsWith('--')) { pos.push(a); continue; }
-  let [k, v] = a.slice(2).split(/=(.*)/s);
-  if (!Object.hasOwn(opt, k) || k === 'full') await fail(`unknown option ${a}\n${USAGE}`);
-  if (v === undefined) { v = args[++i]; if (v === undefined) await fail(`missing value for ${a}`); }
-  opt[k] = v;
-}
+const USAGE = 'Usage: node screenshot.mjs <url|file> <out.png> [--width 1280,390] [--height 900] [--full] [--scheme light,dark] [--media list]'
+  + ' [--wait-for css] [--eval "js"] [--focus css] [--hover css] [--selector css] [--wait 500] [--root dir]';
+const opt = { width: '1280', height: '900', wait: '500', eval: '', root: '', full: false,
+  scheme: '', media: '', 'wait-for': '', focus: '', hover: '', selector: '' };
+const pos = await parseArgs(process.argv.slice(2), opt, ['full'], USAGE);
 if (pos.length !== 2) await fail(USAGE);
-if (typeof WebSocket === 'undefined') await fail('needs Node 22+ (global WebSocket)');
 const widths = [...new Set(opt.width.split(',').map(Number))];
 const height = Number(opt.height);
 const wait = Number(opt.wait);
 if (widths.some((w) => !(w > 0)) || !(height > 0) || !(wait >= 0)) await fail('--width and --height take positive numbers, --wait a number of ms');
+const schemes = [...new Set((opt.scheme || 'light').split(','))];
+if (schemes.some((c) => c !== 'light' && c !== 'dark')) await fail('--scheme takes light, dark, or light,dark');
+const media = opt.media ? opt.media.split(',') : [];
+for (const m of media) if (!Object.hasOwn(MEDIA, m)) await fail(`unknown --media ${m}; use ${Object.keys(MEDIA).join(', ')}`);
 
-let [target, out] = pos;
-if (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target)) target = `http://${target}`;
-else if (!/^[a-z][a-z0-9+.-]*:/i.test(target)) {
-  // Serve local files over http so root-relative assets resolve, which file:// can't do.
-  const file = resolve(target);
-  if (!existsSync(file)) await fail(`no such file: ${target}`);
-  const root = resolve(opt.root || (statSync(file).isDirectory() ? file : dirname(file)));
-  const rel = relative(root, file);
-  if (rel.startsWith('..')) await fail(`${target} is outside --root ${root}`);
-  const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
-    '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif',
-    '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf' };
-  server = createServer((req, res) => {
-    try {
-      let p = join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname));
-      if (p !== root && !p.startsWith(root + sep)) { res.writeHead(403).end(); return; }
-      if (statSync(p).isDirectory()) p = join(p, 'index.html');
-      const body = readFileSync(p);
-      res.writeHead(200, { 'content-type': types[extname(p).toLowerCase()] ?? 'application/octet-stream' }).end(body);
-    } catch { res.writeHead(404).end(); }
-  });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  target = `http://127.0.0.1:${server.address().port}/${rel.split(sep).map(encodeURIComponent).join('/')}`;
-}
-
-const findChrome = () => {
-  const candidates = [process.env.CHROME,
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'].filter(Boolean);
-  for (const c of candidates) if (existsSync(c)) return c;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'microsoft-edge']) {
-    try { return execFileSync('which', [name], { encoding: 'utf8' }).trim(); } catch {}
-  }
-  return null;
-};
-const chromePath = findChrome();
-if (!chromePath) await fail('no Chrome, Chromium, or Edge found; set CHROME=/path/to/chrome');
-
-setTimeout(() => fail('timed out'), 20000 + widths.length * 20000).unref();
-profile = mkdtempSync(join(tmpdir(), 'shot-'));
-// Port 0 lets Chrome pick a free port and write it to DevToolsActivePort, so parallel runs never share a browser.
-chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
-  '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
-chrome.on('error', (e) => fail(`cannot start ${chromePath}: ${e.message}`));
-
-let page;
-for (let i = 0; i < 50 && !page && chrome.exitCode === null; i++) {
-  try {
-    const port = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0].trim();
-    page = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.type === 'page');
-  } catch {}
-  if (!page) await sleep(200);
-}
-if (!page) await fail('Chrome did not start');
-
-const ws = new WebSocket(page.webSocketDebuggerUrl);
-await new Promise((r, j) => { ws.addEventListener('open', r); ws.addEventListener('error', () => j(new Error('cannot connect to Chrome'))); });
-let seq = 0;
-const pending = new Map();
-const waiters = [];
-ws.addEventListener('message', (e) => {
-  const m = JSON.parse(e.data);
-  if (m.id && pending.has(m.id)) {
-    const { resolve, reject } = pending.get(m.id);
-    pending.delete(m.id);
-    if (m.error) reject(new Error(`${m.error.message} (${m.error.data ?? 'CDP'})`)); else resolve(m.result);
-  } else if (m.method) for (const w of waiters.filter((w) => w.method === m.method)) { waiters.splice(waiters.indexOf(w), 1); w.resolve(); }
-});
-ws.addEventListener('close', () => { for (const { reject } of pending.values()) reject(new Error('Chrome closed the connection')); pending.clear(); });
-const send = (method, params = {}) => new Promise((resolve, reject) => { const id = ++seq; pending.set(id, { resolve, reject }); ws.send(JSON.stringify({ id, method, params })); });
-const once = (method, ms) => new Promise((resolve) => {
-  const w = { method, resolve };
-  waiters.push(w);
-  setTimeout(() => { const i = waiters.indexOf(w); if (i >= 0) { waiters.splice(i, 1); resolve(); } }, ms);
-});
-const evaluate = async (expression) => {
-  const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
-  if (r.exceptionDetails) throw new Error(`eval failed: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}`);
-  return r.result?.value;
-};
-
+const [target, out] = pos;
+const url = await resolveTarget(target, opt.root);
+const cdp = await launch(20000 + widths.length * schemes.length * 30000);
+const { send, evaluate } = cdp;
 await send('Page.enable');
+
+// Selectors go into page JS as JSON strings, so quotes in them can't break the expression.
+const q = (css) => `document.querySelector(${JSON.stringify(css)})`;
+// scroll: bring it into view first (focus, hover); the capture box doesn't scroll, so a hover above it stays under the pointer.
+const box = async (css, what, scroll = true) => {
+  const r = await evaluate(`(() => { const el = ${q(css)}; if (!el) return null; ${scroll ? "el.scrollIntoView({ block: 'center', inline: 'center' });" : ''}
+    const b = el.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, sx: scrollX, sy: scrollY }; })()`);
+  if (!r) await fail(`${what}: no element matches ${css}`);
+  if (!(r.w > 0 && r.h > 0)) await fail(`${what}: ${css} has no size (hidden?)`);
+  return r;
+};
+
 let overflow = false;
-for (const width of widths) {
+for (const width of widths) for (const scheme of schemes) {
   const mobile = width < 700;
-  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
-  // A page with a resource that never finishes gets its shot anyway after 15s; fonts get 3s on top.
-  const loaded = once('Page.loadEventFired', 15000);
-  const nav = await send('Page.navigate', { url: target });
-  if (nav.errorText) await fail(`navigation failed: ${nav.errorText} (${target})`);
-  await loaded;
-  const status = await evaluate("performance.getEntriesByType('navigation')[0]?.responseStatus ?? 0");
-  if (status >= 400) await fail(`HTTP ${status} for ${target}`);
-  await Promise.race([evaluate('document.fonts.ready.then(() => true)'), sleep(3000)]);
+  await emulate(cdp, { width, height, scheme, media });
+  await load(cdp, url);
+  for (const m of media) {
+    const [name, value] = MEDIA[m];
+    if (!(await evaluate(`matchMedia('(${name}: ${value})').matches`))) await fail(`this Chrome can't emulate --media ${m}`);
+  }
+  if (opt['wait-for']) await waitFor(cdp, opt['wait-for']);
   if (opt.eval) {
     const v = await evaluate(opt.eval);
     if (v !== undefined) console.log(`eval: ${JSON.stringify(v)}`);
   }
+  if (opt.focus) {
+    await box(opt.focus, '--focus');
+    // A Tab press marks the last input as keyboard, so the focus() below matches :focus-visible.
+    for (const type of ['rawKeyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+    await evaluate(`${q(opt.focus)}.focus({ preventScroll: true })`);
+  }
+  if (opt.hover) {
+    const b = await box(opt.hover, '--hover');
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: b.x + b.w / 2, y: b.y + b.h / 2 });
+  }
   await sleep(wait);
   const [sw, sh, hasViewport] = await evaluate("[document.documentElement.scrollWidth, document.documentElement.scrollHeight, !!document.querySelector('meta[name=viewport]')]");
-  const clip = { x: 0, y: 0, width, height: opt.full ? sh : height, scale: 1 };
-  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: opt.full, clip });
+  let clip = { x: 0, y: 0, width, height: opt.full ? sh : height, scale: 1 };
+  if (opt.selector) {
+    const b = await box(opt.selector, '--selector', false);
+    const x = Math.max(0, Math.floor(b.x + b.sx)), y = Math.max(0, Math.floor(b.y + b.sy));
+    clip = { x, y, width: Math.ceil(b.x + b.sx + b.w) - x, height: Math.ceil(b.y + b.sy + b.h) - y, scale: 1 };
+  }
+  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: opt.full || !!opt.selector, clip });
   const base = out.replace(/\.[^./\\]+$/, '');
-  const file = widths.length > 1 ? `${base}-${width}.png` : `${base}.png`;
+  const file = base + (widths.length > 1 ? `-${width}` : '') + (schemes.length > 1 ? `-${scheme}` : '') + '.png';
   writeFileSync(file, Buffer.from(shot.data, 'base64'));
   const wide = sw > width;
   overflow ||= wide;
   const note = mobile && !hasViewport ? '  no <meta name=viewport>: phones lay this page out at 980px' : '';
-  console.log(`${file}  ${width}x${clip.height}  page ${sw}x${sh}${wide ? `  overflow: ${sw - width}px wider than viewport` : ''}${note}`);
+  console.log(`${file}  ${clip.width}x${clip.height}  page ${sw}x${sh}${wide ? `  overflow: ${sw - width}px wider than viewport` : ''}${note}`);
 }
-ws.close();
-await cleanup();
+await cdp.close();
 process.exit(overflow ? 1 : 0);

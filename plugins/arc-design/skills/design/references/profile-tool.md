@@ -10,8 +10,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Depth
 
-- Depth comes from surface value, not shadow: background levels (base, surface, raised, plus floating for a layer opened from a raised one), each one step above what it sits on, separated by a 1px hairline border at roughly 6–10% of the text color. In dark themes see `dark-mode.md`.
-- Shadows are reserved for floating layers: menus, popovers, dialogs, toasts.
+- Depth comes from surface value, not shadow: solid surfaces with hairlines on lightness layers (`materials.md`). Shadows only on floating layers (menus, popovers, dialogs, toasts); glass only on a sticky or floating layer over moving content.
 - Hover changes the surface value. No lift, no scale.
 
 ## Color

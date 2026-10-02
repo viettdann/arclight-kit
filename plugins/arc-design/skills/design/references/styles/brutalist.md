@@ -19,7 +19,7 @@ Never mix the two modes on one surface.
 
 - **Type (overrides `typography.md` for display):** display weight 700–900, `clamp(3rem, 8vw, 10rem)`, tracking -0.03 to -0.05em, line-height 0.9, uppercase. Micro labels in mono 11–13px with +0.05em tracking. Body text stays readable: at least 14px mono or 16px sans, 4.5:1.
 - **Grid:** the grid is visible: 1–2px solid rules between cells and sections, aligned to real columns. Lines organize content; a line that separates nothing is removed.
-- **Shape and depth:** radius 0 everywhere except the `full` roles (avatars, dots, toggles); no shadows, no gradients, no blur. Depth comes from rules and inversion (a black block with light text).
+- **Shape and depth:** radius 0 everywhere except the `full` roles (avatars, dots, toggles); no shadows, no gradients, no glass. Depth comes from rules and inversion (`materials.md`, Style materials).
 - **Numbers:** large numerals only for real quantities (metrics, prices, counts), tabular.
 - **Motion:** none, instant state changes, or stepped transitions (`steps()`), never soft easing.
 
@@ -30,7 +30,7 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - A viewport-bleeding headline or numeral that the grid is built around.
 - Bracketed labels (`[ STATUS ]`, `> run`) in terminal mode, for real commands and states only.
 - Inverted blocks (solid text-color background) for the one thing that matters on the screen.
-- Analog texture (halftone, dither, scanlines) as a fixed `pointer-events: none` overlay, subtle, never under body text, removed under `prefers-reduced-motion` and `prefers-contrast: more`.
+- Analog texture (halftone, dither, scanlines) per `materials.md` (Texture).
 
 ## Avoid
 

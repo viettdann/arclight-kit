@@ -19,7 +19,7 @@
 | Typography | family (sans, mono), size scale, line-heights, weights, tracking (values from `typography.md`) |
 | Space | 4px base: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96 |
 | Radius | none, sm, md, lg, xl, full; values per profile (roles and rules in `radius.md`) |
-| Elevation | shadow levels 0–3, plus z-index layers: base, dropdown, sticky, overlay, modal, toast, tooltip |
+| Elevation | shadow levels 0–3 (which layers take them: `materials.md`), plus z-index layers: base, dropdown, sticky, overlay, modal, toast, tooltip |
 | Motion | durations 100, 150, 200, 250, 300, 400ms (500–700ms only where a style lists slow motion); easings with explicit curves (below) |
 | Layout | breakpoints, container widths, density (compact, default, comfortable) |
 

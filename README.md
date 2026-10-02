@@ -1,9 +1,10 @@
 # arclight-kit
 
-Claude Code marketplace with two plugins:
+Claude Code marketplace with three plugins:
 
-- `arc-design`: UI design, redesign, restyle, and interaction rules.
-- `arc-kit`: session working rules.
+- `arc-design`: UI design, redesign, restyle, rendering checks, and interaction rules.
+- `arc-kit`: session working rules, plan-to-commit workflow, refactor, fresh-air, and the comment-lint hook.
+- `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection).
 
 ## Which skill
 
@@ -12,18 +13,29 @@ Claude Code marketplace with two plugins:
 | Nothing exists yet: new page, screen, or project; tokens, themes, dark mode, `DESIGN.md` | `arc-design:design` |
 | It exists and you want a new look (new style or direction), keeping content, URLs, and behavior | `arc-design:redesign` |
 | It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
+| A page runs; measure what breaks when it renders: overflow, clipped or overlapping text, contrast per theme, focus, names, targets, images, JS errors | `arc-design:ui-check` |
 | Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
 | Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI) | `/arc-kit:arc` (user-invoked only) |
+| Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |
+| A plan exists; stress-test it before executing | `arc-kit:plan-auditor` |
+| A plan exists; implement it step by step with TDD, sub-agents, and verification | `arc-kit:executor` |
+| Restructure existing code without changing behavior: extract, rename, split, reduce complexity, remove duplication | `arc-kit:refactor` |
+| Work is done or about to be committed: completeness check, then review | `arc-kit:verifier` |
+| Ending or pausing a session; resuming after `/clear` instead of `/compact` | `arc-kit:handoff` |
+| Block a project's own skills, commands, and CLAUDE.md, or restore them | `arc-kit:fresh-air` |
+| ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 
 | Style | For |
 | --- | --- |
-| `editorial-minimal` | Calm, document-like, Notion/Linear feel; tool or marketing |
-| `soft-premium` | Premium consumer, soft radii, diffused depth, slow motion; marketing |
+| `minimal` | Calm, document-like, Notion/Linear feel; tool or marketing |
+| `premium` | Premium consumer, soft radii, diffused depth, slow motion; marketing |
 | `brutalist` | Swiss print or terminal, visible grid, zero ornament; tool or marketing |
+| `cinematic` | Immersive, scroll-paced storytelling, viewport-scale type, full-bleed imagery, dark tech; marketing |
+| `playful` | Bubbly or neo-brutal, saturated multi-hue palette, chunky type, springs; marketing or consumer app |
 
-No style named → the profile alone is the direction.
+No style named → the profile alone is the direction. Surface materials (solid and hairline, shadow, glass, scrim, gradient, texture) are shared by every style in `design/references/materials.md`; glass is a material for floating layers, not a style.
 
 ## Install
 
@@ -31,19 +43,36 @@ No style named → the profile alone is the direction.
 claude plugin marketplace add viettdann/arclight-kit
 claude plugin install arc-design@arclight-kit
 claude plugin install arc-kit@arclight-kit
+claude plugin install mgi-kit@arclight-kit
 ```
 
-Install either one alone; they don't depend on each other. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
+Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint hook and `fresh-air`.
+
+## Hooks
+
+`arc-kit` registers `comment-lint` (`PostToolUse` on `Edit|Write`): it flags newly added comments that are wrapped across lines, longer than the width limit, banners or dividers, multi-line `/* */` blocks, or narrative Markdown headings (`Rationale`, `Background`, `Alternatives`), and exits 2 so Claude fixes them. It reports once per tool call even if the same script version is registered elsewhere (e.g. `~/.claude/settings.json`); check active hooks with `/hooks`.
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `comment_lint_enabled` | `true` | Turn the hook off without disabling the plugin. |
+| `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
+
+Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-kit/scripts/comment_lint_test.py`.
 
 ## Changes
 
-- **0.5.0**: Split `arclight` into `arc-design` (`design`, `redesign`, `restyle`, `ui-interaction`) and `arc-kit` (`arc`, now `/arc-kit:arc`). Skills are unchanged apart from the namespace.
-- **0.4.1**: `design`, `redesign`, and `restyle` get a Sources rule: read only the brief, `DESIGN.md`, tokens, and the current working tree; git history, other branches, other repos, and earlier attempts only when the user names them. Existing screens give values, not markup or copy. The brief of the current turn wins over `DESIGN.md`. Each skill's rules replace an earlier design skill's in the same session. `redesign` deletes its snapshot after verifying. Style signature moves are examples, not a menu.
-- **0.4.0**: Add `arc` skill (`/arclight:arc`, user-invoked only): the arclight projects' shared working rules plus three new ones: an answer is not a go-ahead, a go-ahead covers everything recommended and not dropped, an explicit command is the confirmation.
-- **0.3.2**: Add `design/scripts/screenshot.mjs` (any width, several widths per call, `--full`, `--eval`, `--root`, exit 1 on horizontal overflow); `restyle` step 5 and `redesign` step 7 check the rendered page with it. `contrast.mjs` takes hex, `rgb()`, and `oklch()` as written. `restyle` drops the audit table; `redesign`'s audit becomes working notes; reports list only flagged behavior, changes to protected items, placeholders, and checks that couldn't run.
-- **0.3.1**: Cross-skill paths use `${CLAUDE_PLUGIN_ROOT}/skills/<skill>/`. `overlays.md` split into `overlays.md`, `navigation.md`, and `gestures.md`. Fix contradictions: `aria-disabled` for typed confirm and empty filter chips, touch targets 44px coarse / 24px fine, accent off focus rings, weights 400/600, soft-premium full-bleed bands square. `restyle`: 3:1 input borders, type-scale value sizes, `code` group for behavior tells, contrast step, no em dashes. `design`: Tailwind v4 `text-text-muted` naming trap, easing names that don't shadow Tailwind's. Scripts: `scan_tells.py` and `preserve_check.py` exit 2 on a missing path, fewer false positives, meta-description parsing fixed, `contrast.mjs` accepts `rgb()` and clamps alpha.
-- **0.3.0**: `design` adds `typography.md` and `radius.md` (always loaded) and `cards.md`, `avatars.md`, `dark-mode.md` (on demand); tool radius sm 4 / md 6 / lg 12; marketing radius per element. `ui-interaction` adds `settings.md`, inline edit, context menus, narrow tables, selection scope, badges, copy to clipboard, scroll restoration, sticky headers, resize handles, pull to refresh. `restyle` scanner adds surface, decoration, and code-tell rules.
-- **0.2.1**: Skill paths use `${CLAUDE_SKILL_DIR}` instead of a `<skill-dir>` placeholder. `redesign` snapshots the source folder to a temp dir before editing instead of using `git stash`, lists classes that tests and analytics use during the audit, updates an existing `DESIGN.md` with the new direction, and gives full paths to the contrast script and the ui-interaction skill. `design` parses the style argument first, runs the marketing tell scan from its workflow, and reports contrast pairs that still fail. `restyle` decides hierarchy in a fixed order (state page, ordered peers, primary or equal), leaves a `TODO` instead of adding props, and writes the audit as a fixed-column table. `ui-interaction` splits verification into steps, defines when to skip the state note, and drops rules that repeat the always-loaded baseline.
-- **0.2.0**: `ui-visual` renamed to `design`, with styles (`editorial-minimal`, `soft-premium`, `brutalist`) on top of the tool and marketing profiles. New `redesign` skill with `preserve_check.py`. Marketing profile extended (design read, layout, imagery, copy tells); scanner covers marketing and code tells.
+- **arc-design 1.0.0**: First release.
+  - `design`: new UI from a profile (tool or marketing) plus an optional style (`minimal`, `premium`, `brutalist`, `cinematic`, `playful`). Always loads tokens, typography, radius, and `materials.md` (solid and hairline, lightness layers, shadow, glass for layers floating over moving content, scrim, gradient and glow, texture, tint fill); cards, avatars, and dark mode on demand. Writes the project's `DESIGN.md`. Scripts: `contrast.mjs` (WCAG pairs, stacked backgrounds such as `"<tint> over <backdrop>"`) and `screenshot.mjs` (any width, light or dark, emulated media, `--wait-for`, `--eval`, keyboard `--focus`, real `--hover`, one element with `--selector`, exit 1 on horizontal overflow).
+  - `redesign`: a new visual language for an existing product, keeping content, information architecture, URLs, and behavior; snapshots the source first and checks what it preserved with `preserve_check.py`.
+  - `restyle`: removes AI tells from a generated-looking UI while keeping the layout; `scan_tells.py` finds them in code, and critique-only mode reports at most three findings by user impact.
+  - `ui-check`: loads a running page at 375, 768, 1280, and 1920px and reports measured defects by severity: the element causing horizontal overflow, clipped and overlapping text, contrast per text element in each theme, focus with no visible change, controls without an accessible name, small targets, broken or distorted images, heading structure, JS errors, and failed requests. Fixes only when asked; `restyle` and `redesign` run it to verify.
+  - `ui-interaction`: behavior and state rules for forms, tables, overlays, navigation, feedback, destructive actions, and settings, used alongside the other design skills.
+- **arc-kit 1.0.0**: First release.
+  - `/arc-kit:arc`: session working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI), including no placeholders in code and names and strings findable by grep.
+  - Workflow: `brainstorming` (design dialogue, approval gate, design doc in `docs/plans/`), `plan-auditor` (stress-tests a plan before execution), `executor` (implements it with TDD, sub-agents, and continuous verification), `verifier` (completeness check against the plan, then parallel review for reuse, quality, efficiency, correctness and security, comments, and docs), `handoff` (session handoff file instead of `/compact`).
+  - `refactor`: pins behavior with characterization tests, maps the contract surface and its consumers, and moves in small verified steps; wide scopes stop for approval first.
+  - `fresh-air` blocks a project's own skills, commands, and `CLAUDE.md`, and restores them; the `comment-lint` hook flags wrapped, overlong, banner, and narrative comments.
+- **mgi-kit 0.1.0**: First release.
+  - `api-contract`, adapted from github/awesome-copilot (MIT): audits ASP.NET controllers, Minimal API endpoints, and DTOs against their TypeScript/JavaScript consumers in both directions; diff-scoped by default. `refactor` and `verifier` run it when it is installed.

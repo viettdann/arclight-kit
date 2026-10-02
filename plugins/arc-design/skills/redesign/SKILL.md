@@ -1,7 +1,7 @@
 ---
 name: redesign
-description: "Give an existing product, site, or screen a new visual language while keeping its content, information architecture, URLs, and behavior. Use when the user wants to redesign, revamp, overhaul, modernize, or refresh the look of something that already exists, change its style or direction (\"làm lại giao diện\", \"đổi phong cách\", \"make it feel premium/editorial/brutalist\"), or apply a new brand look to current pages. Not for a screen that doesn't exist yet (use design), and not for removing the generated look while keeping the layout (use restyle)."
-argument-hint: "[editorial-minimal | soft-premium | brutalist | none] [file, folder, or page]"
+description: "Give an existing product, site, or screen a new visual language while keeping its content, information architecture, URLs, and behavior. Use when the user wants to redesign, revamp, overhaul, modernize, or refresh the look of something that already exists, change its style or direction (\"làm lại giao diện\", \"đổi phong cách\", \"make it feel premium/minimal/brutalist/cinematic/playful\"), or apply a new brand look to current pages. Not for a screen that doesn't exist yet (use design), and not for removing the generated look while keeping the layout (use restyle)."
+argument-hint: "[minimal|premium|brutalist|cinematic|playful|none] [target]"
 ---
 
 # Redesign
@@ -24,12 +24,12 @@ Read the target the user named and the sources the design skill allows (`${CLAUD
 
 ## Workflow
 
-0. If the skill was invoked with arguments and the first word is a style name (`editorial-minimal`, `soft-premium`, `brutalist`) or `none`, that is the style (`none` means no style); the rest is the target. Otherwise the style comes from the brief in step 3.
+0. If the skill was invoked with arguments and the first word is a style name (`minimal`, `premium`, `brutalist`, `cinematic`, `playful`; the old `editorial-minimal` and `soft-premium` mean `minimal` and `premium`) or `none`, that is the style (`none` means no style); the rest is the target (file, folder, or page). Otherwise the style comes from the brief in step 3.
 1. **Snapshot the original** before any edit. Copy the source folder the rebuild may touch, including shared components and layouts (e.g. `src`, not the repo root), to a fresh temp dir; step 7 compares against the printed path:
    ```bash
    s=<src>; d=$(mktemp -d) && cp -R "${s%/}" "$d/" && echo "$d/$(basename "${s%/}")"
    ```
-   Don't use `git stash` or checkout: they change the working tree, which may hold uncommitted work by the user or another agent.
+   Don't use `git stash` or checkout: they change the working tree, which may hold uncommitted work by the user or another agent. If the page renders now (static file or a running dev server), also take before shots with the screenshot command step 7 uses and `before` in the file name, so the user can compare at the same widths.
 2. **Audit what exists**, as working notes for the steps below, not a section of the report:
    - Brand to carry over: logo, brand colors, typefaces, photography. A brand that is already violet stays violet unless the user says otherwise.
    - Structure: routes, nav labels and order, section order, the main conversion or task paths.
@@ -45,7 +45,7 @@ Read the target the user named and the sources the design skill allows (`${CLAUD
    - The check doesn't cover classes. Confirm each class the audit listed under Keep still exists in the markup.
    - Re-run the scanner: remaining hits are intentional, or `7-code` behavior items (disabled, clipboard, keyboard, scroll, drag handlers) listed in the report; fix those only if asked.
    - Check contrast for every pair you introduced: `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/contrast.mjs "fg|bg|kind" ...` (usage in the design skill, step 6). Colors go in as written in the CSS: hex, 8-digit hex, `rgb()`, or `oklch()`, so don't convert them first.
-   - Look at the rendered page at desktop and phone width: `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/screenshot.mjs <url-or-file> out.png --width 1280,390` writes `out-1280.png` and `out-390.png` and prints each path; exit 1 means the shots are written but a width scrolls sideways (the `overflow` line says by how much), exit 2 means no shot was taken. Add `--root <site-root>` for a local page below the site root that uses root-relative assets, `--full` for the whole page, `--eval "js"` to show a hidden step such as a later checkout state; for an app, use the dev server that is already running. Check for large empty areas, sections detached from what they describe, and a primary action that isn't visible without scrolling on the phone. Without Node 22+ and Chrome, Chromium, or Edge, or without a running dev server for a page that needs one, skip this and say so.
+   - Look at the rendered page at desktop and phone width: `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/screenshot.mjs <url-or-file> out.png --width 1280,390` writes `out-1280.png` and `out-390.png` and prints each path; exit 1 means the shots are written but a width scrolls sideways (the `overflow` line says by how much), exit 2 means no shot was taken. Add `--root <site-root>` for a local page below the site root that uses root-relative assets, `--full` for the whole page, `--eval "js"` to show a hidden step such as a later checkout state, `--scheme light,dark` when there are two themes, `--hover`/`--focus <css>` for a recomposed control's states, `--wait-for <css>` for async content (all options: restyle skill, step 4); for an app, use the dev server that is already running. Check for large empty areas, sections detached from what they describe, and a primary action that isn't visible without scrolling on the phone. Then run `node ${CLAUDE_PLUGIN_ROOT}/skills/ui-check/scripts/ui_check.mjs <url-or-file>` (`--scheme light,dark` with two themes; usage in the ui-check skill): every P1 and P2 finding on the rebuilt surfaces is fixed, and the rest are listed in the report. Without Node 22+ and Chrome, Chromium, or Edge, or without a running dev server for a page that needs one, skip this and say so.
 8. **Remove the snapshot** once every check above has run: `rm -rf "$(dirname <snapshot>)"` with the path printed in step 1. Its path is never a source for later work in the session.
 9. **Report** in a few lines, only what the page doesn't show: the direction in one line (profile, style, design read), each intentional change to something step 5 protects and to `DESIGN.md`, items from the preserve check, behavior hits and proof flagged instead of changed, placeholders left, and checks that couldn't run. No audit summary or per-surface change list; the page shows those.
 

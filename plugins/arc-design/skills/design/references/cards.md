@@ -18,7 +18,7 @@ Pick one edge per card from what it sits on, and use the same one for every card
 | A tinted canvas (card lighter than the page) | Tool profile: 1px border. Marketing profile: one soft shadow, no border |
 | A panel, modal, drawer, or any other surface | Flat: no border, no shadow; separated by dividers or spacing |
 
-Never a full-strength border and a shadow together; the two edges read as a double outline.
+Never a full-strength border and a shadow together; the two edges read as a double outline. The materials themselves (hairline values, layered shadow) are in `materials.md`.
 
 ## Never nest
 

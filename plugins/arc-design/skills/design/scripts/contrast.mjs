@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // WCAG 2.x contrast checker. Usage: node contrast.mjs "#fff|#6366f1" "oklch(0.93 0.005 250)|#131316|large" "#0f766e|#fff|ui" ...
 // Pairs are split on "|" because oklch() values contain spaces; a translucent fg is composited over bg first, since that is what the eye sees.
+// A bg written as "<tint> over <backdrop>" (glass) is composited the same way, top layer first.
 
 const oklchToRgb = (L, C, H, a) => {
   const h = (H * Math.PI) / 180;
@@ -64,7 +65,7 @@ const THRESHOLDS = { text: 4.5, large: 3, ui: 3 };
 
 const pairs = process.argv.slice(2);
 if (pairs.length === 0) {
-  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), white, black)');
+  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), white, black; bg may be "<translucent> over <opaque>")');
   process.exit(2);
 }
 
@@ -76,8 +77,11 @@ for (const pair of pairs) {
   try {
     if (!bgHex) throw new Error(`Expected "<fg>|<bg>", got: ${pair}`);
     if (!Object.hasOwn(THRESHOLDS, kind)) throw new Error(`Unknown kind "${kind}", use text, large or ui`);
-    [fg, bg] = [parse(fgHex), parse(bgHex)];
-    if (bg.a !== 1) throw new Error(`Background must be opaque: ${bgHex}`);
+    // A background may be a stack, top layer first: "<glass tint> over <backdrop>".
+    const layers = bgHex.split(/\s+over\s+/i).map(parse);
+    const base = layers.pop();
+    if (base.a !== 1) throw new Error(`Background must be opaque (or end in an opaque layer): ${bgHex}`);
+    [fg, bg] = [parse(fgHex), layers.reduceRight((under, top) => ({ ...composite(top, under), a: 1 }), base)];
   } catch (e) {
     console.error(e.message);
     process.exit(2);

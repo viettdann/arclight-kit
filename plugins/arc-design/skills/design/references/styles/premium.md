@@ -1,4 +1,4 @@
-# Style: Soft Premium
+# Style: Premium
 
 Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident motion, lots of air. Reads as considered and physical; fails when every element gets the same treatment and the page becomes a template of rounded cards.
 
@@ -18,7 +18,7 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
   | Primary CTA, floating nav | full pill |
 
   Secondary buttons, chips, tags, and badges keep the profile's radius; making them pills is a mistake, not a variant.
-- **Depth:** very diffused shadows tinted toward the background hue (large blur, low opacity, small offset), plus a 1px highlight on the top edge for lifted objects. Depth marks what is important, so most surfaces stay flat.
+- **Depth:** the diffused shadow from `materials.md` (Shadow) on lifted objects only. Depth marks what is important, so most surfaces stay flat.
 - **Space:** section padding 96–160px on desktop; one idea per section.
 - **Motion:** slow and weighted: entrances 400–700ms with a long ease-out (`cubic-bezier(0.32, 0.72, 0, 1)`), a single 16px fade-up per block, run once; press feedback `scale(0.98)`. Every animation still needs a reason (see the marketing profile).
 
@@ -26,9 +26,9 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
 
 These show the style's spirit; they are not a menu. Derive the surface's distinctive move from the product first, and use one of these only when it fits better. Never more than two per page.
 
-- **Double bezel** for the hero media or one feature: an outer shell (subtle tinted background, hairline ring, 6–8px padding, shell radius from the table) holding an inner core (own background, inset top highlight, radius = outer − padding). Use it on one or two objects, not on every card.
+- **Double bezel** (`materials.md`, Style materials) for the hero media or one feature, shell radius from the table above. One or two objects, not every card.
 - **Pill CTA with a nested icon:** the trailing arrow sits in its own small circle flush with the button's inner padding and shifts slightly on hover.
-- **Floating pill navigation** detached from the top edge, blurred background (blur only on fixed or sticky elements).
+- **Floating pill navigation** detached from the top edge, in glass (`materials.md`).
 - A macro product crop filling a section, with type set small beside it.
 
 ## Avoid

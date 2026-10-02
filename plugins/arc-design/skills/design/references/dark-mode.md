@@ -6,12 +6,7 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 
 - The page is near-black, never `#000`: a dark neutral tinted slightly toward the brand hue (see `tokens.md`), so lighter layers have room above it.
 - Surfaces step up in even OKLCH lightness increments with the same hue and chroma: page, surface, raised, floating. Pick the steps once; don't hand-pick a hex per component.
-- The step follows what a layer sits on, not what kind of element it is: a card sits one step above the page, a popover or modal one step above what it opens from, and a menu opened inside a modal one step above the modal.
-
-## Lightness is elevation
-
-- Raise with lightness, not shadow. A black shadow on a near-black page is invisible, so it can't be the elevation cue.
-- In-page surfaces carry no shadow. Floating layers are told apart by their lighter surface plus a hairline; a shadow may stay under them for overlap, not as the signal.
+- Which step a layer takes, and why dark themes raise with lightness instead of shadow, is in `materials.md` (Lightness layers).
 
 ## Three inks from one white
 
@@ -25,10 +20,9 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - A lighter accent flips its foreground: white text on a calmed accent usually fails, so `on-accent` becomes the near-black. Verify the pair.
 - Status colors follow the same rule, with text steps lighter than their fills.
 
-## Alpha hairlines
+## Hairlines
 
-- Borders are white at low alpha (about 6–10%, for example `rgb(255 255 255 / 0.08)`), not a fixed grey hex: the same token reads one step lighter on every layer, where a hex disappears on one surface and glares on another.
-- A hairline is decorative, around 1.2:1. A boundary that identifies a control (text input, select, checkbox) needs 3:1 against its surface, so inputs use `border-strong`, checked with `contrast.mjs` as `ui`.
+- Borders are alphas of one white, and input boundaries pass 3:1: `materials.md` (Solid and hairline).
 
 ## Images
 

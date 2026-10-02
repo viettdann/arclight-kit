@@ -8,7 +8,7 @@
     {
       "name": "arc-design",
       "source": "./plugins/arc-design",
-      "description": "UI design from scratch, redesign, restyle, and interaction and state rules"
+      "description": "UI design from scratch, redesign, restyle, rendering checks, and interaction and state rules"
     },
     {
       "name": "arc-kit",

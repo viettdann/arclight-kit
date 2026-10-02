@@ -12,7 +12,7 @@ Write this file at the repo root. It records decisions and their reasons; exact 
 | Surface | Path/route | Profile | Style |
 | --- | --- | --- | --- |
 | App | src/app/(app) | tool | none |
-| Marketing | src/app/(marketing) | marketing | editorial-minimal |
+| Marketing | src/app/(marketing) | marketing | minimal |
 
 ## Tokens
 - Source: `src/styles/tokens.css` (or Tailwind `@theme` file). Components use semantic tokens only.

@@ -36,7 +36,7 @@ RULES = [
     ("4-surface", "large radius (>=16px)", re.compile(r"\brounded(?:-[trblse]{1,2})?-(?:[2-4]xl|\[(?:1[6-9]|[2-9]\d)px\])(?![\w-])|border-radius:\s*(?:(?:1[6-9]|[2-9]\d)px|(?:1(?:\.\d+)?|[2-9](?:\.\d+)?)rem)")),
     ("4-surface", "shadow (ok only on overlays)", re.compile(r"(?<![\w-])shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl|inner))?(?![\w-])|box-shadow:(?!\s*none\b)|\bboxShadow:")),
     ("4-surface", "all corners rounded on an edge-flush element (rounded-t-*?)", re.compile(r"^(?=.*(?<![\w:-])fixed\b)(?=.*(?<![\w:-])(?:bottom-0|inset-x-0|inset-y-0)\b)(?=.*(?<![\w:-])rounded(?:-(?:sm|md|lg|xl|2xl|3xl))?(?![\w-]))")),
-    ("4-surface", "glassmorphism", re.compile(r"\bbackdrop-blur(?:-\w+)?\b|backdrop-filter:")),
+    ("4-surface", "glass on an in-page surface? (fine on fixed, sticky, or overlay layers)", re.compile(r"\bbackdrop-blur(?:-\w+)?\b|backdrop-filter:")),
     ("5-copy", "greeting / filler", re.compile(r"welcome back|good (?:morning|afternoon|evening)|here'?s what'?s happening|\bhello,|hi there|>\s*(?:hi|hey|hello)\b[\s,!]", re.I)),
     ("5-copy", "emoji in UI text", EMOJI),
     ("5-copy", "filler verb", re.compile(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer)\b", re.I)),
@@ -63,10 +63,15 @@ RULES = [
     ("7-code", "escalated z-index", re.compile(r"\bz-\[\d{3,}\]|z-index:\s*\d{3,}|\bzIndex:\s*\d{3,}")),
 ]
 
+FLOATING = re.compile(r"(?<![\w-])(?:fixed|sticky|absolute)\b|position:\s*['\"]?(?:fixed|sticky|absolute)")
+
 # Context checks on nearby lines: (label prefix, regex, lines before, lines after).
 SUPPRESS_NEAR = [
     ("Enter handler", re.compile(r"isComposing|keyCode\s*===?\s*229"), 6, 1),
     ("clipboard write", re.compile(r"^\s*\.(?:then|catch)\b"), 0, 1),
+    # Glass on a layer that floats over moving content is the legitimate use (design materials.md).
+    # Markup is checked on its own line; a stylesheet by its rule block (see css_block).
+    ("glass on", FLOATING, 0, 0),
 ]
 REQUIRE_NEAR = [
     ("scroll to top", re.compile(r"pathname|location|router|\$route|\bnavigat(?:e|ion)\b|afterEach|useEffect|watch\(", re.I), 4, 1),
@@ -120,6 +125,13 @@ def near(lines, i, rx, before, after):
     return any(rx.search(l) for l in lines[max(0, i - 1 - before):i + after])
 
 
+def css_block(lines, i):
+    """The declarations of the rule that holds line i (1-based): from the last "{" above it to the next "}"."""
+    start = next((j for j in range(i - 1, -1, -1) if "{" in lines[j]), i - 1)
+    end = next((j for j in range(i - 1, len(lines)) if "}" in lines[j]), i - 1)
+    return "".join(lines[start:end + 1])
+
+
 def scan(paths):
     hits = defaultdict(list)
     deltas = Counter()
@@ -167,6 +179,8 @@ def scan(paths):
                 if rx.search(line):
                     ctx = CONTEXT.get(label)
                     if ctx and near(lines, i, *ctx[1:]) == ctx[0]:
+                        continue
+                    if label.startswith("glass on") and ext in STYLE_EXTS and FLOATING.search(css_block(lines, i)):
                         continue
                     hits[principle].append({"file": path, "line": i, "tell": label, "snippet": snippet})
             if markup and DASH.search(line) and not COMMENT.match(line):
