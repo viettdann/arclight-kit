@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify completed work"
+  short_description: "Check completeness and review changes against the task"
+  default_prompt: "Use $verifier to check the requested work for completeness and defects."

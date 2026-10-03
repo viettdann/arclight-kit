@@ -1,0 +1,19 @@
+{
+  "name": "mgi-kit",
+  "version": "1.0.0",
+  "description": "Audit ASP.NET APIs against TypeScript and JavaScript consumers.",
+  "author": {
+    "name": "viettdann"
+  },
+  "repository": "https://github.com/viettdann/arclight-kit",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "MGI Kit",
+    "shortDescription": "Audit ASP.NET APIs against TypeScript and JavaScript consumers.",
+    "developerName": "viettdann",
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Audit this API change against its frontend consumers."
+    ]
+  }
+}

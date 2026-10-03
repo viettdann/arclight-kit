@@ -1,41 +1,36 @@
 # Handoff: <task> - <YYYY-MM-DD>
 
-> To resume: read this file top to bottom, then run `git status` and `git diff`
-> to confirm the repo matches what's described below before continuing.
-> Source session: `<session-id>` (full transcript: `claude --resume <session-id>`)
+> Read this file, then inspect the current branch, scoped status, diff, and files before continuing.
+> Include a source session and resume command here only when the actual ID and CLI support are verified; otherwise omit this line.
 
-## Goal
+## Goal and scope
 
-<What we're trying to build and why. One or two sentences. The objective the
-next session works toward - the destination, not a log of what happened.>
+<The active objective and requested scope. Include relevant user decisions and explicit exclusions.>
 
 ## Current state
 
-<Where the work actually stands right now, grounded in what you just verified.
-Be concrete: which part works, which part is half-done, what's broken.>
+<Verified completed and incomplete work, current branch, and any blocker.>
 
 ## Files in flight
 
-<Files actively being edited. One line each: `path/to/file`, what's done and
-what's still incomplete in it. List only files that actually exist.>
+<One line per existing file: path, what is complete, what remains. Distinguish task edits from unrelated work.>
 
 ## Changed this session
 
-<What was actually touched, grounded in `git status` / `git diff`. If it's not
-in the diff and not on disk, it does not go here. Redact any secrets.>
+<Changes verified from the scoped diff or actual files. Redact secrets.>
+
+## Verification
+
+<Commands actually run and their observed results. Name unavailable checks and pre-existing failures separately.>
 
 ## Failed attempts
 
-<What was tried that did NOT work, and WHY. Highest-value section: it stops the
-next session from repeating dead ends. "Tried X, failed because Y." Omit if
-nothing failed.>
+<What failed and why, if relevant to avoiding repeated work. Omit when empty.>
 
 ## Next step
 
-<The single, concrete next thing to try. One clear action, not a menu. Include
-the specific file/function/command if known. Note alternatives in one line.>
+<One concrete next action with the file, symbol, or command when known. Include remaining checklist items when necessary.>
 
 ## Open questions / unverified
 
-<Anything you're assuming but could not confirm. Flag it here explicitly
-instead of stating it as fact elsewhere. Omit if everything is verified.>
+<Unverified assumptions and unresolved decisions. Omit when empty.>

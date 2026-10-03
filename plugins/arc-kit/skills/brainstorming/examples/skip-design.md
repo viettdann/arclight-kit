@@ -1,57 +1,24 @@
-# Example: User Wants to Skip the Design Phase
+# Example: The user requests implementation immediately
 
-> Fictional project: paths, symbols, and findings below are illustrative, not facts about this repository.
+> Fictional project: paths, symbols, and findings are illustrative.
 
-Shows how to handle "just do it" / "skip the questions" requests without either railroading the user into a full design or losing alignment entirely.
+User: “Add a rate limiter to the Hono API. Don't ask a bunch of questions, just do it.”
 
-## User prompt
+Inspect the actual project before choosing defaults: applicable AGENTS.md, middleware registration, deployment topology, installed packages, tests, and the trusted source of client identity. The request already authorizes implementation.
 
-> Add a rate limiter to the Hono API. Don't ask me a bunch of questions, just do it.
+Assistant:
 
-## Response: confirm the trade-off, then request the minimum viable anchor
+> Tôi sẽ dùng giới hạn 60 request/phút trên các route `/api/*`, trả `429` kèm `Retry-After`, và dùng nguồn client IP đã được middleware hiện tại xác thực. Tôi đang kiểm tra deployment để chọn nơi lưu counter.
 
-Do NOT dive into implementation blind. Do NOT force a full design either. Middle path:
+If the repository confirms a single-process deployment, choose a bounded in-memory store and explain that scope. If topology is unverified, do not claim the absence of Redis proves single-node operation. Resolve it from deployment files, or ask the one missing consequential question while progressing independent work.
 
-> Understood. Skipping design means I'll make these choices on your behalf:
->
-> - Storage: in-memory (single-node assumption)
-> - Algorithm: sliding window, 60 requests / minute / IP
-> - Error response: 429 with `Retry-After` header
-> - Scope: all `/api/*` routes
->
-> If any of those are wrong, tell me now. Otherwise I'll proceed with a plan and stop only for explicit approval before writing code.
+Present a concise file/change/check plan and implement without another approval gate. Run the project's relevant unit and integration checks. Do not install e2e tooling for this request.
 
-This is one message, not a questionnaire. The user can either correct one item or say "go."
+## User steering
 
-## User responses and how to handle them
+- “Go”: continue the plan already within scope; do not request another confirmation.
+- “Use Postgres instead”: inspect the existing DB integration, update the storage and concurrency design, and continue within the revised scope. Clarify only unresolved operational choices.
+- “Just write the code”: continue implementation using verified constraints and reasonable defaults.
+- A question about design: answer it briefly, incorporate any correction, and continue unless the user asks to pause or switches to a design-only task.
 
-### Case A: "Go"
-
-Proceed directly to the implementation plan (same format as `happy-path.md`). Still require explicit approval on the plan before writing code. Skipping design does not mean skipping the approval gate.
-
-### Case B: "Change storage to Postgres, otherwise fine"
-
-Acknowledge, update the assumption list, present the plan:
-
-> Got it, Postgres. Everything else as stated. Plan:
-> [plan...]
-> Approve?
-
-### Case C: "Just write the code already"
-
-This is NOT approval to skip the plan gate. Respond:
-
-> The plan step costs one message and protects us from rewriting the feature. Here it is:
-> [plan...]
-> Reply `proceed` to start.
-
-### Case D: User contradicts own "skip" and starts asking detailed questions
-
-Drop back into the normal design flow. Do not insist on the skip path once the user has re-engaged with design decisions.
-
-## Key principles
-
-1. **Skip design, not alignment:** state your default assumptions in one shot, let user veto
-2. **Skip design, not the approval gate:** the plan gate still applies
-3. **Use project defaults aggressively.** CLAUDE.md conventions, existing patterns in the codebase, safest-reasonable choice for anything not specified
-4. **Flag irreversible or high-blast-radius choices:** even in skip mode, if a default choice would be hard to undo (schema change, breaking API), surface it before applying
+Authorization persists across ordinary preference answers. A plan or user correction does not authorize unrelated earlier suggestions.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Contract"
+  short_description: "Audit ASP.NET and TypeScript API contract compatibility."
+  default_prompt: "Use $api-contract to audit this API change against its consumers."

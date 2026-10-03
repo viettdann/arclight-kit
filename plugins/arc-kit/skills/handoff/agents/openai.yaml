@@ -1,0 +1,4 @@
+interface:
+  display_name: "Save or resume progress"
+  short_description: "Write verified session notes or resume a saved handoff"
+  default_prompt: "Use $handoff to save verified progress and the next action for this task."

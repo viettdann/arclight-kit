@@ -1,0 +1,4 @@
+interface:
+  display_name: "Execute a plan"
+  short_description: "Implement a plan and verify the complete result"
+  default_prompt: "Use $executor to implement the agreed plan and verify each requirement."

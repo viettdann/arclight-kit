@@ -1,0 +1,26 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "arc-kit",
+  "version": "2.0.0",
+  "description": "Plan, implement, review, and hand off coding work in Codex.",
+  "author": {
+    "name": "viettdann"
+  },
+  "repository": "https://github.com/viettdann/arclight-kit",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Arc Kit",
+        "shortDescription": "Plan, implement, review, and hand off coding work in Codex.",
+        "developerName": "viettdann",
+        "category": "Developer Tools",
+        "defaultPrompt": [
+          "Use arc-kit to implement the agreed plan.",
+          "Review this change for completeness and correctness.",
+          "Save a handoff for the next session."
+        ]
+      },
+      "hooks": "./hooks/hooks.json"
+    }
+  }
+}

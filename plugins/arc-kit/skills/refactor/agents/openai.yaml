@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refactor existing code"
+  short_description: "Restructure code while preserving observable contracts"
+  default_prompt: "Use $refactor to restructure the requested code while preserving its behavior."

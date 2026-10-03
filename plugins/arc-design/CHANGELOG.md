@@ -2,6 +2,14 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-10-03
+
+### Changed
+
+- Package for Codex with portable and compatibility manifests, marketplace discovery, and skill UI metadata.
+- Resolve bundled helpers relative to the installed skill; preserve all design references and scripts.
+- Allow local rendering verification as part of authorized implementation and UI checks.
+
 ## [1.0.1] - 2026-10-03
 
 ### Changed

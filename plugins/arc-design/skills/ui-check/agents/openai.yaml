@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Check"
+  short_description: "Measure responsive rendering and accessibility defects."
+  default_prompt: "Use $ui-check to inspect this running page."

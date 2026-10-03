@@ -1,7 +1,7 @@
 ---
 name: api-contract
 description: "Audit ASP.NET controllers, Minimal API endpoints, and DTOs against their TypeScript/JavaScript consumers (hand-written fetch/axios/HttpClient services or NSwag/OpenAPI clients) for contract drift in both directions: renamed or removed JSON keys, enum values, new required fields, status codes, type changes. Reads source, reports only. Use when checking for breaking API changes, FE/BE contract sync, or a DTO or controller change before merging, including after a refactor (\"check breaking change\", \"API có vỡ không\", \"FE BE còn khớp không\")."
-license: MIT (adapted from github/awesome-copilot, see LICENSE.txt)
+license: "MIT (adapted from github/awesome-copilot, see LICENSE.txt)"
 ---
 
 # API Contract

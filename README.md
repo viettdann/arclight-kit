@@ -1,66 +1,111 @@
-# arclight-kit
+# arclight-kit for Codex
 
-Claude Code marketplace with three plugins:
+Three independent Codex plugins, containing 14 skills:
 
-- `arc-design`: UI design, redesign, restyle, rendering checks, and interaction rules.
-- `arc-kit`: session working rules, plan-to-commit workflow, refactor, fresh-air, and the comment-lint hook.
-- `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection).
+- **arc-design**: design new UI, redesign or refine existing UI, check rendering, and implement interaction states.
+- **arc-kit**: session preferences, planning, execution, review, refactoring, handoffs, reversible project-skill disabling, and a comment-lint hook.
+- **mgi-kit**: audit ASP.NET API contracts against TypeScript and JavaScript consumers.
 
-## Which skill
-
-| Situation | Skill |
-| --- | --- |
-| Nothing exists yet: new page, screen, or project; tokens, themes, dark mode, `DESIGN.md` | `arc-design:design` |
-| It exists and you want a new look (new style or direction), keeping content, URLs, and behavior | `arc-design:redesign` |
-| It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
-| A page runs; measure what breaks when it renders: overflow, clipped or overlapping text, contrast per theme, focus, names, targets, images, JS errors | `arc-design:ui-check` |
-| Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
-| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI) | `/arc-kit:arc` (user-invoked only) |
-| Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |
-| A plan exists; stress-test it before executing | `arc-kit:plan-auditor` |
-| A plan exists; implement it step by step with TDD, sub-agents, and verification | `arc-kit:executor` |
-| Restructure existing code without changing behavior: extract, rename, split, reduce complexity, remove duplication | `arc-kit:refactor` |
-| Work is done or about to be committed: completeness check, then review | `arc-kit:verifier` |
-| Ending or pausing a session; resuming after `/clear` instead of `/compact` | `arc-kit:handoff` |
-| Block a project's own skills, commands, and CLAUDE.md, or restore them | `arc-kit:fresh-air` |
-| ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
-
-`design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
-
-| Style | For |
-| --- | --- |
-| `minimal` | Calm, document-like, Notion/Linear feel; tool or marketing |
-| `premium` | Premium consumer, soft radii, diffused depth, slow motion; marketing |
-| `brutalist` | Swiss print or terminal, visible grid, zero ornament; tool or marketing |
-| `cinematic` | Immersive, scroll-paced storytelling, viewport-scale type, full-bleed imagery, dark tech; marketing |
-| `playful` | Bubbly or neo-brutal, saturated multi-hue palette, chunky type, springs; marketing or consumer app |
-
-No style named → the profile alone is the direction. Surface materials (solid and hairline, shadow, glass, scrim, gradient, texture) are shared by every style in `design/references/materials.md`; glass is a material for floating layers, not a style.
+This branch targets Codex. See [the migration analysis](docs/codex-migration.md) for the platform changes and compatibility limits.
 
 ## Install
 
+Use a Codex host with plugin marketplace support. From this checkout:
+
 ```bash
-claude plugin marketplace add viettdann/arclight-kit
-claude plugin install arc-design@arclight-kit
-claude plugin install arc-kit@arclight-kit
-claude plugin install mgi-kit@arclight-kit
+codex plugin marketplace add .
+codex plugin marketplace list
+codex
 ```
 
-Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
+Open `/plugins`, select the `arclight-kit` marketplace, and install the plugins you want. Start a new session to load their skills. In the desktop app, open this project, restart the app, and select the repo marketplace in the plugin browser. Each plugin can be installed independently.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint hook and `fresh-air`.
+Once the `codex` branch has been pushed, register it remotely with:
 
-## Hooks
+```bash
+codex plugin marketplace add viettdann/arclight-kit --ref codex
+```
 
-`arc-kit` registers `comment-lint` (`PostToolUse` on `Edit|Write`): it flags newly added comments that are wrapped across lines, longer than the width limit, banners or dividers, multi-line `/* */` blocks, or narrative Markdown headings (`Rationale`, `Background`, `Alternatives`), and exits 2 so Claude fixes them. It reports once per tool call even if the same script version is registered elsewhere (e.g. `~/.claude/settings.json`); check active hooks with `/hooks`.
+Check `codex plugin marketplace --help` if your installed CLI uses a different command set. Marketplace support depends on the host version; copying a plugin into the workspace does not by itself install or activate it. This repository does not modify your personal Codex configuration during validation.
 
-| Option | Default | Effect |
+Plugin hooks need review and trust in Codex before they run. Enable hooks in the host if disabled; do not treat installation as hook activation. See [OpenAI's plugin packaging guide](https://developers.openai.com/plugins/build/plugins) and [hook documentation](https://learn.chatgpt.com/docs/hooks).
+
+## Choose a skill
+
+Use `$` autocomplete to select an installed skill, or name the plugin and skill in your request. The catalog may display a plugin-qualified name such as `arc-kit:executor`; use the identifier exposed by your host when names collide.
+
+| Task | Plugin | Skill |
 | --- | --- | --- |
-| `comment_lint_enabled` | `true` | Turn the hook off without disabling the plugin. |
-| `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
+| New page, screen, tokens, themes, or `DESIGN.md` | arc-design | `$design` |
+| New visual direction, preserving content and behavior | arc-design | `$redesign` |
+| Refine a generic UI while preserving layout | arc-design | `$restyle` |
+| Measure rendering and accessibility defects | arc-design | `$ui-check` |
+| Forms, tables, navigation, overlays, and async states | arc-design | `$ui-interaction` |
+| Apply Vietnamese chat / English file and coding preferences | arc-kit | `$arc` (explicit only) |
+| Explore a non-trivial feature or architectural decision | arc-kit | `$brainstorming` |
+| Audit a proposed implementation plan | arc-kit | `$plan-auditor` |
+| Implement an existing plan | arc-kit | `$executor` |
+| Restructure code while preserving behavior | arc-kit | `$refactor` |
+| Check completeness and review a change | arc-kit | `$verifier` |
+| Save or resume verified session context | arc-kit | `$handoff` |
+| Disable or restore a project's local skills | arc-kit | `$fresh-air` (explicit only) |
+| Check backend/frontend contract drift | mgi-kit | `$api-contract` |
 
-Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-kit/scripts/comment_lint_test.py`.
+`arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly.
 
-## Changes
+`design` combines a **profile** (`tool` or `marketing`) with an optional **style**:
 
-Each plugin keeps its own changelog: [`arc-design`](plugins/arc-design/CHANGELOG.md), [`arc-kit`](plugins/arc-kit/CHANGELOG.md), [`mgi-kit`](plugins/mgi-kit/CHANGELOG.md).
+| Style | Direction |
+| --- | --- |
+| `minimal` | Calm, document-like, warm monochrome |
+| `premium` | Consumer surfaces, soft corners, restrained depth |
+| `brutalist` | Swiss print or terminal, visible grid |
+| `cinematic` | Immersive, scroll-paced, image-led |
+| `playful` | Saturated palette, chunky type, spring motion |
+
+Only load references needed by the task. Bundled script paths resolve from the installed skill's directory, while target project paths resolve from the project's working directory.
+
+## Runtime requirements
+
+- Python 3.11+ for `fresh-air` and repository validation; Python 3 for the other Python helpers.
+- Node 22+ for browser helpers; Chrome, Chromium, or Edge available locally (including a supported Playwright browser cache). `CHROME=/absolute/path` selects a browser.
+- A running page or static HTML file for rendering checks. Skill instructions allow starting the project's existing local dev command for an authorized check.
+- Delegation is optional. Workflow skills use available Codex sub-agent tools only when allowed, inherit runtime model/concurrency settings, and work inline when delegation is unavailable.
+
+Missing browser/runtime capabilities are reported as unchecked portions of a task. No MCP server or connector is required by these plugins.
+
+## Comment lint
+
+`arc-kit` registers `PostToolUse` for `apply_patch` and reads `tool_input.command`. It checks added comments in patch results for wrapping, excessive width, banners, multi-line block comments, and narrative Markdown headings. Findings return feedback to Codex; the edit has already happened.
+
+| Environment variable | Default | Effect |
+| --- | --- | --- |
+| `ARC_COMMENT_LINT_ENABLED` | `true` | Set to `false`, `0`, `no`, or `off` to disable. |
+| `ARC_COMMENT_LINT_WIDTH` | `150` | Width threshold, minimum 60 columns. |
+
+Set these in the environment that launches Codex. They are script options, not Codex plugin settings. Shell-written changes do not trigger this hook. Check those files explicitly:
+
+```bash
+python3 plugins/arc-kit/scripts/comment-lint.py --files path/to/file.ts path/to/file.py
+```
+
+The standalone command checks all lines of the named files. The hook checks only added lines it can locate reliably in the final file; ambiguous patch context may leave lines unchecked. Files outside the hook working directory, generated files, unsupported/binary files, and inputs larger than 2 MB are skipped. This is a style aid, not an enforcement boundary.
+
+## Fresh air
+
+`$fresh-air` disables discovered project `.agents/skills` using documented `[[skills.config]]` entries in your Codex user configuration. Its `off`, `status`, and `restore` commands operate on a named project; restore removes only entries owned by this helper. Review the skill's [usage and limits](plugins/arc-kit/skills/fresh-air/SKILL.md) before using it. Start a new Codex session after a configuration change.
+
+Project `AGENTS.md` instructions, plugins, MCP servers, and hooks remain active. This tool is not a sandbox or an instruction-isolation mechanism.
+
+## Validate
+
+```bash
+python3 scripts/validate_plugins.py
+python3 -m unittest discover -s scripts -p '*_test.py'
+python3 plugins/arc-kit/scripts/comment_lint_test.py
+python3 -m unittest discover -s plugins/arc-kit/skills/fresh-air/tests
+```
+
+The validator checks this repo's package conventions, fallback-manifest consistency, skill metadata, bundled references, and hook wiring. It is not a replacement for a host installation test.
+
+Each plugin keeps its own changelog: [arc-design](plugins/arc-design/CHANGELOG.md), [arc-kit](plugins/arc-kit/CHANGELOG.md), [mgi-kit](plugins/mgi-kit/CHANGELOG.md). The API contract skill retains its upstream [MIT notice](plugins/mgi-kit/skills/api-contract/LICENSE.txt).

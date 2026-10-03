@@ -2,6 +2,15 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-10-03
+
+### Changed
+
+- Package for Codex with native skill metadata and explicit invocation policies for arc and fresh-air.
+- Adapt planning, execution, review, and handoff to available Codex tools, AGENTS.md, and session capabilities.
+- Read apply_patch events in comment-lint; support a standalone explicit-file check.
+- Replace fresh-air with reversible Codex skill-disable entries; project instructions remain active.
+
 ## [1.0.0] - 2026-10-03
 
 First release.

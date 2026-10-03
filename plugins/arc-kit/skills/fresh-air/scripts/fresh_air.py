@@ -1,432 +1,311 @@
 #!/usr/bin/env python3
-"""fresh-air: keep project-level Claude Code skills from loading.
+"""Disable repository Codex skills through supported user-config entries.
 
-Writes skillOverrides / enabledPlugins (and optionally claudeMdExcludes)
-entries into <project>/.claude/settings.local.json so only user-level
-(personal, synced, plugin) skills stay active in that project.
-
-Subcommands:
-  scan     [DIR] [--json]            report project skills and risk signals
-  apply    [DIR] [--mode off|user-only|name-only] [--claude-md sub|all] [--dry-run]
-  restore  [DIR] [--dry-run]         remove every entry fresh-air adds (alias: revert)
+Python 3.11+. Only this script's verified marker block is changed. Repository
+files are never modified. Disabling a path affects every session using the
+same CODEX_HOME; restart Codex after changing the configuration.
 """
+
 import argparse
+from contextlib import contextmanager
+import hashlib
 import json
 import os
+from pathlib import Path
 import re
-import shutil
+import stat
 import subprocess
 import sys
-import time
-from pathlib import Path
-
-HOME = Path.home()
-USER_SKILLS = HOME / ".claude" / "skills"
-USER_COMMANDS = HOME / ".claude" / "commands"
-BACKUP_DIR = HOME / ".claude" / "backups" / "fresh-air"
-PRUNE_DIRS = {
-    ".git", "node_modules", "vendor", "dist", "build", "target", ".venv",
-    "venv", "__pycache__", ".next", ".cache", "bin", "obj",
-}
-MAX_DEPTH = 8
-MODES = ("off", "user-invocable-only", "name-only")
-MODE_ALIASES = {"user-only": "user-invocable-only"}
-
-RISK_PATTERNS = [
-    ("shell-injection", re.compile(r"!`[^`]+`")),
-    ("network", re.compile(r"\b(curl|wget|nc|ncat|Invoke-WebRequest|requests\.(get|post)|urllib\.request|fetch\()", re.I)),
-    # Case-sensitive on purpose: prose like "Core Exec (Worker)" must not match.
-    ("obfuscation", re.compile(r"base64\s+(-d|--decode)|\beval\s*\(|\bexec\s*\(|fromCharCode|\\x[0-9a-f]{2}\\x")),
-    ("destructive", re.compile(r"rm\s+-rf\s+[~/$]|mkfs|dd\s+if=|chmod\s+-R\s+777", re.I)),
-    ("prompt-injection", re.compile(
-        r"ignore (all |any )?(previous|prior|above) instructions|(do not|don't|never) (tell|inform|mention (this|it) to) the user"
-        r"|hide (this|it) from the user|disregard (your|the) (rules|instructions)", re.I)),
-    ("sensitive-paths", re.compile(r"\.ssh/|id_rsa|\.aws/credentials|ANTHROPIC_API_KEY|\.claude/settings(\.local)?\.json", re.I)),
-]
-SCANNED_EXT = {".md", ".sh", ".py", ".js", ".ts", ".mjs", ".cjs", ".ps1", ".rb", ".pl", ""}
+import tempfile
+import tomllib
 
 
-def project_root(start):
-    start = Path(start).resolve()
+class Conflict(Exception):
+    """Configuration or ownership cannot safely be determined."""
+
+
+def project_root(directory):
+    start = Path(directory).expanduser().resolve(strict=True)
+    if not start.is_dir():
+        raise Conflict(f"Not a directory: {start}")
     try:
-        out = subprocess.run(
+        result = subprocess.run(
             ["git", "-C", str(start), "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True, text=True, timeout=5, check=False,
         )
-        if out.returncode == 0 and out.stdout.strip():
-            return Path(out.stdout.strip())
+        if result.returncode == 0:
+            return Path(result.stdout.strip()).resolve(strict=True)
     except (OSError, subprocess.SubprocessError):
         pass
     return start
 
 
-def frontmatter_name(path):
+def protected_roots(codex_home):
+    return tuple(path.resolve() for path in (
+        Path.home() / ".agents" / "skills", codex_home / "skills",
+        Path("/etc/codex/skills"),
+    ))
+
+
+def validate_root(root, protected):
+    home = Path.home().resolve()
+    if home.is_relative_to(root):
+        raise Conflict("Choose a project directory, not your home or its ancestors.")
+    if any(root.is_relative_to(path) for path in protected):
+        raise Conflict("A personal or system skills directory is not a project.")
+
+
+def discover(root, protected):
+    """Find nested .agents/skills, following skill links only inside this repo."""
+    found, skipped = set(), set()
+
+    def failed_walk(error):
+        raise error
+
+    def permitted(path):
+        resolved = path.resolve()
+        if not resolved.is_relative_to(root):
+            skipped.add(f"{path}: symlink target outside project")
+            return False
+        if any(resolved.is_relative_to(item) for item in protected):
+            skipped.add(f"{path}: personal or system skills")
+            return False
+        return True
+
+    def walk_skills(directory):
+        seen = set()
+        for current, dirs, files in os.walk(directory, followlinks=True, onerror=failed_walk):
+            path = Path(current)
+            resolved = path.resolve()
+            if not permitted(path) or resolved in seen:
+                dirs[:] = []
+                continue
+            seen.add(resolved)
+            dirs[:] = sorted(d for d in dirs if d != ".git" and permitted(path / d))
+            if "SKILL.md" in files and permitted(path / "SKILL.md"):
+                if (path / "SKILL.md").is_file():
+                    found.add((path / "SKILL.md").resolve())
+                else:
+                    skipped.add(f"{path / 'SKILL.md'}: missing or non-file skill")
+
+    for current, dirs, _ in os.walk(root, followlinks=False, onerror=failed_walk):
+        path = Path(current)
+        if ".agents" in dirs:
+            skills = path / ".agents" / "skills"
+            if skills.is_dir() and permitted(skills):
+                walk_skills(skills)
+            dirs.remove(".agents")
+        retained = []
+        for name in sorted(dirs):
+            candidate = path / name
+            if name == ".git":
+                continue
+            if candidate.is_symlink():
+                skipped.add(f"{candidate}: linked project directory not traversed")
+            elif permitted(candidate):
+                retained.append(name)
+        dirs[:] = retained
+    return sorted(found), sorted(skipped)
+
+
+def parse_config(raw):
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return None
-    m = re.match(r"^---\s*\n(.*?)\n---", text, re.S)
-    if not m:
-        return None
-    nm = re.search(r"^name:\s*['\"]?([^'\"\n]+?)['\"]?\s*$", m.group(1), re.M)
-    return nm.group(1).strip() if nm else None
+        return tomllib.loads(raw.decode("utf-8"))
+    except (UnicodeError, tomllib.TOMLDecodeError) as error:
+        raise Conflict(f"Invalid config.toml; nothing changed: {error}") from error
 
 
-def skill_dirs_under(skills_dir):
-    if not skills_dir.is_dir():
-        return []
-    return sorted(p for p in skills_dir.iterdir() if (p / "SKILL.md").is_file())
-
-
-def command_files_under(commands_dir):
-    if not commands_dir.is_dir():
-        return []
-    result = []
-    for f in sorted(commands_dir.rglob("*.md")):
-        rel = f.relative_to(commands_dir).with_suffix("")
-        result.append((":".join(rel.parts), f))
+def configured_skills(raw):
+    data = parse_config(raw)
+    skills = data.get("skills", {})
+    if not isinstance(skills, dict):
+        raise Conflict("Existing 'skills' configuration is not a table.")
+    entries = skills.get("config", [])
+    if not isinstance(entries, list):
+        raise Conflict("Existing 'skills.config' is not an array of tables.")
+    result = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise Conflict("Existing skills.config entry has no string path.")
+        if "enabled" in entry and not isinstance(entry["enabled"], bool):
+            raise Conflict("Existing skills.config entry has a non-boolean enabled value.")
+        path = Path(entry["path"]).expanduser()
+        if not path.is_absolute():
+            # Relative paths can vary with config source. Never guess and risk
+            # adding an override for the same skill.
+            raise Conflict("Existing skills.config uses a relative path; resolve it before running fresh-air.")
+        path = path.resolve()
+        if path in result:
+            raise Conflict(f"Duplicate existing skill configuration: {path}")
+        result[path] = entry.get("enabled", True)
     return result
 
 
-def find_claude_dirs(root, nested):
-    """Yield every .claude dir that Claude Code may load project skills from."""
-    yield root / ".claude"
-    if not nested:
-        return
-    root_depth = len(root.parts)
-    for dirpath, dirnames, _ in os.walk(root):
-        depth = len(Path(dirpath).parts) - root_depth
-        dirnames[:] = [d for d in dirnames if d not in PRUNE_DIRS and not (d.startswith(".") and d != ".claude")]
-        if depth >= MAX_DEPTH:
-            dirnames[:] = []
-        if ".claude" in dirnames:
-            cdir = Path(dirpath) / ".claude"
-            if cdir != root / ".claude":
-                yield cdir
-            dirnames.remove(".claude")
+def marker_id(root):
+    return hashlib.sha256(os.fsencode(root)).hexdigest()[:24]
 
 
-def risk_signals(skill_path):
-    """Return sorted set of risk labels found in a skill folder or command file."""
-    files = [skill_path] if skill_path.is_file() else [
-        f for f in skill_path.rglob("*") if f.is_file() and f.suffix.lower() in SCANNED_EXT
-    ]
-    found = set()
-    for f in files[:200]:
-        try:
-            if f.stat().st_size > 512_000:
-                continue
-            text = f.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for label, pat in RISK_PATTERNS:
-            if pat.search(text):
-                found.add(label)
-        if f.name == "SKILL.md" or f.suffix == ".md":
-            fm = re.match(r"^---\s*\n(.*?)\n---", text, re.S)
-            if fm and re.search(r"^allowed-tools:.*\bBash\b", fm.group(1), re.M):
-                found.add("pre-approved-bash")
-    if skill_path.is_dir() and (skill_path / ".claude-plugin" / "plugin.json").is_file():
-        found.add("plugin-folder")
-    return sorted(found)
+def make_block(root, paths):
+    body = f"# Repository: {json.dumps(str(root), ensure_ascii=False)}\n"
+    for path in sorted(paths):
+        body += f"[[skills.config]]\npath = {json.dumps(str(path), ensure_ascii=False)}\nenabled = false\n"
+    payload = body.encode("utf-8")
+    key = marker_id(root)
+    digest = hashlib.sha256(payload).hexdigest()
+    return (
+        f"\n# >>> fresh-air {key} {digest}\n".encode() + payload
+        + f"# <<< fresh-air {key}\n".encode()
+    )
 
 
-def user_skill_names():
-    """Names owned by the user: personal skills, personal commands, synced skills."""
-    personal, synced = set(), set()
-    for d in skill_dirs_under(USER_SKILLS):
-        if d.name.lower() == "synced":
-            continue
-        personal.add(d.name)
-        fm = frontmatter_name(d / "SKILL.md")
-        if fm:
-            personal.add(fm)
-    for name, _ in command_files_under(USER_COMMANDS):
-        personal.add(name)
-    synced_root = USER_SKILLS / "synced"
-    if synced_root.is_dir():
-        for sk in synced_root.glob("*/*/SKILL.md"):
-            synced.add(sk.parent.name)
-            fm = frontmatter_name(sk)
-            if fm:
-                synced.add(fm.split(":")[-1])
-    return personal, synced
+def split_owned(raw, root):
+    key = marker_id(root).encode()
+    start_token = b"# >>> fresh-air " + key
+    end_token = b"# <<< fresh-air " + key
+    if start_token not in raw and end_token not in raw:
+        return raw, set(), b""
+    pattern = re.compile(
+        rb"\n# >>> fresh-air " + key + rb" ([0-9a-f]{64})\n(.*?)# <<< fresh-air " + key + rb"\n",
+        re.DOTALL,
+    )
+    matches = list(pattern.finditer(raw))
+    if len(matches) != 1 or raw.count(start_token) != 1 or raw.count(end_token) != 1:
+        raise Conflict("Managed markers changed or duplicated; nothing changed.")
+    match = matches[0]
+    if hashlib.sha256(match[2]).hexdigest().encode() != match[1]:
+        raise Conflict("Managed block was edited; restore its original contents before retrying.")
+    paths = configured_skills(match[2])
+    if not paths or any(paths.values()) or make_block(root, paths) != match[0]:
+        raise Conflict("Managed block does not match the expected repository/format.")
+    actual = configured_skills(raw)
+    if any(path not in actual or actual[path] is not False for path in paths):
+        raise Conflict("Managed markers are not active disabled skill entries; nothing changed.")
+    base = raw[:match.start()] + raw[match.end():]
+    configured_skills(base)
+    return base, set(paths), match[0]
 
 
-def scan(root, nested=True, with_risk=True):
-    personal, synced = user_skill_names()
-    items = []
-    for cdir in find_claude_dirs(root, nested):
-        rel = cdir.parent.relative_to(root).as_posix()
-        location = "root" if rel == "." else rel
-        for d in skill_dirs_under(cdir / "skills"):
-            names = {d.name}
-            fm = frontmatter_name(d / "SKILL.md")
-            if fm:
-                names.add(fm)
-            plugin_name = None
-            pj = d / ".claude-plugin" / "plugin.json"
-            if pj.is_file():
-                try:
-                    plugin_name = json.loads(pj.read_text()).get("name") or d.name
-                except (OSError, ValueError):
-                    plugin_name = d.name
-            items.append({
-                "kind": "skill", "location": location, "path": str(d.relative_to(root)),
-                "names": sorted(names), "plugin": plugin_name,
-                "risk": risk_signals(d) if with_risk else [],
-            })
-        for name, f in command_files_under(cdir / "commands"):
-            items.append({
-                "kind": "command", "location": location, "path": str(f.relative_to(root)),
-                "names": [name], "plugin": None,
-                "risk": risk_signals(f) if with_risk else [],
-            })
-    for it in items:
-        it["shadows_personal"] = sorted(set(it["names"]) & personal)
-        it["shadows_synced"] = sorted(set(it["names"]) & synced)
-    project_settings = root / ".claude" / "settings.json"
-    project_hooks = False
-    if project_settings.is_file():
-        try:
-            project_hooks = bool(json.loads(project_settings.read_text()).get("hooks"))
-        except (OSError, ValueError):
-            pass
-    return {"root": str(root), "items": items, "project_settings_has_hooks": project_hooks}
-
-
-def settings_path(root):
-    return root / ".claude" / "settings.local.json"
-
-
-def load_settings(path):
-    if not path.exists():
-        return {}
-    text = path.read_text(encoding="utf-8")
-    if not text.strip():
-        return {}
+@contextmanager
+def config_lock(config_path):
+    """Fail fast if another fresh-air operation owns this config's lock."""
+    config_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    lock = config_path.with_name(".fresh-air.lock")
     try:
-        data = json.loads(text)
-    except ValueError as e:
-        sys.exit(f"ERROR: {path} is not valid JSON ({e}). Fix it manually; nothing was changed.")
-    if not isinstance(data, dict):
-        sys.exit(f"ERROR: {path} top level is not an object; nothing was changed.")
-    return data
+        fd = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError as error:
+        raise Conflict(f"Configuration locked: {lock}. If a previous process crashed, remove this lock after confirming it has stopped.") from error
+    try:
+        with os.fdopen(fd, "w") as stream:
+            stream.write(str(os.getpid()) + "\n")
+        yield
+    finally:
+        lock.unlink()
 
 
-def write_settings(path, data):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists():
-        # Backups live outside the repo so they can never be committed by accident.
-        slug = re.sub(r"[^A-Za-z0-9]+", "-", str(path.parent.parent)).strip("-")
-        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-        stamp = time.strftime("%Y%m%d-%H%M%S")
-        backup = BACKUP_DIR / f"{slug}-{stamp}.json"
-        n = 1
-        while backup.exists():
-            backup = BACKUP_DIR / f"{slug}-{stamp}-{n}.json"
-            n += 1
-        shutil.copy2(path, backup)
-        print(f"Backup: {backup}")
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    os.replace(tmp, path)
+def read_config(path):
+    try:
+        return path.read_bytes()
+    except FileNotFoundError:
+        return b""
 
 
-def plan_targets(report):
-    """Split names into ones to block and ones left alone because the user owns them."""
-    block, skipped = set(), {}
-    plugins = set()
-    for it in report["items"]:
-        for n in it["names"]:
-            if n in it["shadows_personal"]:
-                skipped[n] = "same name as a personal skill; personal already wins and blocking by name would hide yours"
-            else:
-                block.add(n)
-        if it["plugin"]:
-            plugins.add(f"{it['plugin']}@skills-dir")
-    return sorted(block), skipped, sorted(plugins)
+def atomic_write(path, previous, replacement, existed):
+    parse_config(replacement)
+    mode = stat.S_IMODE(path.stat().st_mode) if existed else 0o600
+    fd, temporary = tempfile.mkstemp(prefix=".fresh-air-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            os.chmod(temporary, mode)
+            stream.write(replacement)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if path.exists() != existed or read_config(path) != previous:
+            raise Conflict("Config changed during this operation; nothing overwritten. Retry after other config edits finish.")
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
-def cmd_scan(args):
-    root = project_root(args.dir)
-    report = scan(root, nested=not args.no_nested)
+def operate(command, root, config_path, protected, dry_run=False):
+    existed = config_path.exists()
+    raw = read_config(config_path)
+    configured_skills(raw)
+    base, owned, old_block = split_owned(raw, root)
+    for entry in parse_config(raw).get("skills", {}).get("config", []):
+        if Path(entry["path"]).expanduser().resolve() in owned and set(entry) != {"path", "enabled"}:
+            raise Conflict("A managed skill entry has extra user fields; nothing changed.")
+    existing = configured_skills(base)
+    if owned & existing.keys():
+        raise Conflict("Managed skill paths also have user entries; resolve the duplicate configuration first.")
+    paths, skipped = discover(root, protected) if command != "restore" else ([], [])
+    report = {
+        "project": str(root), "config": str(config_path), "command": command,
+        "discovered": [str(path) for path in paths],
+        "managed": [str(path) for path in sorted(owned)],
+        "preserved_user_entries": [
+            {"path": str(path), "enabled": existing[path]}
+            for path in paths if path in existing
+        ],
+        "skipped": skipped, "changed": False, "dry_run": dry_run,
+    }
+    if command == "status":
+        return report
+    if command == "off":
+        owned.update(path for path in paths if path not in existing)
+        block = make_block(root, owned) if owned else b""
+        # Keep the original block location on repeated calls, including when
+        # the user has appended unrelated tables after it.
+        replacement = raw if block == old_block else base + block
+    else:
+        replacement = base
+        owned.clear()
+    report["managed"] = [str(path) for path in sorted(owned)]
+    report["changed"] = replacement != raw
+    parse_config(replacement)
+    if report["changed"] and not dry_run:
+        atomic_write(config_path, raw, replacement, existed)
+    return report
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=("off", "restore", "status"))
+    parser.add_argument("directory", nargs="?", default=".")
+    parser.add_argument("--dry-run", action="store_true", help="preview without writing config or a lock")
+    parser.add_argument("--json", action="store_true", help="print machine-readable results")
+    args = parser.parse_args(argv)
+    try:
+        codex_home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))).expanduser().resolve()
+        config_path = (codex_home / "config.toml").resolve()
+        root = project_root(args.directory)
+        protected = protected_roots(codex_home)
+        validate_root(root, protected)
+        if args.command == "status" or args.dry_run:
+            report = operate(args.command, root, config_path, protected, args.dry_run)
+        else:
+            with config_lock(config_path):
+                report = operate(args.command, root, config_path, protected)
+    except (Conflict, OSError, RuntimeError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return
-    items = report["items"]
-    risky = [i for i in items if i["risk"] or i["shadows_personal"] or i["shadows_synced"]]
-    print(f"Project: {root}")
-    print(f"Project skills/commands found: {len(items)}  (flagged: {len(risky)})")
-    if report["project_settings_has_hooks"]:
-        print("NOTE: .claude/settings.json defines hooks (fresh-air does not touch hooks).")
-    current = load_settings(settings_path(root)).get("skillOverrides", {})
-    for it in items:
-        state = ",".join(sorted({current.get(n, "on") for n in it["names"]}))
-        flags = list(it["risk"])
-        if it["shadows_personal"]:
-            flags.append("shadows-personal:" + "/".join(it["shadows_personal"]))
-        if it["shadows_synced"]:
-            flags.append("shadows-synced:" + "/".join(it["shadows_synced"]))
-        print(f"  [{state:>4}] {it['kind']:7} {'/'.join(it['names']):28} {it['path']}"
-              + (f"  !! {' '.join(flags)}" if flags else ""))
-
-
-MEMORY_FILES = ("CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md")
-
-
-def git_tracked(root, path):
-    try:
-        out = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", str(path)],
-                             capture_output=True, timeout=5)
-        return out.returncode == 0
-    except (OSError, subprocess.SubprocessError):
-        return False
-
-
-def glob_escape(path):
-    return re.sub(r"([\[\]*?{}])", r"\\\1", str(path))
-
-
-def claude_md_patterns(root, scope):
-    """Absolute claudeMdExcludes patterns for memory files the project ships.
-
-    scope "sub" covers subdirectories only (root CLAUDE.md stays), "all" adds the root.
-    CLAUDE.local.md is the user's own file, so it is excluded only when the repo commits it.
-    """
-    patterns = []
-    dirs = [root] if scope == "all" else []
-    root_depth = len(root.parts)
-    for dirpath, dirnames, _ in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in PRUNE_DIRS and not (d.startswith(".") and d != ".claude")]
-        if len(Path(dirpath).parts) - root_depth >= MAX_DEPTH:
-            dirnames[:] = []
-        if ".claude" in dirnames:
-            dirnames.remove(".claude")
-        if Path(dirpath) != root:
-            dirs.append(Path(dirpath))
-    for d in dirs:
-        for name in MEMORY_FILES:
-            if (d / name).is_file():
-                patterns.append(glob_escape(d / name))
-        local = d / "CLAUDE.local.md"
-        if local.is_file() and git_tracked(root, local):
-            patterns.append(glob_escape(local))
-        if (d / ".claude" / "rules").is_dir():
-            patterns.append(glob_escape(d / ".claude" / "rules") + "/**")
-    return patterns
-
-
-def drop_empty(data, *keys):
-    for k in keys:
-        if k in data and not data[k]:
-            del data[k]
-
-
-def finish(path, data, changed, dry_run, done_msg):
-    if not changed:
-        return False
-    print(("Would change" if dry_run else "Changing") + f" {path}:")
-    for c in changed:
-        print("  " + c)
-    if not dry_run:
-        write_settings(path, data)
-        print(done_msg)
-    return True
-
-
-def cmd_apply(args):
-    root = project_root(args.dir)
-    mode = MODE_ALIASES.get(args.mode, args.mode)
-    report = scan(root, nested=not args.no_nested, with_risk=False)
-    block, skipped, plugins = plan_targets(report)
-    path = settings_path(root)
-    data = load_settings(path)
-    changed = []
-
-    overrides = data.setdefault("skillOverrides", {})
-    for n in block:
-        if overrides.get(n) != mode:
-            overrides[n] = mode
-            changed.append(f"skillOverrides.{n} = {mode}")
-    drop_empty(data, "skillOverrides")
-
-    if plugins:
-        enabled = data.setdefault("enabledPlugins", {})
-        for p in plugins:
-            if enabled.get(p) is not False:
-                enabled[p] = False
-                changed.append(f"enabledPlugins.{p} = false")
-
-    if args.claude_md:
-        excludes = data.setdefault("claudeMdExcludes", [])
-        for pat in claude_md_patterns(root, args.claude_md):
-            if pat not in excludes:
-                excludes.append(pat)
-                changed.append(f"claudeMdExcludes += {pat}")
-        drop_empty(data, "claudeMdExcludes")
-
-    for n, why in sorted(skipped.items()):
-        print(f"SKIP {n}: {why}")
-    if not block and not plugins and not args.claude_md:
-        print(f"No project skills found under {root}; nothing to do.")
-        return
-    if not finish(path, data, changed, args.dry_run,
-                  f"Done. {len(block)} project skill name(s) set to '{mode}'."):
-        print(f"Already fresh: {path} is up to date.")
-
-
-def cmd_restore(args):
-    root = project_root(args.dir)
-    report = scan(root, nested=not args.no_nested, with_risk=False)
-    block, _, plugins = plan_targets(report)
-    path = settings_path(root)
-    if not path.exists():
-        print(f"{path} does not exist; nothing to restore.")
-        return
-    data = load_settings(path)
-    changed = []
-    overrides = data.get("skillOverrides", {})
-    for n in block:
-        if n in overrides:
-            del overrides[n]
-            changed.append(f"skillOverrides -= {n}")
-    drop_empty(data, "skillOverrides")
-    enabled = data.get("enabledPlugins", {})
-    for p in plugins:
-        if enabled.get(p) is False:
-            del enabled[p]
-            changed.append(f"enabledPlugins -= {p}")
-    drop_empty(data, "enabledPlugins")
-    excludes = data.get("claudeMdExcludes", [])
-    for pat in claude_md_patterns(root, "all"):
-        if pat in excludes:
-            excludes.remove(pat)
-            changed.append(f"claudeMdExcludes -= {pat}")
-    drop_empty(data, "claudeMdExcludes")
-    if not finish(path, data, changed, args.dry_run, "Restored."):
-        print("Nothing to restore.")
-
-
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("scan", "apply", "restore"):
-        p = sub.add_parser(name, aliases=["revert"] if name == "restore" else [])
-        p.add_argument("dir", nargs="?", default=".")
-        p.add_argument("--no-nested", action="store_true", help="only the project root .claude/")
-        if name == "scan":
-            p.add_argument("--json", action="store_true")
-        if name == "apply":
-            p.add_argument("--mode", choices=MODES + tuple(MODE_ALIASES), default="off")
-            p.add_argument("--claude-md", choices=("sub", "all"),
-                           help="exclude project CLAUDE.md files: sub = subdirectories only, all = root too")
-        if name in ("apply", "restore"):
-            p.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
-    cmd = "restore" if args.cmd == "revert" else args.cmd
-    {"scan": cmd_scan, "apply": cmd_apply, "restore": cmd_restore}[cmd](args)
+    else:
+        print(f"Project: {report['project']}\nConfig: {report['config']}")
+        print(f"Discovered: {len(report['discovered'])}; managed disabled paths: {len(report['managed'])}")
+        for path in report["discovered"]:
+            print(f"SKILL: {path}")
+        for entry in report["preserved_user_entries"]:
+            print(f"PRESERVED: {entry['path']} (enabled={str(entry['enabled']).lower()})")
+        for message in report["skipped"]:
+            print(f"SKIP: {message}")
+        if args.command != "status":
+            print("Would change config." if args.dry_run and report["changed"] else "Config changed." if report["changed"] else "No changes.")
+            if report["changed"] and not args.dry_run:
+                print("Restart Codex sessions using this CODEX_HOME to load the change.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

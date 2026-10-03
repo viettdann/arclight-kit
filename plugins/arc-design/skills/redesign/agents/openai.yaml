@@ -1,0 +1,4 @@
+interface:
+  display_name: "Redesign"
+  short_description: "Rebuild the visual design while preserving product behavior."
+  default_prompt: "Use $redesign to update this interface and preserve its content and behavior."

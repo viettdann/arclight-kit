@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Interaction"
+  short_description: "Build complete interaction, loading, and error states."
+  default_prompt: "Use $ui-interaction for the requested component behavior."

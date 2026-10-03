@@ -38,7 +38,7 @@ Do not restate the original claim, do not search for partial matches that prop i
 
 Naming what the bad claim contaminated is part of the retraction. Otherwise the user has to do the bookkeeping.
 
-> The design section that proposed "reuse existing HMAC helper" is invalidated. Replacement: implement `verifyAdoSignature()` from scratch in `server/src/routes/automation.ts`, using `crypto.createHmac` and `crypto.timingSafeEqual` directly. The Implementation Plan drops the "extract shared HMAC util" item and adds a unit test for the new function plus an integration test that posts a signed and an unsigned payload.
+> The design section that proposed "reuse existing HMAC helper" is invalidated. Replacement: first verify the provider's actual authentication or signature contract in its official documentation. Implement `verifyAdoSignature()` only if that contract supports it; otherwise revise the endpoint authentication design. Update the plan and tests to match the verified mechanism rather than assuming HMAC support.
 
 ## Re-present the affected sections
 

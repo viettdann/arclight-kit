@@ -1,8 +1,0 @@
-{
-  "name": "arc-design",
-  "version": "1.0.1",
-  "description": "Design new UI with profiles and styles (design), give existing UI a new look (redesign), remove the generated look (restyle), measure rendering defects on a running page (ui-check), and interaction and state rules (ui-interaction).",
-  "author": {
-    "name": "viettdann"
-  }
-}

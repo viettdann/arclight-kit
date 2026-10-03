@@ -1,0 +1,21 @@
+{
+  "name": "arc-design",
+  "version": "2.0.0",
+  "description": "Design, redesign, refine, and verify web interfaces.",
+  "author": {
+    "name": "viettdann"
+  },
+  "repository": "https://github.com/viettdann/arclight-kit",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Arc Design",
+    "shortDescription": "Design, redesign, refine, and verify web interfaces.",
+    "developerName": "viettdann",
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Design a new screen with arc-design.",
+      "Redesign this page while preserving its behavior.",
+      "Check this UI at phone and desktop widths."
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 # Example handoff
 
-A filled-in handoff at the density and specificity to target. Note the Failed
+A fictional handoff at the density and specificity to target; the files and results below are illustrative. Note the Failed
 attempts entry: it names the exact dead end and the reason, so the next session
 doesn't waste a turn re-discovering it.
 
@@ -10,9 +10,8 @@ doesn't waste a turn re-discovering it.
 
 > To resume: read this file top to bottom, then run `git status` and `git diff`
 > to confirm the repo matches what's described below before continuing.
-> Source session: `3f2a9c1e-7b4d-4e8a-9c6f-1d2e3b4a5c6d` (full transcript: `claude --resume 3f2a9c1e-7b4d-4e8a-9c6f-1d2e3b4a5c6d`)
 
-## Goal
+## Goal and scope
 
 Refresh expired access tokens transparently so API calls don't 401 mid-session.
 Target: a request that hits an expired token retries once with a fresh token.
@@ -36,6 +35,11 @@ refresh request is in flight) is unhandled.
 
 - `src/auth/token.ts` - added `refreshToken()`, added `onUnauthorized` stub.
 - `src/auth/token.test.ts` - new file, one passing test.
+
+## Verification
+
+- `bun test src/auth/token.test.ts`: passed (one happy-path test).
+- Request-layer integration checks: not run; wiring is incomplete.
 
 ## Failed attempts
 

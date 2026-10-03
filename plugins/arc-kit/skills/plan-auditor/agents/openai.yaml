@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit a plan"
+  short_description: "Validate a technical plan against actual project evidence"
+  default_prompt: "Use $plan-auditor to audit the supplied plan against the codebase."

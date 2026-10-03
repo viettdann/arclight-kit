@@ -1,94 +1,39 @@
-# Example: Happy Path
+# Example: Design and implement a rate limiter
 
-> Fictional project: paths, symbols, and findings below are illustrative, not facts about this repository.
+> Fictional project: paths, symbols, and findings are illustrative.
 
-Shows the full workflow when the user engages cooperatively, answers clarifying questions, and approves the plan without pivoting.
+User: “I want to add a rate limiter to our Hono API server. Cap each IP per minute across all endpoints.”
 
-## User prompt
+## Discover the constraints
 
-> I want to add a rate limiter to our Hono API server. Each IP should be capped at some reasonable amount per minute across all endpoints.
+Read the middleware registration, deployment configuration, dependencies, and tests. Use `rg` and the available file-reading tools; batch independent reads.
 
-## Step 1: Grasp + targeted codebase discovery
+Illustrative findings:
 
-Assistant response:
+- Verified: `createApp()` in `server/src/main.ts` registers CORS and authentication middleware.
+- Verified: `getTrustedClientIp()` in `server/src/middleware/clientIp.ts` supplies the validated client identity.
+- Verified: the deployment configuration in `deploy/api.yaml` runs one API process.
+- Assumed: 60 requests per minute is an appropriate product default; the user did not specify a number.
 
-> Before I suggest a design, let me check how the server is structured.
+Do not infer deployment topology from missing dependencies. Identify stable symbols and paths for facts the design relies on.
 
-Runs (in parallel):
-- `Grep` for `hono` imports in `server/src`
-- `Read` `server/src/main.ts`, `server/src/middleware/` (if exists)
-- `Grep` for existing `rateLimit|throttle` patterns
+## Choose the behavior
 
-Summary back to user:
-- Hono app entrypoint at `server/src/main.ts`, middleware chain already uses CORS + auth
-- No existing rate-limit middleware found
-- Routes split across `server/src/routes/` (17 files)
-- Bun runtime, no Redis in deps
+If the cap is consequential, use an optional preference question through `request_user_input` when available and supported, or ask in text. Resolve API signatures and storage capabilities yourself.
 
-## Step 2: Self-verify + Clarify
+User: “Sliding window, 30 a minute.”
 
-The assistant resolves factual constraints from codebase discovery instead of asking:
+This refines the active implementation request. It does not require another execution approval.
 
-> **Resolved from codebase:**
->
-> Verified:
-> - Single-node deployment, no Redis in `package.json` dependencies → in-memory storage is the right fit. No reason to add a new dependency
-> - Pino imported in `createLogger()` at `server/src/lib/logger.ts`, called by `authMiddleware` in `server/src/middleware/auth.ts`. Available for the rate-limit middleware as well
->
-> Assumed (listed in the plan's assumptions to validate):
-> - Client IP reachable via `c.req.header('x-forwarded-for')` in this deployment
->
-> **Preference question (requires user input):**
->
-> Two algorithm shapes fit:
-> 1. **Sliding window per IP** (recommended): rolling 60s window, drops old timestamps on each request. Accurate, small memory footprint
-> 2. **Fixed window counter:** simpler, but allows 2x burst at window boundaries
->
-> I recommend sliding window. Which do you prefer, and what cap per IP per minute? (60/min is a common starting point if you have no number in mind.)
+## State the design and plan
 
-Note: the assistant did NOT ask "how should state be stored?" because codebase discovery already answered that (single-node, no Redis). It stated the conclusion as a fact and only asked the genuine preference question.
+Use a sliding window keyed by the existing trusted client identity, with bounded storage and expiry cleanup. Return `429` and `Retry-After` when over the limit. State restart behavior and the single-process scope.
 
-User: "Sliding window, 30 a minute."
+| File | Change | Check |
+| --- | --- | --- |
+| `server/src/middleware/rateLimit.ts` | Implement the middleware using project patterns | Deterministic clock tests at the limit and window boundary |
+| `server/src/main.ts` | Register middleware in the intended route scope | HTTP integration test for limited and exempt routes |
+| `server/src/middleware/rateLimit.test.ts` | Cover limits, expiry, cleanup, and client isolation | Run the relevant test file |
+| `server/tests/rateLimit.integration.test.ts` | Exercise the registered middleware | Existing integration test command passes |
 
-## Step 3: Present full design in one message
-
-The assistant presents the entire design as a single coherent message, NOT section-by-section:
-
-> **Architecture:**
-> Middleware `rateLimitMiddleware(limit, windowMs)` registered in `server/src/main.ts` before routes. Stores a `Map<ip, number[]>` keyed by client IP. Sliding window algorithm.
->
-> **Components:**
-> - `server/src/middleware/rateLimit.ts`: middleware factory
-> - In-memory store scoped to module (cleared on restart)
-> - Returns `429` with `Retry-After` header when limit exceeded
->
-> **Error handling:**
-> - Log at `warn` level via Pino with `{ ip, path, count }` when limit hit
->
-> **Testing:**
-> - Unit test: inject fake clock, verify window behavior
-> - Integration test: hit endpoint 31 times in 60s, expect 30 success + 1 rejection
->
-> Does this design look right?
-
-Note: ONE confirmation ask at the end of the full design, not after each section.
-
-User: "Yes."
-
-## Step 4: Implementation plan
-
-```
-Files touched:
-- server/src/middleware/rateLimit.ts (new): sliding-window factory, exports rateLimitMiddleware
-- server/src/main.ts (edit): register middleware before routes
-- server/src/middleware/rateLimit.test.ts (new): unit tests with fake clock
-- server/tests/rateLimit.integration.test.ts (new): integration test
-
-Assumptions to validate:
-- Client IP is available via Hono's c.req.header('x-forwarded-for') or c.env.remoteAddr
-
-Verification criteria:
-- Unit test: 30 requests in window succeed, 31st returns 429
-- Integration test: real HTTP, same result
-- No TypeScript errors, biome check passes
-```
+Save a durable design if the work needs one, then implement and verify. If the original request was only to discuss a design, finish with the design and plan instead.

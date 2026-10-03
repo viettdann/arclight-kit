@@ -5,11 +5,13 @@ description: "Behavior and state rules for interactive UI: forms and validation,
 
 # UI Interaction Rules
 
+Resolve reference and script paths relative to this `SKILL.md`. Before running a helper from the project directory, replace its relative path with the absolute installed path; keep the project working directory so target paths resolve correctly. Read applicable `AGENTS.md` instructions first. Use the session’s available shell, file-editing, and image-viewing tools; load only the references needed for the task.
+
 Generated UI tends to render only the happy path: every column in the table, a disabled submit button, a blank screen when search finds nothing, a generic "Are you sure?". These rules cover the rest.
 
 ## Workflow
 
-1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules. A surface that matches several rows of the table below needs each of their references: a modal holding a form needs `overlays.md` and `forms.md`. When a reference points to the design skill (`typography.md`, `avatars.md`, `profile-tool.md`), those files are in `${CLAUDE_PLUGIN_ROOT}/skills/design/references/`; read one only when you build what it covers.
+1. Load `references/baseline.md`, plus only the references for surfaces you are creating or changing, not everything on the screen. Adding a delete button to an existing table needs `destructive.md`, not the form or overlay rules. A surface that matches several rows of the table below needs each of their references: a modal holding a form needs `overlays.md` and `forms.md`. When a reference points to the design skill (`typography.md`, `avatars.md`, `profile-tool.md`), those files are in `../design/references/`; read one only when you build what it covers.
 
 | Surface you create or change | Load |
 | --- | --- |

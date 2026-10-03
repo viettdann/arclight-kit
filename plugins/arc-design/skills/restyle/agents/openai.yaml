@@ -1,0 +1,4 @@
+interface:
+  display_name: "Restyle"
+  short_description: "Refine a generic interface while retaining its layout."
+  default_prompt: "Use $restyle to refine this interface without changing its layout."

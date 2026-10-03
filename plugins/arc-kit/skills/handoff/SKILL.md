@@ -1,69 +1,30 @@
 ---
 name: handoff
-description: Write a session handoff file before ending a Claude Code session, so a fresh session can resume cleanly after /clear. Use this INSTEAD of /compact or auto-compact, which often summarize the work with wrong, vague, or invented details.
-when_to_use: "Usually invoked directly. Also trigger on two intents, in English or Vietnamese: ending or pausing work (wrap up, save progress, free up context, about to /clear or /compact, \"lưu tiến độ\", \"ghi handoff\", \"tạm dừng\", \"chuẩn bị clear\"), and starting work by resuming from a previous handoff (\"làm tiếp\", \"tiếp tục từ handoff\")."
-effort: high
+description: "Save or resume a concise, verified session handoff with the task, current files, checks, decisions, and next action. Use for wrap up, save progress, resume a handoff, lưu tiến độ, ghi handoff, tạm dừng, or tiếp tục từ handoff. Complements Codex compaction and session resume."
 ---
 
 # Handoff
 
-A handoff is a short, accurate Markdown file that lets a brand-new session pick up exactly where this one stopped. It lives in `${CLAUDE_PROJECT_DIR}/docs/` (written `docs/` below), is named with today's date and the task, and is written from verified facts.
+Write a short Markdown file that lets a fresh session continue from verified state. Use Vietnamese in chat and English in files unless requested otherwise. Follow applicable AGENTS.md instructions. A handoff supplements the runtime's context compaction and session resume features.
 
-Accuracy is the whole point - a confident-but-wrong handoff is worse than useless.
+## Save progress
 
-## Writing a handoff
+1. Identify the project root from the workspace context and git when available. Read the current branch, scoped status and diff, relevant recent commits, and the files you describe. Inspect only the task's paths; avoid exposing unrelated edits and secrets. Use `rg --files` for file discovery. If there is no repository, inspect the relevant files directly and record that change tracking could not be verified.
+2. Capture the active goal, latest user corrections, authorization boundaries, completed work, remaining items, and actual verification results. Distinguish observed facts from assumptions and from work reported by another worker. Do not claim a test ran if its result is unavailable.
+3. Choose `docs/handoff-YYYY-MM-DD-<slug>.md` under the verified project root, using the local date and a short lowercase kebab-case task slug. Create the directory if needed. If the destination already exists, append the lowest free suffix (`-2`, `-3`, etc.). Never overwrite a previous handoff. If no writable project root is identifiable, ask where to save it.
+4. Read [assets/handoff-template.md](assets/handoff-template.md), relative to this loaded skill directory, and fill the applicable sections. Consult [references/example.md](references/example.md) only when a density example would help. Keep the result to a screen or two and omit empty sections.
+5. Recheck file names, commands, branch, and completion claims. Redact credentials and tokens from excerpts. State the saved path and the concrete next action. Leave `docs/` unstaged unless the user explicitly asks to commit it.
 
-### Step 1 - Ground yourself in reality first
+Include a source session ID only when it is actually exposed by the runtime or supplied and verified in this session. Do not invent a session environment variable, scrape unrelated transcripts, or manufacture an ID. When a verified Codex session ID is available and the installed CLI supports it, record `codex resume <session-id>`; otherwise omit the resume command. Reading the handoff in a fresh session is always sufficient to use the saved context.
 
-Read the actual current state of the repo and any file you're about to describe; do not rely on your recollection of the chat (memory drift is exactly what compaction gets wrong).
+## Resume progress
 
-```bash
-date +%F                  # today's date for the filename
-git status                # staged / modified / untracked
-git diff HEAD --stat      # which files changed (staged + unstaged), how much
-git diff HEAD -- . ':(exclude)*.env*' ':(exclude)*.pem' ':(exclude)*.key' ':(exclude)*.p12' \
-  ':(exclude)*.pfx' ':(exclude)*id_rsa*' ':(exclude)*id_ed25519*' ':(exclude)*credentials*'
-git log --oneline -10     # recent commits for context
-```
+Find relevant `docs/handoff-*.md` files beneath the current project root. Prefer the task and date matching the request; ask only if several files are plausible. If none exists, ask for its location or the missing task context instead of inventing earlier work.
 
-The `:(exclude)` patterns keep env files, private keys, certificates and credential files out of the diff. Before pasting any diff content into the handoff, scan it for secrets (API keys, tokens, credentials) and redact them - the handoff is plaintext and may be committed.
+Read the entire handoff and recheck the referenced files, current branch, status, and scoped diff. Trust the repository when it disagrees with stale notes. Preserve existing changes and identify any assumption that no longer holds.
 
-If git is unavailable, list the working directory (`ls -R` scoped to the area you worked in) and read the files you touched. Warn the user that without version control the handoff's change-tracking is unverified, and record that caveat in _Open questions_.
+State the current goal and next action briefly, then continue the user's authorized task. Resume only the scope recorded and requested; a handoff does not itself authorize deployment, messaging, or unrelated changes. Verify any session resume command against the available CLI before suggesting it.
 
-### Step 2 - Choose the filename
+## Retention
 
-Format: `docs/handoff-YYYY-MM-DD-<slug>.md` (e.g. `docs/handoff-2026-06-06-auth-token-refresh.md`).
-
-- `YYYY-MM-DD` is today's date (date-first so files sort chronologically).
-- `<slug>` is 2-4 kebab-case words naming the task: `auth-token-refresh`, `csv-import-bug`.
-
-Create the dir if missing (`mkdir -p docs`). Same-day same-slug collisions are common, so enumerate existing matches before writing and append the lowest free numeric suffix after the slug:
-
-```bash
-ls docs/handoff-YYYY-MM-DD-<slug>*.md 2>/dev/null
-```
-
-If the base name is taken, use `-2`, then `-3`, etc. (`handoff-2026-06-06-<slug>-2.md`). Never overwrite an existing handoff.
-
-### Step 3 - Write the file
-
-Read [assets/handoff-template.md](assets/handoff-template.md) and fill every section from what you verified in Step 1. The template's session ID is `${CLAUDE_SESSION_ID}`. If you're unsure how much detail a section needs, [references/example.md](references/example.md) is a filled-in handoff at the right density - read it only when that calibration is missing.
-
-The template's inline notes carry the per-section rules. Two calibrations worth restating: a claim you can't verify moves to _Open questions_ or gets dropped, never into _Current state_, _Files in flight_, or _Changed_; and hedged uncertainty is the correct register there. "I think the migration ran but didn't confirm" is useful; asserting "the migration ran" when you didn't check is the failure mode this skill prevents.
-
-Keep the file to a screen or two - density beats length. Omit empty sections rather than padding them. After writing, tell the user the path and suggest: review it, `/clear`, then start the next session by reading it.
-
-### Retention
-
-Handoff files accumulate. Recommend deleting or archiving a handoff once its task is closed (merged/shipped), so the dir stays current.
-
-## Resuming after /clear
-
-When a session starts and the user wants to continue earlier work:
-
-1. Find the latest handoff: `ls -t docs/handoff-*.md | head -5`, pick the relevant one (confirm if ambiguous). If none exist, say so and ask whether to start cold or point you at a specific file - do not invent prior context.
-2. Read it fully.
-3. Re-ground as in Step 1: run `git status` and `git diff`, confirm the repo still matches _Current state_ and _Files in flight_ (files may have changed since it was written).
-4. State the plan back in one or two lines (goal + next step), then proceed.
-
-If the repo and the handoff disagree, trust the repo and say so; don't act on stale notes. If the handoff lacks a detail you need, tell the user they can reopen the original transcript with `claude --resume` and the session ID in its header.
+When the task is closed, mention archiving or deleting its handoff if useful. Do not delete saved context without authorization.

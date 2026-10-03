@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design a feature"
+  short_description: "Turn a feature request into a grounded implementation plan"
+  default_prompt: "Use $brainstorming to design the requested feature and plan its implementation."

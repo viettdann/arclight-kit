@@ -1,22 +1,23 @@
 ---
 name: ui-check
 description: "Measure rendering defects on a page that runs (dev server, staging, or a static file): horizontal overflow and the element causing it, clipped or overlapping text, contrast of every text element in each theme, keyboard focus without a visible state, controls without an accessible name, targets under 24px, broken or distorted images, JS errors and failed requests, at phone, tablet, desktop, and wide widths. Use when the user asks to check, QA, test, or verify how a page or UI renders (\"check the UI\", \"is anything broken\", \"test it on mobile\", \"kiểm tra giao diện\", \"xem có lỗi hiển thị không\"), before shipping a UI change, or after building, restyling, or redesigning a page. Reports by impact and fixes only when asked. Not for taste or the generated look (use restyle), a new visual direction (redesign), or building component behavior (ui-interaction)."
-argument-hint: "[url or file] [fix]"
 ---
 
 # UI check
+
+Resolve reference and script paths relative to this `SKILL.md`. Before running a helper from the project directory, replace its relative path with the absolute installed path; keep the project working directory so target paths resolve correctly. Read applicable `AGENTS.md` instructions first. Use the session’s available shell, file-editing, and image-viewing tools; load only the references needed for the task.
 
 A page can pass every rule in its code and still break when it renders: a table pushes the page sideways at 375px, a label lands on a heading at 768px, a muted grey fails contrast only in the dark theme, a custom button loses its focus ring. These are measurable, so measure them instead of eyeballing a screenshot. This skill reports defects, not taste; taste is restyle's job.
 
 ## Workflow
 
-1. **Target.** The URL of a dev server or staging site that is already running, or a static HTML file. Don't start a server or install anything unless the user asks; if the page needs a server that isn't running, say so and stop. A production URL is checked read-only. As in the design skills, read only the current working tree (`${CLAUDE_PLUGIN_ROOT}/skills/design/SKILL.md`, Sources).
+1. **Target.** The URL of a dev server or staging site that is already running, or a static HTML file. For an authorized local UI check, start the project's existing dev command when needed and stop only the process you started afterward. If dependencies or credentials are missing, report that limitation and continue static checks. A production URL is checked read-only. As in the design skills, read only the current working tree (`../design/SKILL.md`, Sources).
 2. **Run the check**, with screenshots in a temp dir:
    ```bash
-   d=$(mktemp -d) && node ${CLAUDE_SKILL_DIR}/scripts/ui_check.mjs <url-or-file> --shot "$d/shot.png"
+   d=$(mktemp -d) && node ./scripts/ui_check.mjs <url-or-file> --shot "$d/shot.png"
    ```
    It loads the page at 375, 768, 1280, and 1920px (`--width` to change), light theme by default, and walks the first 40 Tab stops at 1280. Add `--scheme light,dark` when the project has a dark theme through `prefers-color-scheme`; a theme set by a class needs a second run with `--eval "document.documentElement.classList.add('dark')"`. Use `--wait-for <css>` for content that arrives after load (charts, fetched lists), `--eval "js"` to open the state to check (a tab, a modal, a later step), `--root <site-root>` for a local file that uses root-relative assets, `--full` for whole-page shots, `--json` for the full list. One run per URL. Exit 0 means nothing at P1 or P2, 1 findings at P1 or P2, 2 the check couldn't run (no Node 22+, no Chrome, Chromium, or Edge, page unreachable); on 2, say what is missing and stop.
-3. **Look at the screenshots** of every width for what the script can't measure: elements detached from what they describe, large empty areas, a primary action off screen at 375px, sections in the wrong order. Confirm each `[review]` finding in the shot before reporting it, and drop it when it's intended (a badge meant to sit over an avatar, a caption positioned over a photo). For a hover state, use `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/screenshot.mjs <url> out.png --hover <css>`.
+3. **Look at the screenshots** of every width for what the script can't measure: elements detached from what they describe, large empty areas, a primary action off screen at 375px, sections in the wrong order. Confirm each `[review]` finding in the shot before reporting it, and drop it when it's intended (a badge meant to sit over an avatar, a caption positioned over a photo). For a hover state, use `node ../design/scripts/screenshot.mjs <url> out.png --hover <css>`.
 4. **Report** in this shape, at most about ten lines, ordered by severity and then by how many users meet it:
    ```
    P1 overflow · 375, 768 · `table.invoices`: right edge 120px past the viewport → wrap it in an overflow-x: auto container
@@ -31,7 +32,7 @@ A page can pass every rule in its code and still break when it renders: a table 
 | --- | --- | --- |
 | `overflow` | fixed width, unbroken string, flex item without `min-w-0`, wide table or code block | Fix the element the script names: `min-w-0`, `overflow-wrap: anywhere`, a scroll container for tables and code. Never `overflow-x: hidden` on `html` or `body`: it hides the overflow and breaks `position: sticky` (the script still finds it). |
 | `clipped`, `overlap` | fixed height, `whitespace-nowrap` without truncation, absolute positioning, display line-height under 1 | Ellipsis with `min-w-0`, or let it wrap; `typography.md` (Long text) |
-| `contrast` | a muted or placeholder token, a light accent, a dark theme that wasn't checked | Change the token, not one usage; verify the new pair with `${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/contrast.mjs`. Over glass: `materials.md`. |
+| `contrast` | a muted or placeholder token, a light accent, a dark theme that wasn't checked | Change the token, not one usage; verify the new pair with `../design/scripts/contrast.mjs`. Over glass: `materials.md`. |
 | `contrast-unmeasured` | text over an image, gradient, or glass | Check it in the shot; add a scrim or a solid surface behind the text if it fails |
 | `focus` | `outline: none` without a replacement | A `:focus-visible` ring from the `focus-ring` token (ui-interaction `baseline.md`) |
 | `name`, `placeholder-label` | icon button without a label, field labelled by its placeholder | `aria-label` on icon buttons, a visible `<label>` above fields (ui-interaction `forms.md`) |
@@ -40,7 +41,7 @@ A page can pass every rule in its code and still break when it renders: a table 
 | `js-error`, `console`, `request-asset`, `request` | a runtime error or a missing file | Report it with the message; fix only when the cause is in the UI code being checked |
 | `heading`, `viewport`, `favicon` | structure | One `h1`, no skipped levels, `<meta name="viewport" content="width=device-width, initial-scale=1">` |
 
-Reference paths: `typography.md`, `materials.md`, and `cards.md` are in `${CLAUDE_PLUGIN_ROOT}/skills/design/references/`; `baseline.md` and `forms.md` in `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/`.
+Reference paths: `typography.md`, `materials.md`, and `cards.md` are in `../design/references/`; `baseline.md` and `forms.md` in `../ui-interaction/references/`.
 
 ## Severity
 

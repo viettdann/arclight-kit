@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
+import argparse
 import json
+from pathlib import Path
 import os
 import re
-import subprocess
 import sys
-import tempfile
-import time
 
 DEFAULT_WIDTH = 150
 WRAP_MIN = 60
 MAX_BYTES = 2_000_000
-LOCK_TTL = 3600
-LOCK_DIR = os.path.join(tempfile.gettempdir(), f"comment-lint-{os.getuid() if hasattr(os, 'getuid') else 'user'}")
-
+MAX_MATCH_STATES = 256
+MAX_MATCH_WORK = 4_000_000
 
 def option(key, default):
-    return os.environ.get(f"CLAUDE_PLUGIN_OPTION_{key}", "").strip() or default
+    return os.environ.get(f"ARC_{key}", "").strip() or default
 
 
 def lint_enabled():
@@ -25,7 +23,7 @@ def lint_enabled():
 def lint_width():
     try:
         return max(int(float(option("COMMENT_LINT_WIDTH", str(DEFAULT_WIDTH)))), WRAP_MIN)
-    except ValueError:
+    except (ValueError, OverflowError):
         return DEFAULT_WIDTH
 
 
@@ -64,42 +62,117 @@ def line_comment(line, marker):
     return m.group(1), m.group(2).rstrip()
 
 
-def edit_added(lines, text, tool_input):
-    new, old = tool_input.get("new_string", ""), tool_input.get("old_string", "")
-    old_lines = set(old.split("\n"))
-    fresh = {k for k, line in enumerate(new.split("\n")) if line not in old_lines and line.strip()}
-    added, start = set(), text.find(new) if new else -1
-    while start != -1:
-        base = text.count("\n", 0, start)
-        added.update(base + k for k in fresh)
-        if not tool_input.get("replace_all"):
-            break
-        start = text.find(new, start + len(new))
-    if not added:
-        wanted = {new.split("\n")[k] for k in fresh}
-        added = {i for i, line in enumerate(lines) if line in wanted}
-    return added
+def parse_patch(command):
+    """Read the apply_patch grammar; reject incomplete or unexpected input."""
+    if not isinstance(command, str) or len(command.encode("utf-8")) > MAX_BYTES:
+        return []
+    rows = command.strip().splitlines()
+    if len(rows) < 2 or rows[0] != "*** Begin Patch" or rows[-1] != "*** End Patch":
+        return []
+    operations, i = [], 1
+    while i < len(rows) - 1:
+        header = rows[i]
+        kind = next((k for k in ("Add", "Update", "Delete") if header.startswith(f"*** {k} File: ")), None)
+        if not kind:
+            return []
+        path = header.split(": ", 1)[1]
+        i += 1
+        if not path:
+            return []
+        if kind == "Delete":
+            operations.append((path, path, kind, []))
+            continue
+        destination = path
+        if kind == "Update" and rows[i].startswith("*** Move to: "):
+            destination = rows[i][len("*** Move to: "):]
+            i += 1
+        hunks, body, anchor, eof = [], [], None, False
+        while i < len(rows) - 1 and not rows[i].startswith(("*** Add File: ", "*** Update File: ", "*** Delete File: ")):
+            row = rows[i]
+            if kind == "Update" and (row == "@@" or row.startswith("@@ ")):
+                if body:
+                    hunks.append((body, anchor, eof))
+                body, anchor, eof = [], row[3:] if row.startswith("@@ ") else None, False
+            elif kind == "Update" and row == "*** End of File":
+                eof = True
+            elif not eof and (row and row[0] in ("+" if kind == "Add" else " +-") or not row and kind == "Update"):
+                body.append(row or " ")
+            else:
+                return []
+            i += 1
+        if body:
+            hunks.append((body, anchor, eof))
+        operations.append((path, destination, kind, hunks))
+    return operations
 
 
-def write_added(path, lines):
-    cwd = os.path.dirname(path) or "."
-    tracked = subprocess.run(
-        ["git", "-C", cwd, "ls-files", "--error-unmatch", "--", path],
-        capture_output=True, text=True,
-    )
-    if tracked.returncode != 0:
-        return set(range(len(lines)))
-    diff = subprocess.run(
-        ["git", "-C", cwd, "diff", "-U0", "--no-color", "HEAD", "--", path],
-        capture_output=True, text=True,
-    )
-    if diff.returncode != 0:
-        return set(range(len(lines)))
-    added = set()
-    for m in re.finditer(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", diff.stdout, re.M):
-        start, count = int(m.group(1)), int(m.group(2) or "1")
-        added.update(range(start - 1, start - 1 + count))
-    return added
+def matching_starts(lines, expected, start, eof):
+    last = len(lines) - len(expected)
+    candidates = [last] if eof else range(start, last + 1)
+    if len(candidates) * len(expected) > MAX_MATCH_WORK:
+        return []
+    for normalize in (lambda s: s, str.rstrip, str.strip):
+        matches = [
+            i for i in candidates if i >= start
+            and all(normalize(lines[i + j]) == normalize(row) for j, row in enumerate(expected))
+        ]
+        if matches:
+            return matches
+    return []
+
+
+def patch_added(lines, hunks, kind):
+    if kind == "Add":
+        expected = [row[1:] for body, _, _ in hunks for row in body]
+        return set(range(len(lines))) if lines == expected else set()
+    # Intersect all valid placements: repeated context must not implicate old comments.
+    states = {0: set()}
+    for body, anchor, eof in hunks:
+        expected = [row[1:] for row in body if row[0] != "-"]
+        offsets = {j for j, row in enumerate(row for row in body if row[0] != "-") if row[0] == "+"}
+        if not expected:
+            continue
+        next_states = {}
+        for cursor, added in states.items():
+            if anchor is not None:
+                anchors = matching_starts(lines, [anchor], cursor, False)
+                if not anchors:
+                    continue
+                cursor = anchors[0] + 1
+            append = not any(row[0] in " -" for row in body)
+            for start in matching_starts(lines, expected, cursor, eof or append):
+                end = start + len(expected)
+                located = added | {start + j for j in offsets}
+                if end in next_states:
+                    next_states[end] &= located
+                else:
+                    next_states[end] = located
+                if len(next_states) > MAX_MATCH_STATES:
+                    return set()
+        states = next_states
+        if not states:
+            return set()
+    return set.intersection(*states.values()) if states else set()
+
+
+def read_source(root, name):
+    if not isinstance(name, str) or not name:
+        return None
+    try:
+        path = (root / name).resolve()
+        relative = path.relative_to(root)
+        ext = path.suffix.lower()
+        if SKIP_PATH.search(relative.as_posix()) or ext not in SLASH_EXTS | HASH_EXTS | MD_EXTS:
+            return None
+        if not path.is_file() or path.stat().st_size > MAX_BYTES:
+            return None
+        with path.open(encoding="utf-8") as source:
+            content = source.read(MAX_BYTES + 1)
+        if len(content.encode("utf-8")) > MAX_BYTES:
+            return None
+        return path, ext, content.splitlines()
+    except (OSError, ValueError, UnicodeError, RuntimeError):
+        return None
 
 
 def excerpt(text, limit=50):
@@ -161,58 +234,55 @@ def check_markdown(lines, added):
     ]
 
 
-def claim(tool_use_id):
-    if not tool_use_id:
-        return True
-    try:
-        os.makedirs(LOCK_DIR, exist_ok=True)
-        now = time.time()
-        for name in os.listdir(LOCK_DIR):
-            stale = os.path.join(LOCK_DIR, name)
-            try:
-                if now - os.path.getmtime(stale) > LOCK_TTL:
-                    os.remove(stale)
-            except OSError:
-                pass
-        lock = os.path.join(LOCK_DIR, re.sub(r"[^\w-]", "_", tool_use_id))
-        os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
-    except FileExistsError:
-        return False
-    except OSError:
-        return True
-    return True
-
-
-def main():
-    if not lint_enabled():
-        return 0
-    payload = json.load(sys.stdin)
-    tool, tool_input = payload.get("tool_name"), payload.get("tool_input") or {}
-    path = tool_input.get("file_path", "")
-    ext = os.path.splitext(path)[1].lower()
-    if tool not in ("Edit", "Write") or SKIP_PATH.search(path):
-        return 0
-    if ext not in SLASH_EXTS | HASH_EXTS | MD_EXTS:
-        return 0
-    if os.path.getsize(path) > MAX_BYTES:
-        return 0
-    if not claim(payload.get("tool_use_id")):
-        return 0
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
-    lines = text.split("\n")
-    added = edit_added(lines, text, tool_input) if tool == "Edit" else write_added(path, lines)
-    if not added:
-        return 0
-    if ext in MD_EXTS:
-        found = check_markdown(lines, added)
-    else:
-        found = check_code(lines, added, "//" if ext in SLASH_EXTS else "#")
-    if not found:
-        return 0
+def report(path, ext, lines, added):
+    found = check_markdown(lines, added) if ext in MD_EXTS else check_code(lines, added, "//" if ext in SLASH_EXTS else "#")
     for start, end, message, text in sorted(found):
         span = f"{start + 1}-{end + 1}" if end > start else f"{start + 1}"
         print(f'{path}:{span}: {message} "{text}"', file=sys.stderr)
+    return bool(found)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Lint comments added by a Codex apply_patch hook, or entire explicit workspace files.")
+    parser.add_argument("--files", nargs="+", help="Lint all lines in these files, relative to the current directory; no Git diff is used.")
+    args = parser.parse_args()
+    if not lint_enabled():
+        return 0
+    violations = False
+    if args.files:
+        root = Path.cwd().resolve()
+        for name in args.files:
+            source = read_source(root, name)
+            if source:
+                path, ext, lines = source
+                violations |= report(path, ext, lines, set(range(len(lines))))
+    else:
+        try:
+            raw = sys.stdin.read(MAX_BYTES + 1)
+            if len(raw.encode("utf-8")) > MAX_BYTES:
+                return 0
+            payload = json.loads(raw)
+        except (ValueError, UnicodeError):
+            return 0
+        if not isinstance(payload, dict) or payload.get("tool_name") != "apply_patch":
+            return 0
+        tool_input, cwd = payload.get("tool_input"), payload.get("cwd")
+        if not isinstance(tool_input, dict) or not isinstance(cwd, str) or not cwd or not Path(cwd).is_absolute():
+            return 0
+        try:
+            root = Path(cwd).resolve()
+        except (OSError, ValueError, RuntimeError):
+            return 0
+        operations = parse_patch(tool_input.get("command"))
+        for _, destination, kind, hunks in operations:
+            if kind == "Delete":
+                continue
+            source = read_source(root, destination)
+            if source:
+                path, ext, lines = source
+                violations |= report(path, ext, lines, patch_added(lines, hunks, kind))
+    if not violations:
+        return 0
     print(
         f"Join each flagged comment onto one physical line (never wrap it; up to {WIDTH} columns is fine) "
         "stating the invariant, or delete it; drop narrative doc sections. Ignore false positives.",
@@ -222,7 +292,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except Exception:
-        sys.exit(0)
+    sys.exit(main())

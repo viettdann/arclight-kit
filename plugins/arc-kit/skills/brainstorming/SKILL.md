@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Use this skill before implementing non-trivial features, designing components, or making architectural decisions. Explores user intent, requirements, and design through collaborative dialogue before any implementation begins. Trigger on phrases like 'I want to build', 'how should I design', 'let's design', 'brainstorm', 'plan this out', 'tôi muốn làm', 'thiết kế', 'lên kế hoạch', 'nên làm thế nào', or when the user describes a multi-step feature or system they want to create. Do not trigger for small, self-contained tasks like adding a single helper function."
+description: "Design non-trivial features, components, or architectural changes from verified project context. Use for brainstorm, plan this out, design this, thiết kế, or lên kế hoạch. Resolve facts first, ask about consequential choices, and continue implementation when already authorized. Skip small self-contained edits."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -9,13 +9,13 @@ description: "Use this skill before implementing non-trivial features, designing
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start from a high-level description of what the user wants to build and the current project context, then ask questions to refine the idea. Once you understand what you're building, present the design.
+Start from the user's stated intent and project context. Resolve facts independently, ask only about consequential unknowns, and present the design with its execution steps.
 
 ## The Process
 
 ### Understanding the Idea
 
-- **Grasp the idea first.** Ask the user for a high-level description of what they want to build (1-2 sentences is enough to proceed)
+- **Use the intent already provided.** Infer the goal from the request and current conversation. Ask for a high-level description only if the goal is missing.
 - **Targeted codebase discovery:** informed by the user's stated intent:
   - If the project is empty or the user explicitly states it's a greenfield/new project, skip codebase discovery entirely and note this assumption
   - Otherwise, search and read the local codebase
@@ -24,8 +24,8 @@ Start from a high-level description of what the user wants to build and the curr
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
-- **Use AskUserQuestion tool** for preference/judgment questions only:
-  - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions of the same call (up to 4 per call)
+- **Use `request_user_input` for optional preferences when available and supported in the current mode; otherwise ask in text.**
+  - Group related choices into one question; respect the actual tool schema and question limit
   - Each question states your recommended option and why
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
 - Focus on: purpose, constraints, success criteria
@@ -44,16 +44,16 @@ See `examples/verify-callout.md` for the recovery flow when a claim turns out to
 
 ### Handling Disagreement or Stalled Dialogue
 
-- **User contradicts an earlier answer.** Name the contradiction explicitly, list which prior decisions it invalidates, ask which version is correct. Do not silently absorb the new answer. See `examples/user-pivots.md`
-- **User stays unclear across 3+ turns on the same decision, or keeps giving non-answers ("whatever", "you decide").** Pick the safest reasonable default, state it as a decision (not a question), and move on. If no safe default exists, narrow scope to what's already clear or defer the decision and proceed with the rest
-- **User wants to skip the design phase.** State your default assumptions in one message, let the user veto any item, then proceed to the plan. The approval gate still applies. See `examples/skip-design.md`
+- **User changes an earlier answer.** State the affected decisions and apply the latest clear correction. Ask which interpretation is intended only if the new instruction is ambiguous. See `examples/user-pivots.md`
+- **User delegates a choice ("you decide").** Pick a reasonable default, state it briefly, and move on. If a required answer remains unclear and no safe default exists, ask for that missing detail while continuing independent work.
+- **User wants to skip the design phase.** State your default assumptions in one message, let the user veto any item, then proceed to the plan. If implementation was already requested, proceed within that authorization. See `examples/skip-design.md`
 
 ### Exploring Approaches
 
-- Propose 2-3 different approaches with trade-offs
+- Compare 2-3 approaches only when a material trade-off needs the user's judgment; otherwise choose the suitable approach and explain it briefly
 - Lead with your recommended option and explain why
 - **Always present the proper solution.** If a workaround or shortcut exists, present it alongside the proper solution with clear trade-offs (effort, tech debt created, future cost). Never present only the workaround
-- **When to ask vs. when to just do it:** If the proper fix is small or obvious, just pick it and move on. Only use AskUserQuestion when the effort difference between proper fix and workaround is significant (e.g., hours vs. minutes, or requires touching many unrelated files) or the trade-off is genuinely ambiguous
+- **When to ask vs. when to just do it:** If the proper fix is small or obvious, just pick it and move on. Only ask a preference question when the effort difference between proper fix and workaround is significant (e.g., hours vs. minutes, or requires touching many unrelated files) or the trade-off is genuinely ambiguous
 
 ### Research (when needed)
 
@@ -61,42 +61,34 @@ Research covers external dependencies only: whether a library exists, its API su
 
 ### Presenting the Design
 
-- Present the entire design in one message, organized with headings, and ask for confirmation once at the end, never per section
+- Present the design together with a concrete implementation plan. Ask for a decision only if one is still needed; do not create repeated confirmation gates for work the user already requested.
 - Cover: architecture, components, data flow, error handling, testing considerations
 - Go back and clarify if something doesn't land correctly
 
 ### Implementation Plan
 
-- After the user confirms the design, present a concrete implementation plan:
-  - List every file the plan touches. Do not summarize multiple files into one line
-  - Each line: file path + what changes + the check that proves it (test name, command, or observable state). Add why only when it is not obvious from the change, in a few words
-  - Highlight assumptions that need validation
-- **Stop here. Do not proceed until the user explicitly approves the plan.**
-  Approval is an unambiguous instruction to start building, in whatever language the user writes it (`proceed`, `go ahead`, `implement it`, `tiến hành`, `làm đi`). Judge it by intent, not by matching those words.
-  Praise for the design is not approval, and neither is a reply that stays ambiguous or ends in a question (`looks good`, `sounds good`, `ok`). When it is unclear, ask once whether to start implementing.
-- **Scope Creep Rule:** If the user adds a new constraint or feature at this approval stage, revise the design and plan in chat, show the delta, and ask for approval again. The design doc is written only after approval
+- List each affected file or clearly bounded file group, its change, and a check that proves it (test, command, or observable state). Expand exact paths as discovery resolves them.
+- Highlight unverified assumptions that could change the design and validate them before dependent edits.
+- For a design-only request, finish with the design and plan; implementation needs a request to execute.
+- When the user has already asked to implement, migrate, or fix the feature, continue after stating the approach. A preference answer or correction refines that authorization; it does not require another go-ahead.
+- A go-ahead covers the requested task or accepted plan, not unrelated suggestions from earlier discussion.
+- If the user introduces new constraints, revise affected parts and proceed within the revised authorized scope. Ask only about unresolved scope or consequential choices.
 
 ### Design Doc Wording
 
-The saved design doc describes the target state only. When a draft element is dropped, omit it; the doc never records history or removals ("Removed X", "There is no X"). Deltas and removal notes belong in chat (Scope Creep Rule, YAGNI flags), not in the doc.
+The saved design doc describes the target state only. When a draft element is dropped, omit it; the doc never records history or removals ("Removed X", "There is no X"). Deltas and removal notes belong in chat, not in the doc.
 - *Incorrect:* "There is no header subtitle. Removed the subtitle text."
 - *Correct:* "The header contains a primary title."
 
 ## After the Design
 
-- Once the user approves the plan, write the design to `${CLAUDE_PROJECT_DIR}/docs/plans/YYYY-MM-DD-<topic>-design.md` (`docs/plans/` below means this directory; take the date from `date +%F`)
-  - **Topic slug must match `^[a-z0-9-]{1,60}$`**
-  - Derive the slug by lowercasing, replacing spaces/underscores with hyphens, and stripping invalid characters. Example: `Input: My Feature/Design v2 → Output: my-feature-design-v2`
-  - Truncate the slug to 60 characters after normalization. Fall back to `untitled` if empty
-  - Never interpolate the raw topic into a shell command; only pass the validated slug to the `Write` tool as part of the fixed `docs/plans/` path
-  - **If `docs/plans/` does not exist**, create it (`mkdir -p docs/plans`) and note its creation in your reply. If the current working directory is not a writable project root (e.g., outside a repo, or user is in a path like `/tmp`), ask the user where to save the design instead of silently creating directories
-- The doc must stand alone after `/clear`: include the approved Implementation Plan (every file + what changes + its check, and the assumptions to validate) as its own section, since the next session only has the doc
-- Include a **Verification Criteria** section in the design doc:
-  - What tests to write/run to validate the implementation
-  - What constitutes "done"
-  - Known edge cases to verify
-- Include an **Out of scope** section: what the user explicitly excluded, one line each, written as a boundary ("Leaves the billing module untouched"), never as removal history
-- Suggest to the user: "Run `/arc-kit:plan-auditor docs/plans/<filename>` to stress-test before execution."
+For substantial work needing a durable plan, write `docs/plans/YYYY-MM-DD-<topic>-design.md` beneath the verified project root. Find the root from the workspace context and git when available; do not assume a platform environment variable. Use the local date. Resolve examples relative to this loaded skill directory.
+
+Normalize the topic to lowercase kebab case matching `^[a-z0-9-]{1,60}$`, falling back to `untitled`. Use safe file APIs or properly quoted arguments, never raw user text in a shell command. Create `docs/plans/` when the project root is known and writable; otherwise ask for the destination. Never overwrite an unrelated existing plan.
+
+Keep the saved document self-contained for a fresh session: goal, target design, implementation steps with checks, assumptions to validate, completion criteria, and explicit scope boundaries. Use English on disk and Vietnamese in chat unless the user requests otherwise. Follow applicable AGENTS.md instructions.
+
+For a substantial or uncertain design, use the installed `arc-kit:plan-auditor` skill if available (explicit invocation: `$plan-auditor docs/plans/<filename>`). If it is unavailable, verify the plan's references and assumptions directly. An audit recommendation is not an extra permission gate before authorized implementation.
 
 ## Key Principles
 
@@ -105,7 +97,7 @@ The saved design doc describes the target state only. When a draft element is dr
   2. It does not appear in the stated goals, constraints, or success criteria
   3. It is not a direct consequence of an explicitly required feature (e.g., auth → session storage is a direct consequence)
 
-  When flagging, state the feature + the reason, and let the user reinstate it. Example: "Removed: admin dashboard. Not in stated goals. Reinstate?"
+  Leave unsolicited features outside the plan. Mention a consequential scope boundary briefly; ask only when it is ambiguous whether the user requested the feature.
 
 ## Additional Resources
 

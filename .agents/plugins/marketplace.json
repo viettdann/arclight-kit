@@ -1,0 +1,44 @@
+{
+  "name": "arclight-kit",
+  "interface": {
+    "displayName": "Arclight Kit"
+  },
+  "plugins": [
+    {
+      "name": "arc-design",
+      "source": {
+        "source": "local",
+        "path": "./plugins/arc-design"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "arc-kit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/arc-kit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "mgi-kit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/mgi-kit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

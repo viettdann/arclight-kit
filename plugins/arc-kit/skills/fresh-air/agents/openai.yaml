@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fresh Air"
+  short_description: "Disable and restore repository Codex skills"
+  default_prompt: "Use $fresh-air to inspect this project's Codex skills and disable them when I explicitly request it."
+policy:
+  allow_implicit_invocation: false
