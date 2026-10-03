@@ -24,6 +24,7 @@ Start from a high-level description of what the user wants to build and the curr
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
+- **Surface what nobody asked.** The frontier holds only decisions someone knew to make. When the feature enters a domain the codebase hasn't handled yet (money, time zones, i18n, file uploads, permissions, offline sync), list the domain's decisions that usually bite later, each glossed in a few words, and put the ones that apply on the frontier
 - **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier with the AskUserQuestion tool, for preference/judgment questions only:
   - A decision that depends on another question still open goes in a later round, not this one; each round's answers unblock the next frontier
   - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions of the same call (up to 4 per call; a larger frontier asks first the decisions most others depend on)

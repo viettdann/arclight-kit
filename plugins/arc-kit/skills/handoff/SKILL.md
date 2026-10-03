@@ -14,7 +14,7 @@ Accuracy is the whole point - a confident-but-wrong handoff is worse than useles
 
 Invoked with `resume`, or as the first thing in a session with no work yet: go to Resuming. Otherwise write one.
 
-A handoff carries work somewhere this session can't follow: a later session after `/clear` or a restart, another repo or directory, another harness, a colleague, or a side task forked off without derailing this one. When the next step continues the same task in this session, `/compact <what the next phase needs>` keeps more of the reasoning. If the user invokes it in that case, write the handoff as asked and mention the alternative in one line of the final reply.
+A handoff carries work somewhere this session can't follow: a later session after `/clear` or a restart, another repo or directory, another harness, a colleague, or a side task forked off without derailing this one. When the next step continues the same task in this session, `/compact <what the next phase needs>` keeps more of the reasoning. If the user invokes it in that case, write the handoff as asked and end the reply with that alternative ready to paste: `/compact <focus>` alone in a code block, the focus naming the next step, the files it touches, and the decisions it must keep.
 
 ## Writing a handoff
 

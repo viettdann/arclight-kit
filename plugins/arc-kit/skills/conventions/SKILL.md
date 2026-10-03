@@ -69,6 +69,7 @@ paths:
 - **Rules:** one checkable line each, naming the concrete type, helper, folder, or pattern. Keep a line only if a capable developer new to the repo would likely get it wrong without it; generic good practice the model already follows is cut.
 - **Don't:** minority patterns that must not spread, each with where they live.
 - A rule the project's linter or analyzer could enforce (a banned import, a naming pattern, a forbidden base class): offer it as a lint rule instead of a prose line. If the user takes it, prove it before keeping it: the linter passes on the code, fails on a deliberate violation, and passes again once that violation is reverted.
+- Path globs: brackets are a character class, so a folder named `[locale]` or `[id]` written literally matches nothing; write that segment as `*`. Check each glob with `git ls-files ':(glob)<pattern>' | wc -l` against the layer's file count.
 - Keep each file under about 60 lines; it loads every time a matching file is read.
 - The comment line holds the short HEAD sha and date for Update.
 

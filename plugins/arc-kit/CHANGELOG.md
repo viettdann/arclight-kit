@@ -2,6 +2,16 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-10-04
+
+### Changed
+
+- `verifier`: review agents get the diff and the Phase 0 task list, never this session's account of why the code works, and never run as forks. A small diff touching authentication, authorization, payments, secrets, or a data-deleting migration still sends Agent 5 to a fresh agent. Agent 5 flags regenerated snapshot or approved files (`*.snap`, `*.verified.*`) without a planned behavior change, and version ceilings or pins that exclude the registry's current release with no stated reason. A guard the diff adds is run against a sabotaged copy in `$TMPDIR` and must fire; the repository stays untouched. An agent that errors or returns nothing is rerun once, then listed under Not verified. A fix for a high correctness or security finding gets one fresh agent that tries to break it.
+- `brainstorming`: in a domain the codebase hasn't handled, the decisions that domain usually gets wrong go on the frontier, since the frontier only holds decisions someone knew to make.
+- `conventions`: path globs write bracketed folder names (`[locale]`) as `*`, and each glob is checked with `git ls-files ':(glob)…'` against the layer's file count.
+- `handoff`: when `/compact` fits better, the reply ends with a ready-to-paste `/compact <focus>` line.
+- Ideas from sangrokjung/claude-forge (MIT): `adversarial-reviewer`, `task-grade-routing`, `blind-spot-pass`, `harness-diet`, `relay`.
+
 ## [1.5.0] - 2026-10-04
 
 ### Added
