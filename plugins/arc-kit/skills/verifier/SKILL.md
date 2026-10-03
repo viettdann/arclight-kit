@@ -1,10 +1,13 @@
 ---
 name: verifier
-description: Comprehensive verification and code review skill. Runs completeness check first to catch dropped tasks and unrequested additions, then parallel code review for reuse, quality, efficiency, correctness and security, and comment and documentation hygiene before commit.
-when_to_use: "Usually invoked directly. Also trigger on two intents, in English or Vietnamese: reviewing work that is finished or about to be committed against its plan (review, check my work, cleanup before commit, \"review lại\", \"kiểm tra lại\", \"trước khi commit\"), and confirming nothing was dropped after a multi-step plan (did I miss anything, is everything done, \"sót gì không\", \"xong hết chưa\"). Conversation context that suggests tasks were forgotten mid-execution is enough on its own."
+argument-hint: "[plan-file]"
+description: Verifies this session's own finished work before commit and fixes what it finds. Checks completeness first, to catch dropped tasks and unrequested additions, then runs a parallel review for reuse, quality, efficiency, correctness and security, and comment and documentation hygiene, and applies the fixes.
+when_to_use: "Trigger on two intents, in English or Vietnamese: reviewing work this session finished or is about to commit (check my work, review before commit, cleanup before commit, \"review lại\", \"kiểm tra lại code vừa làm\", \"trước khi commit\"), and confirming nothing was dropped after a multi-step plan (did I miss anything, is everything done, \"sót gì không\", \"xong hết chưa\"). Conversation context that suggests tasks were forgotten mid-execution is enough on its own. Not for reviewing someone else's PR or code this session didn't write."
 ---
 
 # Verifier: Completeness Check and Code Review
+
+Arguments: $ARGUMENTS
 
 Two jobs, always in this order:
 
@@ -21,7 +24,7 @@ Establish what was supposed to happen, then check it against what actually chang
 
 Determine what defines "done" for this session, checking in this order:
 
-1. **Plan file**: most reliable, compact, not subject to truncation. Search the workspace for `plan.md`, `PLAN.md`, `TODO.md`, `tasks.md`, `checklist.md`, `*.todo`, for design docs under `docs/plans/`, and for files containing `- [ ]` checkboxes at line start (ignore matches inside code blocks).
+1. **Plan file**: most reliable, compact, not subject to truncation. Use the path in the arguments, else a plan file named in this conversation. Without either, search for `plan.md`, `PLAN.md`, `TODO.md`, `tasks.md`, `checklist.md`, `*.todo`, and design docs under `docs/plans/`, and use one only when it describes this session's work (it names files the diff touches); with more than one match, ask which. Never take tasks from other files that happen to hold checkboxes: handoff notes, READMEs, changelogs.
 2. **Conversation history**: holds ad-hoc requests, mid-stream changes, and corrections that never reached a plan file.
 3. **Both**: the common case. The plan file is the baseline; the conversation carries additions and modifications.
 
@@ -39,7 +42,9 @@ Get the diff once here. Phase 1 reuses it.
 
 The worktree is shared: uncommitted changes in files this session never edited belong to the user or another session. Leave them out of the diff and never edit them.
 
-- Uncommitted changes present (staged, unstaged, or both): `git diff HEAD -- <files this session edited or the user named>`
+"Files this session edited" are the files edited in this conversation. In a fresh session (after `/clear`, or resuming from a handoff) that list is empty: use the files the plan names, and when it names none, show `git status --short` and ask which files are in scope.
+
+- Uncommitted changes present (staged, unstaged, or both): `git diff HEAD -- <files this session edited or the user named>`. This never shows untracked files, so also run `git status --porcelain` and add each in-scope `??` file as a whole-file diff (`git diff --no-index /dev/null <file>`); new files are often the core of the work.
 - Working tree clean and the branch tracks a remote: `git diff @{u}...HEAD`, which is exactly the local commits not yet pushed
 - No upstream, or this session's commits are already pushed: read `git log -10 --format='%h %ar %s'`, identify the oldest commit belonging to this session, and diff from its parent (`git diff <oldest>~1..HEAD`). Ask the user to confirm that boundary rather than guessing how many commits are yours; commits from an earlier session look identical from here.
 
@@ -129,10 +134,11 @@ Review the same changes for efficiency:
 4. **Unnecessary existence checks**: pre-checking that a file or resource exists before operating on it (TOCTOU anti-pattern). Operate directly and handle the error.
 5. **Memory**: unbounded data structures, missing cleanup, event listener leaks
 6. **Overly broad operations**: reading whole files when a portion suffices, loading every item to filter for one
+7. **React**: when the diff touches React components, hooks, or stores, also check it against `${CLAUDE_SKILL_DIR}/references/react-performance.md`; pass that path to the agent
 
 ### Agent 4: Comment and Documentation Review
 
-Review every comment the diff adds or changes, every changed documentation file (plans, specs, READMEs), and the READMEs and config templates that reference what the diff changed. Skill files (anything under a skill's directory, including `SKILL.md`) and agent definitions are out of scope unless the user asked this conversation to review them: their rationale is instruction for the model, not narrative. A comment stays only for what code cannot say: a non-obvious invariant, a constraint, or a deliberate gotcha. Documentation states what to do; the reader executes from it.
+Review every comment the diff adds or changes, every changed documentation file (plans, specs, READMEs), and the READMEs and config templates that reference what the diff changed. Skill files (anything under a skill's directory, including `SKILL.md`) and agent definitions are out of scope unless the user asked this conversation to review them: their rationale is instruction for the model, not narrative. A comment stays only for what code cannot say: a non-obvious invariant, a constraint, a deliberate gotcha, or the ceiling of a deliberate shortcut and when to lift it. Documentation states what to do; the reader executes from it.
 
 1. **Comments that restate code**: what the next line does, data flow, usage, or anything names, types, and imports already show. Fix: delete.
 2. **Multi-line comments**: any comment longer than one physical line, including one thought wrapped across lines and prose `/** */` blocks. Fix: cut to the single invariant on one line, or delete.

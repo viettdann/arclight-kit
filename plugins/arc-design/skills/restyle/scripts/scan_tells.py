@@ -44,7 +44,7 @@ RULES = [
     ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*[A-Za-z]")),
     ("6-marketing", "scroll cue", re.compile(r"\bscroll\s+(?:down|to\s+(?:explore|discover|learn|see|continue|begin|start|view))\b|↓\s*scroll|>\s*scroll\s*<", re.I)),
     ("6-marketing", "saving as a percent (write it in money)", re.compile(r"\bsave\s+(?:up\s+to\s+)?\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?\s?%\s+off\b|>\s*[-−]\s?\d{1,2}\s?%\s*<", re.I)),
-    ("7-code", "100vh (use min-h-dvh)", re.compile(r"(?<![\w-])(?:min-|max-)?h-(?:screen\b|\[100vh\])|(?<![\w-])(?:min-|max-)?height:\s*100vh")),
+    ("7-code", "100vh (h-dvh for a fixed app shell, min-h-dvh for a full-height section)", re.compile(r"(?<![\w-])(?:min-|max-)?h-(?:screen\b|\[100vh\])|(?<![\w-])(?:min-|max-)?height:\s*100vh")),
     ("7-code", "scroll event listener", re.compile(r"addEventListener\(\s*['\"]scroll|\bonscroll\s*=")),
     ("7-code", "random color (hash a stable id instead?)", re.compile(r"(?:colou?r|\bbg\b|\bhue\b|palette|hsl|['\"`]#)[^;]*Math\.random\(\)|Math\.random\(\)[^;]*(?:colou?r|\bbg\b|\bhue\b|palette)", re.I)),
     ("7-code", "hand-rolled compact number (Intl.NumberFormat notation: 'compact'?)", re.compile(r"/\s*1(?:e[369]|_?000(?:_?000){0,2})\s*\)?\s*\.toFixed\(\d?\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMBkmb](?![A-Za-z])|\.toFixed\(\d\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMB](?![A-Za-z])")),
@@ -62,6 +62,11 @@ RULES = [
     ("7-code", "context menu blocked page-wide (only on its own objects?)", re.compile(r"(?:document|window|document\.body)\.(?:addEventListener\(\s*['\"]contextmenu['\"]|oncontextmenu\s*=)|\boncontextmenu=['\"]\s*return false")),
     ("7-code", "escalated z-index", re.compile(r"\bz-\[\d{3,}\]|z-index:\s*\d{3,}|\bzIndex:\s*\d{3,}")),
 ]
+
+# 7-code hits that change handlers or behavior; the rest are presentation fixes.
+BEHAVIOR = ("scroll event listener", "clipboard write", "scroll to top", "hard-coded header offset", "mouse events for dragging",
+            "indeterminate as an attribute", "disabled for validity", "disabled while busy", "column hidden by viewport",
+            "Enter handler", "context menu blocked")
 
 FLOATING = re.compile(r"(?<![\w-])(?:fixed|sticky|absolute)\b|position:\s*['\"]?(?:fixed|sticky|absolute)")
 
@@ -182,6 +187,8 @@ def scan(paths):
                         continue
                     if label.startswith("glass on") and ext in STYLE_EXTS and FLOATING.search(css_block(lines, i)):
                         continue
+                    if principle == "7-code":
+                        label = ("behavior: " if label.startswith(BEHAVIOR) else "presentation: ") + label
                     hits[principle].append({"file": path, "line": i, "tell": label, "snippet": snippet})
             if markup and DASH.search(line) and not COMMENT.match(line):
                 copy = RANGE_DASH.sub("", LONE_DASH.sub("", INLINE_COMMENT.sub("", line)))

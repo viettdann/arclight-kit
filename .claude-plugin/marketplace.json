@@ -8,12 +8,12 @@
     {
       "name": "arc-design",
       "source": "./plugins/arc-design",
-      "description": "UI design from scratch, redesign, restyle, rendering checks, and interaction and state rules"
+      "description": "UI design from scratch, redesign, restyle, rendering checks, interaction and state rules, and state-check audits"
     },
     {
       "name": "arc-kit",
       "source": "./plugins/arc-kit",
-      "description": "Session working rules, plan-to-commit workflow skills, refactor, fresh-air, and comment-lint hook"
+      "description": "Daily session defaults, standalone planning and review skills, handoff, refactor, conventions, fresh-air, and the comment-lint and arc-compact hooks"
     },
     {
       "name": "mgi-kit",

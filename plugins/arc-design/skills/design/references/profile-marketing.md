@@ -2,6 +2,8 @@
 
 For pages that have seconds to explain something and win a decision. Concrete beats decorative: a generated page decorates because it has nothing specific to show.
 
+Consumer-app screens (onboarding, home, progress) use Design read, Copy, Generic tells, Visual, and Avoid; Page structure, Layout rules, Pricing, Imagery, and the hero Checks apply to marketing pages only.
+
 Contents: Design read · Page structure · Layout rules · Pricing · Imagery · Copy · Generic tells · Visual (type, radius, elevation, motion) · Avoid · Checks
 
 ## Design read
@@ -9,7 +11,7 @@ Contents: Design read · Page structure · Layout rules · Pricing · Imagery ·
 Before markup, decide one line, and open the summary with it: **page kind · audience · visual language · the one move that makes it this brand's page.** Example: "Launch page for procurement leads · calm, document-like · the product's approval trail runs down the page as the spine."
 
 - The audience picks the language, not habit. Public-sector, regulated, or accessibility-first audiences override aesthetic ambition.
-- Pick one **second-read moment**: a single unobvious but legible motif used once (an oversized number for a result the reader should remember, one material or color switch, a macro crop of the product). It must help scanning or brand recall. Restraint alone produces a clean page nobody remembers.
+- The move is the page's **second-read moment**: a single unobvious but legible motif used once (an oversized number for a result the reader should remember, one material or color switch, a macro crop of the product). It must help scanning or brand recall. Restraint alone produces a clean page nobody remembers. It is also the one special element that may take a gradient, texture, glow, or style material, and the one highlighted element per view; a chosen style adds at most one more of its signature moves.
 - If the brief names a real design system (GOV.UK, USWDS, Carbon, Polaris, Primer, Material), use the official package instead of imitating it.
 
 ## Page structure
@@ -99,17 +101,17 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 
   A full-bleed band is square: sides flush with an edge take no radius (`radius.md`). No pills by default. A pill-shaped button, chip, or tag appears only when the chosen style lists it.
 - Elevation from layered shadows, used only where lift carries meaning; glass on floating layers over moving content (`materials.md`).
-- Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms ease-out. Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
-- Motion: entrances 200–300ms ease-out, exits faster, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once, and content is never hidden by default: apply the hidden start state only after the script has run (`.js .reveal`), show everything at once under `prefers-reduced-motion` or without `IntersectionObserver`, so a script error, a blocked script, or a crawler still sees the page. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
-- Gradients, glow, and texture follow `materials.md`: on one special element at most, never under body text.
+- Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms `--ease-enter`. Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
+- Motion: entrances 200–300ms `--ease-enter`, exits faster with `--ease-exit`, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once, and content is never hidden by default: apply the hidden start state only after the script has run (`.js .reveal`), show everything at once under `prefers-reduced-motion` or without `IntersectionObserver`, so a script error, a blocked script, or a crawler still sees the page. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
+- Gradients, glow, and texture follow `materials.md`: only on the design read's move, never under body text.
 
 ## Avoid
 
-Hero carousels, autoplaying video with sound, parallax that moves text, more than one highlighted element per view.
+Hero carousels, autoplaying video with sound, parallax that moves text, more than one highlighted element per view (the design read's move).
 
 ## Checks
 
-- [ ] Design read and second-read moment stated in the summary.
+- [ ] Design read, with its one move, stated in the summary.
 - [ ] Hero fits 1280×800 with the CTA visible; nav on one line, with a menu on narrow screens when it has three or more links; no display type colliding with other text.
 - [ ] Revealed content is visible without JS and under reduced motion.
 - [ ] No layout family repeated; no empty grid cells.

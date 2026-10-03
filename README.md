@@ -2,8 +2,8 @@
 
 Claude Code marketplace with three plugins:
 
-- `arc-design`: UI design, redesign, restyle, rendering checks, and interaction rules.
-- `arc-kit`: session working rules, plan-to-commit workflow, refactor, fresh-air, and the comment-lint hook.
+- `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, handoff, refactor, conventions, fresh-air, and the comment-lint and arc-compact hooks.
 - `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection).
 
 ## Which skill
@@ -15,13 +15,15 @@ Claude Code marketplace with three plugins:
 | It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
 | A page runs; measure what breaks when it renders: overflow, clipped or overlapping text, contrast per theme, focus, names, targets, images, JS errors | `arc-design:ui-check` |
 | Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
-| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, reuse and minimal code, migrations, UI); reloaded after compaction | `/arc-kit:arc` (user-invoked only) |
+| A control does nothing or the wrong thing; a shared store action changed: trace each handler's state writes against what its label promises | `arc-design:state-check` |
+| Session start in a project without your own CLAUDE.md: load the daily defaults (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, reuse and minimal code, migrations, UI). Lowest priority: the project's CLAUDE.md and the running skill win; reloaded after compaction | `/arc-kit:arc` (user-invoked only) |
 | Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |
 | A plan exists; stress-test it before executing | `arc-kit:plan-auditor` |
-| A plan exists; implement it step by step with TDD, sub-agents, and verification | `arc-kit:executor` |
+| A plan exists (file or chat); implement it step by step with sub-agents and verification; `tdd` turns on test-first | `arc-kit:executor` |
 | Restructure existing code without changing behavior: extract, rename, split, reduce complexity, remove duplication | `arc-kit:refactor` |
-| Work is done or about to be committed: completeness check, then review | `arc-kit:verifier` |
+| This session's work is done or about to be committed: completeness check, then review and fixes | `arc-kit:verifier` |
 | Ending or pausing a session; resuming after `/clear` instead of `/compact` | `arc-kit:handoff` |
+| Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `arc-kit:conventions` |
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `arc-kit:fresh-air` |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 

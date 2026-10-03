@@ -1,7 +1,8 @@
 ---
 name: executor
+argument-hint: "[plan-file] [tdd]"
 description: >
-  Implements plans step-by-step with per-task codebase exploration, TDD, parallel sub-agents, and verification.
+  Implements plans step-by-step with per-task codebase exploration, optional TDD, parallel sub-agents, and verification.
   Reads a plan file, TODO list, checklist, or conversation plan, does a quick scan for
   blocking unknowns, then each sub-agent explores on-the-fly before implementing its task.
   Validates builds and tests continuously, cross-checks every plan item before reporting done,
@@ -51,15 +52,18 @@ Copy and track as you execute:
 
 ### Phase 0: Load the Plan
 
-Locate the plan source:
+Arguments: $ARGUMENTS
 
-1. Plan file in workspace: search for `plan.md`, `PLAN.md`, `TODO.md`, `tasks.md`, `checklist.md`, `*.todo`, and inside `docs/plans/` for a design doc
-2. Plan from conversation history
-3. Both: plan file as baseline, conversation as amendments
+A path in the arguments is the plan file; the word `tdd` turns TDD mode on. Without a path, take the first source that exists:
+
+1. A plan file named in this conversation, or a plan written out in the conversation itself. A conversation plan needs no file.
+2. A workspace search: `plan.md`, `PLAN.md`, `TODO.md`, `tasks.md`, `checklist.md`, `*.todo`, and design docs in `docs/plans/`. One candidate: use it. More than one: ask which with AskUserQuestion, newest first.
+
+A plan file is the baseline; requests in the conversation after it are amendments.
 
 Extract a flat checklist of discrete tasks. Each task gets a status: `pending`.
 
-If no plan exists, stop. Ask the user to provide or create one first.
+If no plan exists in the arguments, the conversation, or the workspace, stop. Ask the user to provide or create one first.
 
 ### Phase 1: Quick Scan for Blockers
 
@@ -82,13 +86,14 @@ Fast, lightweight scan for issues that would block execution, not deep explorati
 
 #### Step 1: Build file-task matrix
 
-Map each task to the files it touches:
+Map each task to the files it touches. When the plan doesn't name them, a quick Grep/Glob usually does; a task whose files still can't be named without exploring goes to the inline lane.
 
 ```
 Task 1 → [src/foo.ts, src/foo.test.ts]
 Task 2 → [src/bar.ts]
 Task 3 → [src/foo.ts, src/baz.ts]
 Task 4 → [src/qux.ts]
+Task 5 → [unknown] → inline lane
 ```
 
 #### Step 2: Detect file overlaps → form task groups
@@ -102,11 +107,11 @@ Group C: Task 4 (independent)
 → Groups A, B, C run in parallel (one sub-agent per group)
 ```
 
-If every task shares at least one file, that is a single group: run fully sequentially, no parallel sub-agents.
+If every task lands in one group, implement it inline in this session, sequentially; spawn no sub-agents. The inline lane also runs inline, after the parallel groups finish.
 
 #### Step 3: Order tasks within each group
 
-Sort by dependency: types/interfaces first → implementations → tests → integrations.
+Sort by dependency: types/interfaces first → implementations with their tests (with TDD mode on, each test comes first) → integrations.
 
 #### Step 4: Safety check for parallel execution
 
@@ -128,18 +133,20 @@ Parallel Groups:
   Group B (agent-2): Task 2 [src/bar.ts]
   Group C (agent-3): Task 4 [src/qux.ts]
 
+Inline: Task 5 (files unknown until explored)
 Sequential follow-up: (none / list cross-group integration tasks)
+TDD mode: on / off
 ```
 
 Log the execution plan for transparency, then spawn immediately. No confirmation gate.
 
 ### Phase 3: Execute
 
-For each task (or parallel batch), each sub-agent follows:
+Whoever runs a task (you inline, or the sub-agent for its group) follows:
 
 1. **Explore**: read target files, understand current state, inspect related code, check the types/interfaces the task needs.
-2. **Implement**: write the code. Follow project conventions from CLAUDE.md if it exists. If not, infer conventions from existing code style in the files being modified.
-3. **Validate**: run build/lint and **scoped/related tests** after meaningful changes (incremental; Phase 4 runs the full suite). Fix failures immediately.
+2. **Implement**: write the code, following TDD mode when it is on. Follow project conventions from CLAUDE.md if it exists. If not, infer conventions from existing code style in the files being modified.
+3. **Validate**: after meaningful changes, run lint and the tests that cover the files you changed, and fix failures immediately. A sub-agent never runs the project-wide build or type-check: other groups' half-written files make them fail. Inline work may run them. Phase 4 runs both, and the full suite, once every group has finished.
 
 **Parallel execution rules:**
 
@@ -149,14 +156,7 @@ Spawn every group that passed the Phase 2 Step 4 check in one message with multi
 - One sub-agent per task group (from Phase 2), not per individual task
 - Tasks within a group run sequentially (shared files)
 - Groups run in parallel (no file overlap between groups)
-- Each sub-agent gets: plan file path (if any), task group description, file edit list, blocker findings (if relevant), and the Shared Worktree rules verbatim
-
-**Mid-execution re-grouping:**
-
-After a sub-agent completes its group, re-evaluate remaining queued groups:
-- If a completed group freed up file exclusivity, check if any remaining sequential group can now be split into parallel sub-groups
-- If a task within a sequential group turns out to not touch the shared file after exploration, split it out as an independent parallel agent
-- This is a continuous optimization: don't wait for all groups to finish before re-evaluating
+- A sub-agent cannot see this skill. Its prompt carries the plan file path (if any), its group's tasks and file list, relevant blocker findings, and, verbatim: the Shared Worktree rules, Phase 3 steps 1-3, the TDD mode section with whether it is on, and the Agent Report template
 
 **User changes direction mid-execution:**
 
@@ -165,11 +165,14 @@ After a sub-agent completes its group, re-evaluate remaining queued groups:
 - After the user confirms, edit the plan file in place so a fresh session can execute from it alone: mark dropped tasks as dropped (keep them visible), add new tasks, rewrite changed ones. Each new or changed task names its files and functions and a checkable done criterion. Keep the file's existing format and change only the affected lines; update a status field only if the plan already has one. Never stage it; `docs/` belongs to the user.
 - Re-run the Phase 1 blocker scan on the changed tasks only, then continue.
 
-**TDD mindset:**
+**TDD mode:**
 
-- When adding new functions/features: write or update tests
-- When fixing bugs: add regression test if test infra exists
-- If no test infra exists: note it, don't block on creating one unless user asks
+Off by default. On when the arguments contain `tdd`, the user asks for TDD, or the plan says to use it.
+
+- **On:** for each task that adds or changes behavior, write the test first, run it, and see it fail on the missing behavior, not on a typo, a bad import, or broken setup. Then implement until it passes. Refactor, config, and docs tasks skip the failing run.
+- **Off:** implement first, then add or update tests for new behavior and a regression test for each bug fix, when test infrastructure exists. If none exists, note it; don't create it unless the user asks.
+
+In either mode a test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns, and never delete, skip, or loosen an existing test to get green. Change an existing test only when the plan changes the behavior it covers, and say so in the report.
 
 **Per-agent result reporting:**
 
@@ -185,9 +188,9 @@ Each sub-agent must return a structured report upon completion:
 - path/to/file.ts: what changed
 
 ### Validation
-- Typecheck: PASS/FAIL
-- Lint: PASS/FAIL
-- Tests: PASS/FAIL/N/A
+- Lint (own files): PASS/FAIL
+- Tests (covering own files): PASS/FAIL/N/A
+- TDD failing runs (TDD on): test name → failure seen
 
 ### Issues encountered
 - (none / description + resolution)
@@ -243,17 +246,14 @@ Final gate after all tasks executed:
 
 **Guard:** Verify workspace is a git repository (`.git` exists) before this phase. If not a git repo, skip.
 
-Never auto-commit. Always wait for the user's explicit approval or instruction.
-Do NOT commit incrementally during task execution. All commits must be done in this final phase after all tasks are completed and verified.
+Commit only here, after Phase 4 passes and the user approves or asks for it; never during execution, never on a broken build.
 Default to a single cohesive commit per plan. If the plan spans logically separable units (e.g., migration + feature code), propose commit boundaries to user for approval.
 
 **Format:** `type(scope): short summary`, then a `-` bullet body grouping related changes. Summary length cap and allowed types come from the project's CLAUDE.md (`${CLAUDE_PROJECT_DIR}/CLAUDE.md` or `${CLAUDE_PROJECT_DIR}/.claude/CLAUDE.md`); without one, match the style of `git log --oneline -20`.
 
 **Rules:**
 
-- Commit only after all tasks in the plan are fully implemented and verified (Phase 4 must pass first)
-- Generate a comprehensive and meaningful commit message that summarizes the entire plan's execution
-- Never commit broken builds
+- The message summarizes the entire plan's execution
 - Never commit secrets or credentials: before staging, verify the file is not `.env`, `*.key`, `*.pem`, `credentials.json`, etc.
 - Stage by explicit path, only files this session edited; `git add .`, `git add -A` and `git commit -a` sweep in other sessions' work
 - Run `git diff --cached` to review staged content before committing
@@ -269,7 +269,7 @@ When encountering choices during execution, **self-verify before escalating to u
 Decision types:
 
 - **Multiple valid approaches**: Pick the one most consistent with existing codebase patterns. Only AskUserQuestion if trade-offs are genuinely ambiguous.
-- **Quick fix vs proper fix**: Default to proper fix. If the proper fix is small, just do it without asking. Only present options via AskUserQuestion when the proper fix is genuinely out of scope AND high-effort (large refactor, cross-cutting change). Do not silently apply workarounds for things that are quick to fix properly.
+- **Quick fix vs proper fix**: Never apply a workaround silently. Take the proper fix without asking when it is small or obvious. Ask with AskUserQuestion only when it costs far more than the workaround (a large refactor, or changes outside the plan's files) or the trade-off is genuinely ambiguous, and then show both: `Proper fix: X (effort). Workaround: Y (debt it creates).`
 - **Missing requirement detail**: Check if the plan, design doc, or codebase answers it first. AskUserQuestion only if genuinely unresolvable.
 - **Plan step seems unnecessary**: Flag to user, don't skip silently
 - **New dependency needed**: Check if an existing dep already covers the need. If so, use it. If truly new, check with user before adding.

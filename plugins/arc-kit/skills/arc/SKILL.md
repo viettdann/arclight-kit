@@ -1,12 +1,14 @@
 ---
 name: arc
-description: The user's working rules for a coding session (communication, scope of a go-ahead, git safety in a shared worktree, docs and comment style, commits, reuse and minimal code, migrations, UI). Invoke once at session start; the rules hold until the session ends.
+description: The user's daily defaults for a session in a project that doesn't carry their own CLAUDE.md (communication, scope of a go-ahead, git safety in a shared worktree, docs and comment style, commits, reuse and minimal code, migrations, UI). Invoked by the user at session start; lowest priority.
 disable-model-invocation: true
 ---
 
-# Arc: working rules
+# Arc: daily defaults
 
-These rules apply from now until the session ends, including after compaction. Where the project's CLAUDE.md is more specific (commands, paths, stack), follow the project file. Reply to this invocation with one line, `Đã nạp arc.`, and wait for the task.
+These defaults hold from now until the session ends, including after compaction. They have the lowest priority: the project's CLAUDE.md and rules files, and the instructions of a skill running for the current task (its templates, report formats, limits, and styles), win wherever they differ.
+
+On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a task, start on it in the same turn; otherwise wait for the task.
 
 ## Talking
 
@@ -24,9 +26,9 @@ These rules apply from now until the session ends, including after compaction. W
 
 ## Scope
 
-**An answer is not a go-ahead.** When the user answers a question or picks among options, record the decision and wait. Change files only after the user explicitly says to execute ("làm đi", "thực hiện", "go").
+**A request is a go-ahead; an answer is not.** A direct instruction to change something ("add a retry to fetchUser") is the go-ahead: do it. When the user only answers your question or picks among options you offered, record the decision and change nothing until they say to execute ("làm đi", "thực hiện", "go").
 
-**A go-ahead covers the whole discussion.** When the user says to execute, the scope is everything recommended earlier in the conversation that the user did not explicitly drop, not only the last item mentioned. If the go-ahead names one file or one step, do it first, then carry out the rest. Before reporting done, walk back through the earlier recommendations and check off each one; anything left undone is named in the report with the reason, never silently skipped.
+**A go-ahead covers every open recommendation on the topic.** On "làm đi" or "go", the scope is every recommendation on the current topic since the last completed go-ahead that the user did not drop, not only the last item mentioned. Naming one file or step sets the order, not the limit: do it first, then the rest. Only an explicit limit ("chỉ X", "only X") narrows the scope; list what it left out as pending. Before reporting done, check off each item in scope; anything left undone is named with the reason.
 
 **An explicit command is the confirmation.** When the user names an operation and its target ("checkout the changes in this folder", "delete branch X"), run it, destructive or not. Read git and shell vocabulary the way an engineer means it: "checkout the changes" means discard them. Don't ask for confirmation, don't restate consequences the user already knows, don't add a backup step. Ask only when the target is unclear (which files, which branch), not when the request is.
 
@@ -34,9 +36,9 @@ These rules apply from now until the session ends, including after compaction. W
 
 ## Git
 
-**`docs/` belongs to the user.** Design notes, plans, drafts. Never stage anything under `docs/`, and never commit, reset, or revert a change there. The user commits it. Production source of truth lives in code.
+**`docs/` belongs to the user.** Design notes, plans, drafts. Never stage anything under `docs/`, and never commit, reset, or revert a change there, unless the user asks for that exact operation. The user commits it. Production source of truth lives in code.
 
-**The worktree is shared; never undo work that isn't yours.** Several sessions run against one checkout, so uncommitted changes to files you never opened are normal: don't remark on them, ask about them, or work around them. Never run `git stash`, `git reset`, `git revert`, `git checkout --`, or `git clean`, and never overwrite a file you didn't edit this session, unless the user asked for that exact operation in this conversation. Stage by explicit path; `git add -A` and `git commit -a` sweep in another session's half-finished work. If a foreign change blocks you, say what it blocks and stop.
+**The worktree is shared; never undo work that isn't yours.** Several sessions run against one checkout, so uncommitted changes to files you never opened are normal: don't remark on them, ask about them, or work around them. Never run `git stash`, `git reset`, `git revert`, `git checkout --`, `git restore`, or `git clean`, and never overwrite a file you didn't edit this session, unless the user asked for that exact operation in this conversation. Stage by explicit path; `git add -A` and `git commit -a` sweep in another session's half-finished work. If a foreign change blocks you, say what it blocks and stop.
 
 **Commit messages.** `type(scope): imperative summary`, concise, no trailing period, e.g. `fix(client): support Ctrl+S saving in files and modals`. A body, when needed, follows one blank line and is `- ` bullets, never prose paragraphs.
 
@@ -73,4 +75,4 @@ These rules apply from now until the session ends, including after compaction. W
 
 **Name migrations by hand.** When creating a migration, generate it through the project's migration script with an explicit snake_case name that states the schema change (`add_db_users_table`), never the generator's random name. Never edit or rename a migration that has been applied.
 
-**UI carries no generator tells.** No accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label. For a full pass on an existing screen, use `arc-design:restyle` when the `arc-design` plugin is installed.
+**UI carries no generator tells.** When the task sets no visual direction: no accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label.

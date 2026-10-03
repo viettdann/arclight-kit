@@ -202,6 +202,7 @@ function audit({ mobile }) {
     }
     return el.getAttribute('title')?.trim() || '';
   };
+  const touch = [];
   for (const el of document.querySelectorAll(INTERACTIVE)) {
     if (!visible(el)) continue;
     const r = box(el);
@@ -216,7 +217,14 @@ function audit({ mobile }) {
     if (el.labels?.length && ['checkbox', 'radio'].includes(el.type)) continue;
     const small = Math.min(r.width, r.height);
     if (small < 24) add('target', el, `${Math.round(r.width)}×${Math.round(r.height)}px, under the 24px minimum`);
-    else if (mobile && small < 44) add('target-touch', el, `${Math.round(r.width)}×${Math.round(r.height)}px on a phone width, under 44px for a primary control`);
+    else if (mobile && small < 44) touch.push({ el, small, size: `${Math.round(r.width)}×${Math.round(r.height)}px` });
+  }
+  // The script can't tell primary controls from secondary ones, so one line lists the smallest and the shot decides which are primary.
+  if (touch.length) {
+    touch.sort((a, b) => a.small - b.small);
+    const rest = touch.slice(1, 3).map((t) => `${sel(t.el)} ${t.size}`).join(', ');
+    add('target-touch', touch[0].el, `${touch.length} control(s) under 44px on a phone width, smallest ${touch[0].size}`
+      + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px', true);
   }
 
   for (const img of document.images) {

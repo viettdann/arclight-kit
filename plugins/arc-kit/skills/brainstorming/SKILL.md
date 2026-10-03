@@ -50,10 +50,8 @@ See `examples/verify-callout.md` for the recovery flow when a claim turns out to
 
 ### Exploring Approaches
 
-- Propose 2-3 different approaches with trade-offs
-- Lead with your recommended option and explain why
-- **Always present the proper solution.** If a workaround or shortcut exists, present it alongside the proper solution with clear trade-offs (effort, tech debt created, future cost). Never present only the workaround
-- **When to ask vs. when to just do it:** If the proper fix is small or obvious, just pick it and move on. Only use AskUserQuestion when the effort difference between proper fix and workaround is significant (e.g., hours vs. minutes, or requires touching many unrelated files) or the trade-off is genuinely ambiguous
+- When more than one approach fits, propose 2-3 with their trade-offs, leading with your recommendation and why. When one approach is clearly right, state it and the reason in one line; don't invent weaker options to compare against
+- **Proper fix first.** Never present only a workaround. Take the proper fix without asking when it is small or obvious. Ask only when it costs far more than the workaround (a large refactor, or changes outside the plan's files) or the trade-off is genuinely ambiguous, and then show both: `Proper fix: X (effort). Workaround: Y (debt it creates).`
 
 ### Research (when needed)
 
@@ -62,7 +60,7 @@ Research covers external dependencies only: whether a library exists, its API su
 ### Presenting the Design
 
 - Present the entire design in one message, organized with headings, and ask for confirmation once at the end, never per section
-- Cover: architecture, components, data flow, error handling, testing considerations
+- Cover: the goal and its success criterion, architecture, components, data flow, error handling, testing considerations
 - Go back and clarify if something doesn't land correctly
 
 ### Implementation Plan
@@ -72,8 +70,9 @@ Research covers external dependencies only: whether a library exists, its API su
   - Each line: file path + what changes + the check that proves it (test name, command, or observable state). Add why only when it is not obvious from the change, in a few words
   - Highlight assumptions that need validation
 - **Stop here. Do not proceed until the user explicitly approves the plan.**
-  Approval is an unambiguous instruction to start building, in whatever language the user writes it (`proceed`, `go ahead`, `implement it`, `tiến hành`, `làm đi`). Judge it by intent, not by matching those words.
-  Praise for the design is not approval, and neither is a reply that stays ambiguous or ends in a question (`looks good`, `sounds good`, `ok`). When it is unclear, ask once whether to start implementing.
+  Approval is an unambiguous yes to the plan, in whatever language the user writes it (`approved`, `proceed`, `go ahead`, `implement it`, `tiến hành`, `làm đi`). Judge it by intent, not by matching those words.
+  Praise for the design is not approval, and neither is a reply that stays ambiguous or ends in a question (`looks good`, `sounds good`, `ok`). When it is unclear, ask once whether the plan is approved.
+- **Approval ends this skill.** Write the design doc (see After the Design), reply with its path, and stop. Don't start implementing in the same turn, even when the approval is worded `implement it` or `làm đi`; implementation starts from the user's next message.
 - **Scope Creep Rule:** If the user adds a new constraint or feature at this approval stage, revise the design and plan in chat, show the delta, and ask for approval again. The design doc is written only after approval
 
 ### Design Doc Wording
@@ -90,13 +89,20 @@ The saved design doc describes the target state only. When a draft element is dr
   - Truncate the slug to 60 characters after normalization. Fall back to `untitled` if empty
   - Never interpolate the raw topic into a shell command; only pass the validated slug to the `Write` tool as part of the fixed `docs/plans/` path
   - **If `docs/plans/` does not exist**, create it (`mkdir -p docs/plans`) and note its creation in your reply. If the current working directory is not a writable project root (e.g., outside a repo, or user is in a path like `/tmp`), ask the user where to save the design instead of silently creating directories
-- The doc must stand alone after `/clear`: include the approved Implementation Plan (every file + what changes + its check, and the assumptions to validate) as its own section, since the next session only has the doc
-- Include a **Verification Criteria** section in the design doc:
-  - What tests to write/run to validate the implementation
-  - What constitutes "done"
-  - Known edge cases to verify
-- Include an **Out of scope** section: what the user explicitly excluded, one line each, written as a boundary ("Leaves the billing module untouched"), never as removal history
-- Suggest to the user: "Run `/arc-kit:plan-auditor docs/plans/<filename>` to stress-test before execution."
+- The doc must stand alone after `/clear`, since the next session only has the doc. Use these sections, in this order:
+
+  ```markdown
+  # <Topic>
+  ## Goal                 what it achieves and how success is measured (a target number for performance work)
+  ## Design               architecture, components, data flow, error handling
+  ## Implementation Plan  one line per file: path + what changes + the check that proves it
+  ## Assumptions          what the plan relies on that is not verified yet, and how to verify each
+  ## Verification         tests to write or run, what counts as done, edge cases to check
+  ## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
+  ```
+
+  Omit `Assumptions` or `Out of scope` when empty; the other four are always present.
+- In the reply with the doc path, suggest an optional audit: "Run `/arc-kit:plan-auditor docs/plans/<filename>` to stress-test before execution."
 
 ## Key Principles
 
@@ -109,7 +115,7 @@ The saved design doc describes the target state only. When a draft element is dr
 
 ## Additional Resources
 
-The examples run on a fictional Hono/Bun rate-limiter scenario. Their paths, symbols, and findings do not describe this repository - discover the real codebase fresh. What they pin down is the shape of the exchange: what gets resolved without asking, what gets asked, and when the design lands.
+The examples run on fictional Hono/Bun projects (a rate limiter, and a webhook signature check). Their paths, symbols, and findings do not describe this repository - discover the real codebase fresh. What they pin down is the shape of the exchange: what gets resolved without asking, what gets asked, and when the design lands.
 
 - `examples/happy-path.md`: full workflow when user engages cooperatively
 - `examples/user-pivots.md`: handling contradictions and rollback mid-design

@@ -32,10 +32,11 @@ The assistant resolves factual constraints from codebase discovery instead of as
 > **Resolved from codebase:**
 >
 > Verified:
-> - Single-node deployment, no Redis in `package.json` dependencies → in-memory storage is the right fit. No reason to add a new dependency
+> - No Redis or other shared store in `server/package.json` dependencies
 > - Pino imported in `createLogger()` at `server/src/lib/logger.ts`, called by `authMiddleware` in `server/src/middleware/auth.ts`. Available for the rate-limit middleware as well
 >
 > Assumed (listed in the plan's assumptions to validate):
+> - Single-node deployment: the repo has no deployment topology to check, so in-memory storage rests on this
 > - Client IP reachable via `c.req.header('x-forwarded-for')` in this deployment
 >
 > **Preference question (requires user input):**
@@ -46,7 +47,7 @@ The assistant resolves factual constraints from codebase discovery instead of as
 >
 > I recommend sliding window. Which do you prefer, and what cap per IP per minute? (60/min is a common starting point if you have no number in mind.)
 
-Note: the assistant did NOT ask "how should state be stored?" because codebase discovery already answered that (single-node, no Redis). It stated the conclusion as a fact and only asked the genuine preference question.
+Note: the assistant did NOT ask "how should state be stored?". With no shared store installed, in-memory follows; the single-node premise it rests on is an inference, so it goes under Assumed with its reason instead of Verified. Two algorithms genuinely fit, so it offered both; with one clear fit it would have stated it in one line.
 
 User: "Sliding window, 30 a minute."
 
@@ -54,6 +55,9 @@ User: "Sliding window, 30 a minute."
 
 The assistant presents the entire design as a single coherent message, NOT section-by-section:
 
+> **Goal:**
+> Cap each client IP at 30 requests per rolling minute across all endpoints; success is request 31 within 60s getting `429`.
+>
 > **Architecture:**
 > Middleware `rateLimitMiddleware(limit, windowMs)` registered in `server/src/main.ts` before routes. Stores a `Map<ip, number[]>` keyed by client IP. Sliding window algorithm.
 >
@@ -79,16 +83,27 @@ User: "Yes."
 
 ```
 Files touched:
-- server/src/middleware/rateLimit.ts (new): sliding-window factory, exports rateLimitMiddleware
-- server/src/main.ts (edit): register middleware before routes
-- server/src/middleware/rateLimit.test.ts (new): unit tests with fake clock
-- server/tests/rateLimit.integration.test.ts (new): integration test
+- server/src/middleware/rateLimit.ts (new): sliding-window factory, exports rateLimitMiddleware. Check: rateLimit.test.ts passes
+- server/src/main.ts (edit): register middleware before routes. Check: integration test gets 429 on request 31
+- server/src/middleware/rateLimit.test.ts (new): fake clock; 30 requests in window pass, 31st is 429, window rolls after 60s. Check: `bun test rateLimit`
+- server/tests/rateLimit.integration.test.ts (new): 31 real HTTP requests in 60s. Check: `bun test rateLimit.integration`
 
 Assumptions to validate:
+- Single-node deployment (in-memory state)
 - Client IP is available via Hono's c.req.header('x-forwarded-for') or c.env.remoteAddr
 
 Verification criteria:
-- Unit test: 30 requests in window succeed, 31st returns 429
-- Integration test: real HTTP, same result
-- No TypeScript errors, biome check passes
+- Both tests pass, no TypeScript errors, biome check passes
+
+Approve this plan?
 ```
+
+User: "Làm đi."
+
+## Step 5: Write the doc and stop
+
+Approval ends the skill. The assistant writes `docs/plans/2026-03-14-ip-rate-limiter-design.md` with Goal, Design, Implementation Plan, Assumptions, Verification, and Out of scope, then replies:
+
+> Saved the design to `docs/plans/2026-03-14-ip-rate-limiter-design.md`. Optional: run `/arc-kit:plan-auditor docs/plans/2026-03-14-ip-rate-limiter-design.md` to stress-test it before execution.
+
+Note: "Làm đi" approved the plan; it did not start the implementation in this turn. Code starts from the user's next message.

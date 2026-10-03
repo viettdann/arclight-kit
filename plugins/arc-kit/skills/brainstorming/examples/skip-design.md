@@ -27,7 +27,7 @@ This is one message, not a questionnaire. The user can either correct one item o
 
 ### Case A: "Go"
 
-Proceed directly to the implementation plan (same format as `happy-path.md`). Still require explicit approval on the plan before writing code. Skipping design does not mean skipping the approval gate.
+Proceed directly to the implementation plan (same format as `happy-path.md`). Still require explicit approval on the plan. Skipping design does not mean skipping the approval gate, and approval still ends with the saved doc and its path; code starts from the next message.
 
 ### Case B: "Change storage to Postgres, otherwise fine"
 
@@ -43,7 +43,7 @@ This is NOT approval to skip the plan gate. Respond:
 
 > The plan step costs one message and protects us from rewriting the feature. Here it is:
 > [plan...]
-> Reply `proceed` to start.
+> Reply `proceed` and I'll save it; the code starts from your next message.
 
 ### Case D: User contradicts own "skip" and starts asking detailed questions
 

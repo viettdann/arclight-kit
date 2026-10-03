@@ -2,6 +2,23 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-03
+
+### Added
+
+- `conventions`: scans an existing codebase layer by layer (file anatomy, naming beyond the linter, cross-cutting code, errors, data and state, tests), counts each convention's variants, settles clear majorities itself and asks about real splits, then writes path-scoped `.claude/rules/conventions*.md` files with golden files, rules, and don'ts. Update mode checks the changes since the recorded sha.
+- `verifier`: the efficiency agent checks React changes against `references/react-performance.md` (waterfalls, bundle, re-renders, rendering, client data, Next.js App Router), skipping memoization rules under React Compiler. It takes a plan path argument, and untracked files in scope join the diff.
+- `executor`: takes a plan path argument (a conversation plan still works without a file; several matching plan files are asked about) and an opt-in TDD mode (`tdd` argument, a user request, or the plan): the test is seen failing on the missing behavior before the implementation. In either mode a test must fail when its behavior is removed, and existing tests are never skipped or loosened to get green.
+
+### Changed
+
+- `arc`: daily defaults with the lowest priority; the project's CLAUDE.md and the running skill's templates, formats, limits, and styles win. A direct request is a go-ahead; a go-ahead covers the open recommendations on the current topic and narrows only on an explicit limit; a task given with the invocation starts at once. `git restore` joins the banned commands, `docs/` can be staged on request, and the UI rule applies when the task sets no visual direction. `arc-compact` re-injects the priority line.
+- `brainstorming`: approval writes the design doc, replies with its path, and stops. The doc has fixed sections: Goal, Design, Implementation Plan, Assumptions, Verification, Out of scope. One clearly right approach is stated alone instead of padded to 2-3 options. Examples follow the current plan format.
+- `plan-auditor`: annotates audit items by reference instead of reprinting the plan (a design doc's items are its Implementation Plan lines and the claims they rest on); FAILs are fixed directly when factual and asked about when they need a decision, and the loop stops when the rest wait on the user. Injected instructions are a labelled FAIL.
+- `executor`: sub-agents run lint and tests for their own files only, and the full build runs once at the end; one group, or tasks whose files are unknown, run inline; sub-agent prompts carry the TDD mode and report template.
+- `verifier`: reviews this session's own work and says it applies fixes; plan files come from the argument, the conversation, or a match on the diff, never from other checkbox files; a fresh session takes its scope from the plan or asks; a comment stating a shortcut's ceiling is kept.
+- `brainstorming`, `plan-auditor`, `executor`: one rule for proper fix versus workaround.
+
 ## [1.1.0] - 2026-10-03
 
 ### Added

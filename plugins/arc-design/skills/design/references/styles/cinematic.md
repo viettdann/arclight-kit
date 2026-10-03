@@ -2,16 +2,16 @@
 
 Immersive, paced pages where imagery, scale, and scroll tell a story. Reads as directed and crafted; fails when motion becomes the content (preloaders, scroll hijacking, every element animating in) and the page turns slow, hard to read, or nauseating.
 
-**Fits:** "immersive", "cinematic", "Awwwards", "storytelling", "launch", "campaign", portfolios and studios, product launches, film, music, games, fashion. Also "dark tech" launch pages (Vercel, Raycast) as its dark mode. **Profile:** marketing. Not for tool screens or long-form reading.
+**Fits:** "immersive", "cinematic", "Awwwards", "storytelling", campaigns, portfolios and studios, product launches, film, music, games, fashion. Also "dark tech" launch pages (Vercel, Raycast) as its dark mode. **Profile:** marketing. Not for tool screens or long-form reading.
 
 ## Decisions
 
 - **Canvas:** deep or bright, picked from the brand and its imagery. Dark is common here but the design rule still holds: dark only when the brief asks for it or names a dark reference, built per `dark-mode.md`. In dark tech, one luminous accent works as the single light source (`materials.md`, Gradient and glow); that element is exempt from the marketing profile's glow tell, and nothing else glows.
-- **Type:** display at viewport scale, `clamp(3.5rem, 10vw, 11rem)`, tracking -0.03 to -0.05em, line-height 0.9–1.0. Display may use one extra weight (300 or 700, from a variable font); body stays 400/600 at 17–18px. A display line still fits in 2–3 lines at 390px, and the marketing profile's hero rules hold: the CTA is visible in the first viewport.
+- **Type:** display at viewport scale, `clamp(3.5rem, 10vw, 11rem)`, tracking -0.03 to -0.05em, line-height 0.9–1.0 (0.9 only for uppercase or lines without descenders, `typography.md`). Display may use one extra weight (300 or 700, from a variable font); body stays 400/600 at 17–18px. A display line still fits in 2–3 lines at 390px, and the marketing profile's hero rules hold: the CTA is visible in the first viewport.
 - **Imagery:** full-bleed photo or video carries the mood, one subject per section. Video is muted, `playsinline`, with a poster that loads first, and pauses under `prefers-reduced-motion: reduce`.
 - **Pacing:** a section is one beat. Alternate dense and quiet beats; a full-height section (`min-height: 100dvh`) only where its content fills it.
 - **Texture and glass:** optional film grain, and glass for floating navigation and controls over imagery, both per `materials.md`.
-- **Motion:** each section gets at most one choreographed movement; the rest of the page is still. Entrances 400–800ms with a long ease-out. The movement must serve the story (reveal, transform, sequence); the marketing profile's one-sentence reason still applies.
+- **Motion:** each section gets at most one choreographed movement; the rest of the page is still. Entrances 400–800ms with `--ease-enter`. The movement must serve the story (reveal, transform, sequence); the marketing profile's one-sentence reason still applies.
 
 ## Motion rules
 
@@ -21,7 +21,7 @@ Immersive, paced pages where imagery, scale, and scroll tell a story. Reads as d
 - **Parallax** moves imagery and decoration only, never text.
 - **Split text:** split by word or by grapheme (`Intl.Segmenter`), so diacritics and emoji stay whole. The split spans are `aria-hidden="true"` and the full string sits beside them in a visually hidden span, so screen readers read the sentence, not letters.
 - **Cursor effects** (custom cursor, magnetic buttons) only under `@media (hover: hover) and (pointer: fine)`. The custom cursor tracks the real hotspot, and the native cursor returns over text, inputs, and selection.
-- **Cost:** animate only `transform` and `opacity` (ui-interaction `baseline.md`). Set `will-change` just before a heavy animation and remove it after; never leave it on many elements in the stylesheet.
+- **Cost:** animate only `transform` and `opacity` (`${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`). Set `will-change` just before a heavy animation and remove it after; never leave it on many elements in the stylesheet.
 - **Tools:** CSS scroll-driven animations (`animation-timeline: view()`) where support allows, otherwise the project's existing library (Motion, GSAP ScrollTrigger). Don't add a library for one reveal.
 - **Reduced motion** (`prefers-reduced-motion: reduce`): no pinning, parallax, scroll-linked movement, or smooth scrolling; content appears in place, opacity fades allowed.
 

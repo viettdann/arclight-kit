@@ -63,18 +63,18 @@ Only now present a new plan that replaces the old one:
 
 ```
 Files touched:
-- server/src/db/schema/rateLimitEvents.ts (new): Drizzle schema
-- server/src/db/schema/index.ts (edit): export rateLimitEvents
-- server/src/middleware/rateLimit.ts (new): async middleware, Postgres-backed
-- server/src/main.ts (edit): register middleware
-- server/src/middleware/rateLimit.test.ts (new): mock db, verify behavior
-- server/tests/rateLimit.integration.test.ts (new): real db, end-to-end
+- server/src/db/schema/rateLimitEvents.ts (new): Drizzle schema, index on (ip, created_at). Check: `bun run db:generate` emits one migration creating the table
+- server/src/db/schema/index.ts (edit): export rateLimitEvents. Check: `tsc --noEmit` passes
+- server/src/middleware/rateLimit.ts (new): async middleware, Postgres-backed, fails open on DB error. Check: rateLimit.test.ts passes
+- server/src/main.ts (edit): register middleware. Check: integration test gets 429 on request 31
+- server/src/middleware/rateLimit.test.ts (new): mocked db; limit, pruning, and fail-open on a thrown query. Check: `bun test rateLimit`
+- server/tests/rateLimit.integration.test.ts (new): real db, 31 requests in 60s. Check: `bun test rateLimit.integration`
 
 Assumptions to validate:
-- Drizzle migrations will be generated via `bun run db:generate` after schema change
-- Connection pool handles extra query volume (check pool size in db config)
-- "Fail open" on DB error is acceptable per user decision
+- Connection pool handles the extra query per request (check pool size in db config)
 ```
+
+"Fail open" is no longer an assumption: the user decided it, so it lives in the design.
 
 ## Key moves illustrated
 

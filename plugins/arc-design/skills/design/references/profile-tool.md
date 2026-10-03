@@ -21,7 +21,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Motion
 
-- Hover response ~80–100ms, transitions 150–200ms at most, ease-out, no bounce or overshoot. The one exception is the release of a touch gesture (pull to refresh, a dismissed sheet), which carries the finger's velocity into a small settle. Nothing animates in a way that delays input.
+- Hover response ~80–100ms, transitions 150–200ms at most, `--ease-enter` (`tokens.md`), no bounce or overshoot. The one exception is the release of a touch gesture (pull to refresh, a dismissed sheet), which carries the finger's velocity into a small settle. Nothing animates in a way that delays input.
 
 ## Layout
 

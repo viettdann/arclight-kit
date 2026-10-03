@@ -22,7 +22,8 @@ Never a full-strength border and a shadow together; the two edges read as a doub
 
 ## Never nest
 
-- A card never contains a card, and a panel, modal, or drawer never contains boxed groups. Inside a surface, groups are separated by a heading and a divider. The one exception is a settings danger zone (ui-interaction `settings.md`).
+- A card never contains a card, and a panel, modal, or drawer never contains boxed groups. Inside a surface, groups are separated by a heading and a divider. The one exception is a settings danger zone (`${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/settings.md`).
+- A media frame inside a card, and a style material built as shell and core (double bezel), are not boxed groups; they follow the nested-corner rule in `radius.md`.
 - Each inner box stacks another round of padding and radius, eating width and adding lines that say nothing.
 
 ## Media
@@ -34,6 +35,6 @@ Never a full-strength border and a shadow together; the two edges read as a doub
 ## Checks
 
 - [ ] Every card has one entity and one destination; groups without either are sections.
-- [ ] No card or boxed group inside another surface.
+- [ ] No card or boxed group inside another surface (media frames and double bezels aside).
 - [ ] One edge treatment per context, never border plus shadow.
 - [ ] One media ratio per grid, nothing stretched.

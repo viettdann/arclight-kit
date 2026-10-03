@@ -1,6 +1,6 @@
 ---
 name: ui-interaction
-description: "Behavior and state rules for interactive UI: forms and validation, inline edit, submit, loading, errors, success and confirmation screens, empty states, tables (including narrow widths), selection and bulk actions, pagination, search, filters, modals, menus and context menus, tabs, navigation and scroll restoration, toasts, badges, copy to clipboard, destructive actions, undo, autosave, settings pages, drag and drop, resizable panes, pull to refresh, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign)."
+description: "Behavior and state rules for interactive UI: forms and validation, inline edit, submit, loading, errors, success and confirmation screens, empty states, tables (including narrow widths), selection and bulk actions, pagination, search, filters, modals, menus and context menus, tabs, navigation and scroll restoration, toasts, badges, copy to clipboard, destructive actions, undo, autosave, settings pages, drag and drop, resizable panes, pull to refresh, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign), or for debugging an existing control that does nothing or the wrong thing (see state-check)."
 ---
 
 # UI Interaction Rules
