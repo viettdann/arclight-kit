@@ -2,6 +2,16 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-10-04
+
+### Changed
+
+- `verifier`: each reviewer's checklist lives in its own `references/review-*.md`, which each reviewer reads itself; `SKILL.md` holds only the flow, the reviewer prompt, and the summary. `scripts/collect-diff.sh` (tested by `collect_diff_test.py`) writes the in-scope diff to a temp file: uncommitted changes, or the session's commits from a confirmed `--base`, or unpushed commits; every untracked file, directories included; whole files outside git. Reviewers get its path; it is rewritten when Phase 0 edits code and deleted after the summary. Contract breaks move to the reuse reviewer, since both search the whole repository; security and test checks read as sub-lists. Severity levels are defined. Reviewers get the user's Phase 0 answers and whether skill or agent files are in review scope, and return a `not_verified` list, which covers a guard that still cannot run outside the repository after its config is copied and a skill the reviewer cannot call. The correctness reviewer alone checks the React rules marked (correctness). Full or slow suites run through `test-runner` when it is available.
+
+### Removed
+
+- `verifier`: the Phase 0 sub-agents, the fresh agent that attacks high-severity fixes, and the design-smell checks.
+
 ## [1.6.0] - 2026-10-04
 
 ### Changed
