@@ -2,6 +2,17 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-03
+
+### Changed
+
+- `design`: a brief that asks for a glassy look gets visible glass on the hero and key panels, not only on floating layers.
+- `design` (marketing): scroll reveals keep content visible without JS and under reduced motion; a nav with three or more links gets a menu on narrow screens.
+
+### Fixed
+
+- `screenshot.mjs` and `ui_check.mjs` also find the Chromium downloaded by Playwright (`$PLAYWRIGHT_BROWSERS_PATH` or the default `ms-playwright` cache, newest build first) when no browser is on PATH, so they run on CI runners and containers without `CHROME` set.
+
 ## [1.0.0] - 2026-10-03
 
 First release.

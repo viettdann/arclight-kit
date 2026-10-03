@@ -27,7 +27,7 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 
 - **Hero fits the first viewport** at 1280×800: headline at most 2 lines, subhead about 20 words, CTA visible without scrolling. If it doesn't fit, lower the type scale or cut copy; a 4-line headline is a font-size error. At most four text elements: optional eyebrow, headline, subhead, CTAs. Trust strips, pricing teasers, and "works with…" taglines go in the section below.
 - Full-height sections use `min-height: 100dvh`, not `100vh`/`h-screen` (mobile address bars make `vh` jump).
-- Navigation stays on one line at desktop, 64–72px tall.
+- Navigation stays on one line at desktop, 64–72px tall. On narrow screens the links can drop away only when there are two or fewer; with three or more, a menu button opens them (closes on Esc, on a link, and on outside click) so mobile visitors can still reach every section.
 - **Vary the section layouts.** Each layout family (3-up cards, image+text split, full-width quote, bento) appears once; more than two image+text splits in a row reads as a template.
 - **Grids have exactly as many cells as content.** Five items → five cells (2+3, hero+4); never a blank tile to complete the grid.
 - Every multi-column section states its narrow-screen layout in the same component, not "Tailwind will handle it".
@@ -69,7 +69,7 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 | Two equal buttons side by side | One primary button plus a text link |
 | "Trusted by 10,000+" above anonymous grey logos | One attributable quote with a result and a unit |
 | Three cards, icon in a circle, one word each | A product screenshot with three annotations |
-| Glass cards over a static background, glow on everything, emoji section headings | Solid surfaces, one elevation style, plain headings; glass only on layers floating over moving content (`materials.md`) |
+| Glass cards over a static background, glow on everything, emoji section headings | Solid surfaces, one elevation style, plain headings; glass only on layers floating over moving content, unless the brief asks for a glassy look (`materials.md`) |
 | Small uppercase eyebrow above every section heading | The heading alone; at most one eyebrow per three sections |
 | Numbered eyebrows (`001 · Capabilities`, `06 / How it works`), `01 / 04` on tiles | Plain topic heading, or nothing |
 | Section header split into big headline left, small paragraph floating right | Headline with the paragraph directly beneath it |
@@ -100,7 +100,7 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
   A full-bleed band is square: sides flush with an edge take no radius (`radius.md`). No pills by default. A pill-shaped button, chip, or tag appears only when the chosen style lists it.
 - Elevation from layered shadows, used only where lift carries meaning; glass on floating layers over moving content (`materials.md`).
 - Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms ease-out. Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
-- Motion: entrances 200–300ms ease-out, exits faster, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
+- Motion: entrances 200–300ms ease-out, exits faster, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once, and content is never hidden by default: apply the hidden start state only after the script has run (`.js .reveal`), show everything at once under `prefers-reduced-motion` or without `IntersectionObserver`, so a script error, a blocked script, or a crawler still sees the page. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
 - Gradients, glow, and texture follow `materials.md`: on one special element at most, never under body text.
 
 ## Avoid
@@ -110,7 +110,8 @@ Hero carousels, autoplaying video with sound, parallax that moves text, more tha
 ## Checks
 
 - [ ] Design read and second-read moment stated in the summary.
-- [ ] Hero fits 1280×800 with the CTA visible; nav on one line; no display type colliding with other text.
+- [ ] Hero fits 1280×800 with the CTA visible; nav on one line, with a menu on narrow screens when it has three or more links; no display type colliding with other text.
+- [ ] Revealed content is visible without JS and under reduced motion.
 - [ ] No layout family repeated; no empty grid cells.
 - [ ] No div-built fake screenshots; missing images are labeled slots listed in the summary.
 - [ ] Every visible string re-read; one label per CTA intent; no em dashes in copy.

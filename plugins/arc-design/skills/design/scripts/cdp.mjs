@@ -2,8 +2,8 @@
 // Importing it registers handlers that turn any uncaught error into `fail` (message on stderr, cleanup, exit 2).
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -72,6 +72,24 @@ const findChrome = () => {
   for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'microsoft-edge']) {
     try { return execFileSync('which', [name], { encoding: 'utf8' }).trim(); } catch {}
   }
+  return findPlaywrightChromium();
+};
+
+// CI runners and containers often have only the Chromium that `npx playwright install` downloaded, which is never on PATH.
+const findPlaywrightChromium = () => {
+  const caches = [process.env.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), '.cache', 'ms-playwright'),
+    join(homedir(), 'Library', 'Caches', 'ms-playwright'), process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'ms-playwright')].filter(Boolean);
+  const bins = [['chrome-linux64', 'chrome'], ['chrome-linux', 'chrome'], ['chrome-mac-arm64', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'], ['chrome-win64', 'chrome.exe'], ['chrome-win', 'chrome.exe']];
+  for (const cache of caches) {
+    let dirs;
+    try { dirs = readdirSync(cache).filter((d) => /^chromium-\d+$/.test(d)); } catch { continue; }
+    dirs.sort((a, b) => Number(b.slice(9)) - Number(a.slice(9)));
+    for (const d of dirs) for (const bin of bins) {
+      const p = join(cache, d, ...bin);
+      if (existsSync(p)) return p;
+    }
+  }
   return null;
 };
 
@@ -79,7 +97,7 @@ const findChrome = () => {
 export const launch = async (timeoutMs) => {
   if (typeof WebSocket === 'undefined') await fail('needs Node 22+ (global WebSocket)');
   const chromePath = findChrome();
-  if (!chromePath) await fail('no Chrome, Chromium, or Edge found; set CHROME=/path/to/chrome');
+  if (!chromePath) await fail('no Chrome, Chromium, or Edge found on PATH or in the Playwright cache; set CHROME=/path/to/chrome');
   setTimeout(() => fail('timed out'), timeoutMs).unref();
   profile = mkdtempSync(join(tmpdir(), 'shot-'));
   // Port 0 lets Chrome pick a free port and write it to DevToolsActivePort, so parallel runs never share a browser.
