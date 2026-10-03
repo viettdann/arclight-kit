@@ -1,7 +1,8 @@
 ---
 name: handoff
-description: Write a session handoff file before ending a Claude Code session, so a fresh session can resume cleanly after /clear. Use this INSTEAD of /compact or auto-compact, which often summarize the work with wrong, vague, or invented details.
-when_to_use: "Usually invoked directly. Also trigger on two intents, in English or Vietnamese: ending or pausing work (wrap up, save progress, free up context, about to /clear or /compact, \"lưu tiến độ\", \"ghi handoff\", \"tạm dừng\", \"chuẩn bị clear\"), and starting work by resuming from a previous handoff (\"làm tiếp\", \"tiếp tục từ handoff\")."
+description: Write a verified handoff file so work can continue in a fresh session, another repo or harness, or with a colleague; with `resume`, pick up from the latest one.
+argument-hint: "[resume]"
+disable-model-invocation: true
 effort: high
 ---
 
@@ -10,6 +11,10 @@ effort: high
 A handoff is a short, accurate Markdown file that lets a brand-new session pick up exactly where this one stopped. It lives in `${CLAUDE_PROJECT_DIR}/docs/` (written `docs/` below), is named with today's date and the task, and is written from verified facts.
 
 Accuracy is the whole point - a confident-but-wrong handoff is worse than useless.
+
+Invoked with `resume`, or as the first thing in a session with no work yet: go to Resuming. Otherwise write one.
+
+A handoff carries work somewhere this session can't follow: a later session after `/clear` or a restart, another repo or directory, another harness, a colleague, or a side task forked off without derailing this one. When the next step continues the same task in this session, `/compact <what the next phase needs>` keeps more of the reasoning. If the user invokes it in that case, write the handoff as asked and mention the alternative in one line of the final reply.
 
 ## Writing a handoff
 
@@ -57,9 +62,7 @@ Keep the file to a screen or two - density beats length. Omit empty sections rat
 
 Handoff files accumulate. Recommend deleting or archiving a handoff once its task is closed (merged/shipped), so the dir stays current.
 
-## Resuming after /clear
-
-When a session starts and the user wants to continue earlier work:
+## Resuming
 
 1. Find the latest handoff: `ls -t docs/handoff-*.md | head -5`, pick the relevant one (confirm if ambiguous). If none exist, say so and ask whether to start cold or point you at a specific file - do not invent prior context.
 2. Read it fully.

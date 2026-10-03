@@ -1,7 +1,8 @@
 ---
 name: fresh-air
-description: Block a project's own Claude Code skills and commands (.claude/skills, .claude/commands, nested) via that project's .claude/settings.local.json, so only the user's personal, claude.ai-synced and plugin skills load. Can also exclude the project's CLAUDE.md files, and restore everything. Use whenever the user wants to disable, block, hide or distrust project skills ("chặn skill project", "tắt skills trong repo", "chỉ dùng skill global", "mở lại skill project"), or opens an unfamiliar repo that ships its own .claude/skills. Also trigger proactively when the project ships many skills (8+), skills that shadow a user skill's name, or skills with pre-approved Bash, `!` shell injection, network calls or prompt-injection text.
+description: Block a project's own skills and commands (optionally its CLAUDE.md files too) through its .claude/settings.local.json, so only your personal and plugin skills load; or restore them.
 argument-hint: "[off|user-only|restore] [claude-md|claude-md-all] [dir]"
+disable-model-invocation: true
 ---
 
 # fresh-air
@@ -26,10 +27,9 @@ Map plain-language requests the same way ("chỉ khi tôi gọi" → `user-only`
 ## Steps
 
 1. `python3 ${CLAUDE_SKILL_DIR}/scripts/fresh_air.py scan [DIR]`. Tell the user the count, the flagged skills, and any names that shadow a user skill, in 2–4 lines.
-2. If the user asked, go ahead. If you triggered on your own, show that summary and ask first.
-3. `python3 ${CLAUDE_SKILL_DIR}/scripts/fresh_air.py apply [DIR] [--mode ...] [--claude-md ...]`, or `restore [DIR]`. Use `--dry-run` to preview.
-4. Read `DIR/.claude/settings.local.json` once to confirm it has the entries the script printed. That is the whole check. Don't start sessions or invoke skills to test it.
-5. Report what changed, the backup path the script printed, and any `SKIP` lines. A skipped name matches one of the user's personal skills, which already wins, so blocking it would hide theirs. End with one line: the change applies from the next message, but `/clear` or restarting Claude Code makes sure it fully takes effect; or say "kiểm tra" and you will list what a fresh session loads.
+2. `python3 ${CLAUDE_SKILL_DIR}/scripts/fresh_air.py apply [DIR] [--mode ...] [--claude-md ...]`, or `restore [DIR]`. Use `--dry-run` to preview.
+3. Read `DIR/.claude/settings.local.json` once to confirm it has the entries the script printed. That is the whole check. Don't start sessions or invoke skills to test it.
+4. Report what changed, the backup path the script printed, and any `SKIP` lines. A skipped name matches one of the user's personal skills, which already wins, so blocking it would hide theirs. End with one line: the change applies from the next message, but `/clear` or restarting Claude Code makes sure it fully takes effect; or say "kiểm tra" and you will list what a fresh session loads.
 
 ## Live check (only when the user asks)
 

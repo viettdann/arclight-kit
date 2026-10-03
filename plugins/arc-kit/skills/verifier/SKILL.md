@@ -54,6 +54,7 @@ Merge the Step 2 lists, deduplicate, then mark each task against the diff:
 
 - `done`: the diff satisfies the requirement
 - `partial`: changes exist but fall short, for example a file created without its key logic, or an API route whose handler is still a stub
+- `wrong`: changes address the task but behave differently from what it asks (filters on the wrong field, returns 200 where the plan says 404); quote the requirement
 - `missing`: no corresponding changes
 - `unclear`: cannot be decided from the diff, or the diff takes one reading of an ambiguous requirement (sort order, default value, inclusive or exclusive bound); state the reading taken
 
@@ -71,13 +72,14 @@ Otherwise present the gaps and let the user decide with AskUserQuestion:
 >
 > - [missing] Task X: no corresponding changes found
 > - [partial] Task Y: file created, logic incomplete
+> - [wrong] Task W: "only active users" but the query filters on `deletedAt`
 > - [unclear] Task Z: "sort by date" implemented newest first; intended order?
 > - [extra] path/to/file: caching layer no task asks for
 >
 > 1. Complete these now
 > 2. Skip them and run the code review only
 
-Under option 1, finish tasks that are single-file and clearly defined. Anything spanning multiple files goes back to the user as its own decision. Never skip missing work silently. Ask about each `unclear` reading and each `extra` (keep or remove) in the same AskUserQuestion; never remove an extra without the user's answer.
+Under option 1, finish tasks that are single-file and clearly defined, and correct each `wrong` one the same way. Anything spanning multiple files goes back to the user as its own decision. Never skip missing work silently. Ask about each `unclear` reading and each `extra` (keep or remove) in the same AskUserQuestion; never remove an extra without the user's answer.
 
 ## Phase 1: Launch Five Review Agents in Parallel
 
@@ -119,11 +121,17 @@ Review the same changes for hacky patterns:
 4. **Leaky abstractions**: internal details exposed that should stay encapsulated, or existing abstraction boundaries broken
 5. **Stringly-typed code**: raw strings where the codebase already has constants, string-union enums, or branded types
 6. **Placeholders**: `// ...`, `// rest of code`, `// implement here`, `// similar to above`, a bare `...` for omitted code, stub bodies, or a `TODO` the user or active skill did not ask for. Fix: write the missing code.
-7. **Contract breaks**: a changed exported signature, HTTP route, DTO or serialized field name, string enum value, ORM mapping, event name, or config key whose consumers the diff does not update. Search the whole repo for consumers, string-based lookups included; the build stays green when a serialized name changes. Fix: update the consumers, or restore the old name when the change was not planned. When the diff touches ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, also run `mgi-kit:api-contract` when it is installed.
+7. **Contract breaks**: a changed exported signature, HTTP route, DTO or serialized field name, string enum value, ORM mapping, event name, or config key whose consumers the diff does not update. Search the whole repo for consumers, string-based lookups included; the build stays green when a serialized name changes. Fix: update the consumers, or restore the old name when the change was not planned. When the diff touches ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, also call the Skill tool with `mgi-kit:api-contract` when it is installed.
 8. **Unsearchable code**: a new exported name that is a bare generic verb or noun (`validate`, `diff`, `handler`), a new synonym for a term the codebase already spells one way, an event name, flag, error code, or log key assembled by interpolation, an error message without a literal prefix that greps back to the throw site, a name the diff left stale after changing its behavior. Fix: rename or write the literal in full; never rename a serialized or string-based contract name.
 9. **Leftovers**: debug output (`console.log`, `print`, `debugger`, `Debug.WriteLine`) and new suppressions added to get green (`any`, `as unknown as`, `@ts-ignore`, `# type: ignore`, `#pragma warning disable`, `!` null-forgiving). Fix: remove the output; fix the type instead of suppressing it.
 10. **Speculative abstraction**: an interface with one implementation, a factory or strategy for two branches, a parameter or option no caller sets, config for a value that never changes, scaffolding for a later feature no task asks for. Fix: inline or delete.
 11. **Defensive code out of place**: a try/catch, null check, or fallback that the surrounding code in the same file doesn't use, guarding a value its callers already validate or its type already guarantees. Fix: remove it; checks at a trust boundary stay.
+12. **Design smells** (Fowler, _Refactoring_ ch. 3), each a judgment call reported as "possible <smell>" with `severity: low`; a documented repo rule or the pattern the surrounding code follows wins:
+    - **Feature Envy**: a new method that reads another object's data more than its own. Fix: move it onto that data.
+    - **Data Clumps**: the same few fields or parameters travel together through several signatures. Fix: one type that holds them.
+    - **Primitive Obsession**: a string or number standing in for a domain concept with rules (an email, a money amount, an id of one entity type). Fix: a small type for it.
+    - **Shotgun Surgery**: one logical change needs scattered edits across many files of the diff. Fix: gather what changes together into one module.
+    - **Message Chains**: a caller walking `a.b().c().d()` through objects it shouldn't know. Fix: one method on the first object that hides the walk.
 
 ### Agent 3: Efficiency Review
 
@@ -163,7 +171,7 @@ Trace each changed code path with concrete inputs. Report only defects with an i
 
 ## Phase 2: Deduplicate and Apply Fixes
 
-Wait for all five agents to finish, then aggregate:
+Wait for all five agents to finish, then aggregate the review findings. The Phase 0 results (does the diff do what was asked) stay a separate axis: never merge, deduplicate, or rank them against review findings, so a clean review can't hide a `wrong` task and a pile of style findings can't bury it.
 
 1. **Deduplicate**: merge findings that share a file and line or that overlap, keeping the most specific suggested fix.
 2. **Sort by severity**, high first, then by file path for locality.
@@ -176,13 +184,13 @@ When done, output:
 ```markdown
 ## Verification Summary
 
-### Completeness (Phase 0)
+### Spec (Phase 0)
 
 - Tasks verified: X/Y
-- Missing or partial: (list or "none")
+- Missing, partial, or wrong: (list, with what was completed or corrected, or "none")
 - Extra: (kept or removed, per the user's answer, or "none")
 
-### Fixes Applied (Phase 2)
+### Review: Fixes Applied (Phase 2)
 
 - path/to/file:line: what was fixed
 
@@ -198,3 +206,5 @@ When done, output:
 
 - what could not be checked and why (no test harness, a page behind login, an external service), or "none"
 ```
+
+End with one line per axis: Spec (gaps found and how many remain open, the worst one) and Review (findings fixed and skipped, the worst one). Don't name one worst issue across both.

@@ -1,7 +1,8 @@
 ---
 name: conventions
-description: "Extract an existing codebase's unwritten conventions (file anatomy, naming beyond the linter, where cross-cutting code lives, error handling, data access and state, tests) into path-scoped `.claude/rules/` files with golden example files, so new code matches the code already there. Counts patterns instead of guessing, settles clear majorities on its own, and asks the user only about real splits. Use when onboarding Claude onto an existing or legacy project, when generated code drifts from the project's style, or to refresh the rules after the code moved on (\"rút convention\", \"học style dự án\", \"AI viết code lệch style\", \"code không giống code cũ\", \"cập nhật style rules\"). Not for formatting a formatter or linter already enforces, or for judging whether the conventions are good."
+description: "Write an existing codebase's unwritten conventions into path-scoped .claude/rules/ files with golden files, or refresh them after the code moved on."
 argument-hint: "[path or layer]"
+disable-model-invocation: true
 ---
 
 # Conventions
@@ -17,6 +18,7 @@ If `.claude/rules/conventions*.md` exists, run Update (step 6). Otherwise run a 
 - Read what is already written down: `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `.editorconfig`, linter and formatter configs (`eslint`, `biome`, `prettier`, `.globalconfig`, `Directory.Build.props`, analyzers). Anything they state or enforce stays out of the rules.
 - Split the repo into layers by `git ls-files` (for example ASP.NET projects, a Next or Vite frontend, shared packages). Each layer gets its own scan and its own rules file.
 - Size each layer by source file count and pick the depth: up to 50 files, read them all; 50 to 500, read shared and infrastructure code fully and sample two or three files per dimension; above 500, sample from `git log --since=6.months --name-only` first, then the largest and most imported files. Recently changed files show where the team is heading; old files show what exists.
+- Done when every layer has a path glob, a file count, and a chosen depth, and the list of what existing docs and configs already enforce is written down.
 
 ## 3. Scan each layer
 
@@ -30,6 +32,8 @@ If `.claude/rules/conventions*.md` exists, run Update (step 6). Otherwise run a 
 | Tests | Framework, naming, arrange style, builders and fixtures, what gets mocked |
 
 Count, don't guess: for each candidate convention, grep both variants and record the counts with two example paths each (`MapGet` 41 vs `: ControllerBase` 3). A convention with no countable form gets the files it was seen in.
+
+Done when each of the six dimensions, in each layer, has its candidate conventions with counts and example paths, or a one-line note that the layer has nothing there (a backend with no UI errors, a package without tests).
 
 ## 4. Settle conflicts
 
@@ -64,6 +68,7 @@ paths:
 - **Golden files:** three to six real files that are recent, typical, and mid-sized, each with what it demonstrates. Pick files without known bugs; a bug in a golden file gets copied.
 - **Rules:** one checkable line each, naming the concrete type, helper, folder, or pattern. Keep a line only if a capable developer new to the repo would likely get it wrong without it; generic good practice the model already follows is cut.
 - **Don't:** minority patterns that must not spread, each with where they live.
+- A rule the project's linter or analyzer could enforce (a banned import, a naming pattern, a forbidden base class): offer it as a lint rule instead of a prose line. If the user takes it, prove it before keeping it: the linter passes on the code, fails on a deliberate violation, and passes again once that violation is reverted.
 - Keep each file under about 60 lines; it loads every time a matching file is read.
 - The comment line holds the short HEAD sha and date for Update.
 

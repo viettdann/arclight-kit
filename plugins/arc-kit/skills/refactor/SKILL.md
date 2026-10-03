@@ -35,7 +35,9 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 
 - One transformation per step. After each: build or type-check, then run the pinned tests. On red, undo that step with Edit (not git) and take a smaller one.
 - Prefer LSP rename over text replacement. With text replacement, update every consumer found in step 2 in the same step.
-- Add abstraction only when it removes real duplication: no interface with one implementation, no strategy, builder, or chain for two branches, no shared helper before three real call sites. Fewer layers is the usual win.
+- Add abstraction only when it removes real duplication: no strategy, builder, or chain for two branches, no shared helper before three real call sites. Fewer layers is the usual win.
+- An interface earns its place with two implementations that exist now (production and a test fake counts); with one, it is indirection. Inline it, unless something outside the scope implements or injects it by that name (step 2).
+- Deletion test for a layer (a wrapper, service, helper module): imagine inlining it into its callers. If the complexity disappears, it was a pass-through; inline it. If the same logic would reappear in several callers, it earns its place; keep it.
 - Delete dead code only after step 2's search, string-based lookups included, finds no consumer. If unsure, list it in the report instead.
 - Match the surrounding style. Leave untouched lines alone so the diff stays reviewable.
 
@@ -44,7 +46,7 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 - Run build, type-check, lint, the pinned tests, and the test suite of every touched package. Compare against the baseline.
 - If the goal is a complexity target, measure it with the project's own analyzer (Sonar, ESLint `complexity` or `sonarjs/cognitive-complexity`, .NET code metrics) before and after, and put both numbers in the report.
 - Grep for every old name to confirm no stale reference. Diff the frozen surfaces from step 2 to confirm they are unchanged.
-- If the scope touched ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, run `mgi-kit:api-contract` when it is installed.
+- If the scope touched ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, call the Skill tool with `mgi-kit:api-contract` when it is installed.
 
 Report in this shape:
 

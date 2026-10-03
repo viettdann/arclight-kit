@@ -25,9 +25,9 @@ Claude Code marketplace with three plugins:
 | Write or check prose people read (README, docs, design docs, release notes, messages): remove autopilot patterns, keep the writer's voice | `arc-kit:writing` |
 | Restructure existing code without changing behavior: extract, rename, split, reduce complexity, remove duplication | `arc-kit:refactor` |
 | This session's work is done or about to be committed: completeness check, then review and fixes | `arc-kit:verifier` |
-| Ending or pausing a session; resuming after `/clear` instead of `/compact` | `arc-kit:handoff` |
-| Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `arc-kit:conventions` |
-| Block a project's own skills, commands, and CLAUDE.md, or restore them | `arc-kit:fresh-air` |
+| Work has to continue somewhere this session can't follow (a later session after `/clear`, another repo or harness, a colleague, a forked side task); `resume` picks it up. Same task in this session with a full context: `/compact <what to keep>` instead | `/arc-kit:handoff` (user-invoked only) |
+| Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `/arc-kit:conventions` (user-invoked only) |
+| Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI | `mgi-kit:dotnet-upgrade` |
 

@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Use this skill before implementing non-trivial features, designing components, or making architectural decisions. Explores user intent, requirements, and design through collaborative dialogue before any implementation begins. Trigger on phrases like 'I want to build', 'how should I design', 'let's design', 'brainstorm', 'plan this out', 'tôi muốn làm', 'thiết kế', 'lên kế hoạch', 'nên làm thế nào', or when the user describes a multi-step feature or system they want to create. Do not trigger for small, self-contained tasks like adding a single helper function."
+description: "Design before code: turns an idea into an approved design and implementation plan, asking in rounds only the judgment calls the codebase can't answer, then saves docs/plans/<date>-<topic>-design.md. Use before building a non-trivial feature, component, or architectural change, or when the user describes a multi-step system to create ('I want to build', 'how should I design', 'brainstorm', 'tôi muốn làm', 'thiết kế', 'lên kế hoạch'). Not for a small self-contained change like one helper function."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -9,7 +9,7 @@ description: "Use this skill before implementing non-trivial features, designing
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start from a high-level description of what the user wants to build and the current project context, then ask questions to refine the idea. Once you understand what you're building, present the design.
+Start from a high-level description of what the user wants to build and the current project context, then ask questions to refine the idea until Understanding is done, then present the design.
 
 ## The Process
 
@@ -24,12 +24,15 @@ Start from a high-level description of what the user wants to build and the curr
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
-- **Use AskUserQuestion tool** for preference/judgment questions only:
-  - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions of the same call (up to 4 per call)
+- **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier with the AskUserQuestion tool, for preference/judgment questions only:
+  - A decision that depends on another question still open goes in a later round, not this one; each round's answers unblock the next frontier
+  - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions of the same call (up to 4 per call; a larger frontier asks first the decisions most others depend on)
   - Each question states your recommended option and why
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
+  - A fact still being looked up (codebase search, research) blocks only the decisions that depend on it; ask the rest of the frontier meanwhile
 - Focus on: purpose, constraints, success criteria
 - For performance work, record the current measurement and a target number before designing; "faster" is not a success criterion
+- **Done when** the frontier is empty: the purpose and success criterion are stated, every judgment call is answered or defaulted (see Handling Disagreement), and every fact the design relies on is Verified or listed as Assumed. Then present the design.
 
 ### Verification Discipline
 
@@ -55,7 +58,7 @@ See `examples/verify-callout.md` for the recovery flow when a claim turns out to
 
 ### Research (when needed)
 
-Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs. Choosing between libraries or services, or checking current versions, support dates, or prices, goes through `arc-kit:research` when it is installed.
+Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs. Choosing between libraries or services, or checking current versions, support dates, or prices, goes through `arc-kit:research` when it is installed: call the Skill tool with it.
 
 ### Presenting the Design
 

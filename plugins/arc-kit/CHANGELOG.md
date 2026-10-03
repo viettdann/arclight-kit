@@ -2,6 +2,23 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-10-04
+
+### Added
+
+- `debug/scripts/hitl-loop.sh`: a repro for bugs only a person can trigger; it prompts the user step by step and prints their observations as `KEY=VALUE` lines.
+
+### Changed
+
+- `debug`: repro sources in a fixed order (test, `curl`, CLI fixture diff, replayed capture, throwaway harness, old-versus-new diff, then the HITL script); the repro is tightened to assert the reported symptom, deterministic and fast, and no theory is built before it has run; it is minimised until every remaining piece is needed. Three to five hypotheses, each with a prediction, shown to the user before testing; performance regressions start from a baseline measurement; a bug with no seam that exercises it as the call site does is reported instead of covered by a shallow test; secrets are redacted in everything shown.
+- `brainstorming`: questions go in rounds over the frontier (decisions whose prerequisites are settled), and Understanding has a done criterion; shorter description.
+- `verifier`: Phase 0 marks tasks done but `wrong`; Spec (Phase 0) and Review (Phase 1-2) are reported as separate axes, never merged or ranked together; the quality agent flags Feature Envy, Data Clumps, Primitive Obsession, Shotgun Surgery, and Message Chains as judgment calls.
+- `refactor`: an interface needs two implementations that exist now; a layer that fails the deletion test is inlined.
+- `executor` and `conventions`: a new lint rule, hook, CI step, or check is kept only after it fails on a deliberate violation. `conventions` steps 2 and 3 have done criteria and offer lint rules for mechanical conventions.
+- `handoff`, `conventions`, and `fresh-air` are user-invoked only, with descriptions written for the person typing them; `handoff` takes `resume`, and no longer replaces `/compact`: it is for work that leaves this session.
+- `writing`: shorter description. Cross-skill calls say "call the Skill tool with" the skill.
+- Ideas from mattpocock/skills (MIT): `diagnosing-bugs`, `grilling`, `code-review`, `codebase-design`, `writing-for-agents`, `setup-ts-deep-modules`.
+
 ## [1.4.0] - 2026-10-03
 
 ### Added
