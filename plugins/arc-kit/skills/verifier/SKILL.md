@@ -102,6 +102,7 @@ For each change:
 1. **Search for existing utilities and helpers** that could replace newly written code. Start with the repo's shared locations (utils, lib, shared, and helpers directories, shared workspace packages) and the directory of each changed file, then widen to the whole repo.
 2. **Flag any new function that duplicates existing functionality.** Put the existing function's path and name in `suggested_fix`.
 3. **Flag inline logic that an existing utility already covers**: hand-rolled string manipulation, manual path handling, custom environment checks, ad-hoc type guards, and similar patterns.
+4. **Flag new code that the platform already covers**: the standard library, a native platform feature (CSS over JS, a DB constraint over app code, a framework built-in), or a dependency already in the manifest. Flag a dependency the diff adds for what a few lines do. In UI, the project's own components outrank native elements. Put the replacement in `suggested_fix`.
 
 ### Agent 2: Code Quality Review
 
@@ -116,7 +117,7 @@ Review the same changes for hacky patterns:
 7. **Contract breaks**: a changed exported signature, HTTP route, DTO or serialized field name, string enum value, ORM mapping, event name, or config key whose consumers the diff does not update. Search the whole repo for consumers, string-based lookups included; the build stays green when a serialized name changes. Fix: update the consumers, or restore the old name when the change was not planned. When the diff touches ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, also run `mgi-kit:api-contract` when it is installed.
 8. **Unsearchable code**: a new exported name that is a bare generic verb or noun (`validate`, `diff`, `handler`), a new synonym for a term the codebase already spells one way, an event name, flag, error code, or log key assembled by interpolation, an error message without a literal prefix that greps back to the throw site, a name the diff left stale after changing its behavior. Fix: rename or write the literal in full; never rename a serialized or string-based contract name.
 9. **Leftovers**: debug output (`console.log`, `print`, `debugger`, `Debug.WriteLine`) and new suppressions added to get green (`any`, `as unknown as`, `@ts-ignore`, `# type: ignore`, `#pragma warning disable`, `!` null-forgiving). Fix: remove the output; fix the type instead of suppressing it.
-10. **Speculative abstraction**: an interface with one implementation, a factory or strategy for two branches, a parameter or option no caller sets. Fix: inline.
+10. **Speculative abstraction**: an interface with one implementation, a factory or strategy for two branches, a parameter or option no caller sets, config for a value that never changes, scaffolding for a later feature no task asks for. Fix: inline or delete.
 
 ### Agent 3: Efficiency Review
 
@@ -147,10 +148,11 @@ Lint suppressions, type-checker directives, license headers, and shebangs are no
 Trace each changed code path with concrete inputs. Report only defects with an input or state that triggers them, and name that input or state in `issue`; style is out of scope.
 
 1. **Logic and edge cases**: empty, null, zero, negative, and maximum values; off-by-one and wrong boundary comparisons; inverted conditions; operations in the wrong order
-2. **Error paths**: errors swallowed or logged and then ignored, a caught failure returned as success, a fallback default that hides missing data, a failure that leaves partial state behind
-3. **Concurrency**: check-then-act races, mutable state shared across requests or threads, a missing `await`, fire-and-forget work whose failure nobody observes
-4. **Security**: untrusted input reaching SQL, shell commands, HTML, file paths, or outbound URLs without parameterization, encoding, or validation; a new endpoint or action without an authentication or authorization check, including access to another user's records; secrets in code, logs, or error messages; a dependency the diff adds whose exact package name does not exist in the registry or that the ecosystem audit (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`) reports as high or critical
-5. **Tests**: new or changed branches with no test, tests that assert implementation details (mock call counts, private state) instead of observable behavior, tests that pass whatever the code does, tests the diff deletes, skips (`.skip`, `xit`, `[Ignore]`, `Skip =`), or loosens without a planned behavior change
+2. **Fix in one caller only**: a bug fixed at the call site the task names while other callers of the same function or path keep the defect. Grep every caller; name the unfixed ones in `issue`.
+3. **Error paths**: errors swallowed or logged and then ignored, a caught failure returned as success, a fallback default that hides missing data, a failure that leaves partial state behind
+4. **Concurrency**: check-then-act races, mutable state shared across requests or threads, a missing `await`, fire-and-forget work whose failure nobody observes
+5. **Security**: untrusted input reaching SQL, shell commands, HTML, file paths, or outbound URLs without parameterization, encoding, or validation; a new endpoint or action without an authentication or authorization check, including access to another user's records; secrets in code, logs, or error messages; a dependency the diff adds whose exact package name does not exist in the registry or that the ecosystem audit (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`) reports as high or critical
+6. **Tests**: new or changed branches with no test, tests that assert implementation details (mock call counts, private state) instead of observable behavior, tests that pass whatever the code does, tests the diff deletes, skips (`.skip`, `xit`, `[Ignore]`, `Skip =`), or loosens without a planned behavior change
 
 ## Phase 2: Deduplicate and Apply Fixes
 
@@ -159,7 +161,7 @@ Wait for all five agents to finish, then aggregate:
 1. **Deduplicate**: merge findings that share a file and line or that overlap, keeping the most specific suggested fix.
 2. **Sort by severity**, high first, then by file path for locality.
 3. **Resolve conflicts**: when two findings propose contradictory changes to the same code, apply the higher-severity one and note the skipped finding in the summary.
-4. **Apply each fix directly.** A fix adds no comment unless it states a non-obvious invariant in one line. Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill or agent file the user did not ask to review, or when the suggested fix contradicts an explicit plan requirement, and record the reason in the summary. Fixes that delete files or revert most of the diff go to the user with AskUserQuestion instead, since they undo the work under review.
+4. **Apply each fix directly.** A fix adds no comment unless it states a non-obvious invariant in one line. A simplification never removes input validation at a trust boundary, error handling that prevents data loss, or a security check; drop that part of the finding. Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill or agent file the user did not ask to review, or when the suggested fix contradicts an explicit plan requirement, and record the reason in the summary. Fixes that delete files or revert most of the diff go to the user with AskUserQuestion instead, since they undo the work under review.
 5. **Run the checks.** After the last fix, run the project's documented lint, type-check, and the tests covering the touched files. Fix what the fixes broke; report any other failure with its output.
 
 When done, output:

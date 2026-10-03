@@ -1,6 +1,6 @@
 ---
 name: arc
-description: The user's working rules for a coding session (communication, scope of a go-ahead, git safety in a shared worktree, docs and comment style, commits, migrations, UI). Invoke once at session start; the rules hold until the session ends.
+description: The user's working rules for a coding session (communication, scope of a go-ahead, git safety in a shared worktree, docs and comment style, commits, reuse and minimal code, migrations, UI). Invoke once at session start; the rules hold until the session ends.
 disable-model-invocation: true
 ---
 
@@ -16,7 +16,7 @@ These rules apply from now until the session ends, including after compaction. W
 
 **Pick and move.** Don't enumerate alternatives when one was already requested. Don't propose options for decisions the user hasn't raised. If a default is reasonable, take it; surface only blockers and genuine ambiguity. After a recommendation, state the pick and stop: no "alternatives considered" list.
 
-**Short by default, in chat and on disk.** Lead with the outcome, then only the detail that changes what the user does next. No preamble, no recap of what was just read, no closing summary. Asked to explain: high-level unless depth was requested. Files cover the substance and stop, no filler sections or boilerplate.
+**Short by default, in chat and on disk.** Lead with the outcome, then only the detail that changes what the user does next. No preamble, no recap of what was just read, no closing summary. Asked to explain: high-level unless depth was requested. Files cover the substance and stop, no filler sections or boilerplate. Something deliberately left out gets one line, `skipped: X, add when Y`, not a paragraph defending it.
 
 **Narrate once, then work.** One sentence before the first tool call. After that, speak only on a real finding or a change of direction, and once at the end. Don't announce tool calls or post progress on work that is going fine.
 
@@ -44,7 +44,7 @@ These rules apply from now until the session ends, including after compaction. W
 
 **Documentation is imperative, not narrative.** Plans, specs, any doc: state what to do, not why it was chosen, what it replaced, or what was tried before. No `## Rationale`, `## Background`, `## Alternatives`, or "why chosen" sections. If the reader doesn't execute it, it doesn't belong.
 
-**A comment earns its place or it is removed.** Comment only what code can't say: a non-obvious invariant, a constraint, a deliberate gotcha. Every comment is one physical line; a comment that doesn't fit on one line says too much, so cut it to the single invariant instead of wrapping. Banned: multi-line blocks, banners, ASCII dividers, module-header prose describing data flow or usage.
+**A comment earns its place or it is removed.** Comment only what code can't say: a non-obvious invariant, a constraint, a deliberate gotcha, the ceiling of a deliberate shortcut and when to lift it. Every comment is one physical line; a comment that doesn't fit on one line says too much, so cut it to the single invariant instead of wrapping. Banned: multi-line blocks, banners, ASCII dividers, module-header prose describing data flow or usage.
 
 ```
 // BAD - narrates data flow + usage, wrapped to look tidy:
@@ -52,10 +52,20 @@ These rules apply from now until the session ends, including after compaction. W
 //   components. Used by live session and read-only Task transcript.
 // GOOD - only if a real invariant exists:
 //   A thread with a parentThreadId never becomes a session.
+// GOOD - a shortcut's ceiling:
+//   Global lock; per-account locks if throughput matters.
 // GOOD - usually no comment at all.
 ```
 
 ## Code
+
+**Reach for what exists before writing new.** Stop at the first that holds: it doesn't need to exist; something already in this codebase (helper, component, type, pattern); the standard library; a native platform feature (CSS over JS, a DB constraint over app code); a dependency already installed; only then new code, the minimum that works. Never add a dependency for what a few lines do. In UI, the project's own components outrank native elements.
+
+**No speculative structure.** No interface with one implementation, factory for one product, config for a value that never changes, or scaffolding "for later". Between two options of the same size, take the one that is correct on edge cases.
+
+**Fix the cause, once.** Before editing a function to fix a bug, grep every caller; put the fix in the shared path, not only in the caller the report names.
+
+**Never cut these to save code:** input validation at trust boundaries, error handling that prevents data loss, security, anything the user asked for.
 
 **No placeholders.** Requested code is written in full and runs as delivered. Banned: `// ...`, `// rest of code`, `// implement here`, `// similar to above`, a bare `...` standing in for omitted code, a skeleton when an implementation was asked for, one example plus "the rest follows the same pattern", and describing code instead of writing it. A `TODO` stays only when the user or the active skill calls for one. If a deliverable can't be finished in one response, stop at a clean boundary (end of a function or file) and name what is left; never compress the remainder to fit.
 

@@ -15,7 +15,7 @@ Claude Code marketplace with three plugins:
 | It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
 | A page runs; measure what breaks when it renders: overflow, clipped or overlapping text, contrast per theme, focus, names, targets, images, JS errors | `arc-design:ui-check` |
 | Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
-| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, migrations, UI) | `/arc-kit:arc` (user-invoked only) |
+| Start of any coding session: load the working rules (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, reuse and minimal code, migrations, UI); reloaded after compaction | `/arc-kit:arc` (user-invoked only) |
 | Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |
 | A plan exists; stress-test it before executing | `arc-kit:plan-auditor` |
 | A plan exists; implement it step by step with TDD, sub-agents, and verification | `arc-kit:executor` |
@@ -60,6 +60,8 @@ Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, 
 | `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
 
 Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-kit/scripts/comment_lint_test.py`.
+
+`arc-kit` also registers `arc-compact` (`SessionStart` on `compact`): when `/arc-kit:arc` was typed earlier in the session, it re-injects the `arc` rules after compaction; otherwise it prints nothing. It needs `sh`, `sed`, and `grep`.
 
 ## Changes
 
