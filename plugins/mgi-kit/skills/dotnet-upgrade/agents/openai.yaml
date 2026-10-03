@@ -1,0 +1,4 @@
+interface:
+  display_name: ".NET Upgrade"
+  short_description: "Move a .NET solution to a newer target framework."
+  default_prompt: "Use $dotnet-upgrade to move this solution to the next .NET LTS."

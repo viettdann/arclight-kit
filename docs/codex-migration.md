@@ -18,8 +18,16 @@ Convert this branch into a Codex plugin marketplace with three independently ins
 | Comment options supplied through Claude plugin configuration | Explicit `ARC_COMMENT_LINT_ENABLED` and `ARC_COMMENT_LINT_WIDTH` environment variables | `comment-lint.py`: `option`; README option table |
 | `fresh-air` edits Claude `settings.local.json`, skill overrides, and instruction exclusions | Reversible owned blocks of Codex `[[skills.config]]` entries; explicit operation on project skills | `arc-kit/skills/fresh-air/` |
 | Handoff assumes `/clear`, Claude session variables, and `claude --resume` | Verified handoff file; `codex resume` only with a known session ID; compaction can continue normally | `arc-kit/skills/handoff/` |
+| Claude plugin agent `test-runner` (fixed model) | Worker brief run delegated when the runtime allows it, inline otherwise; inherited model | `arc-kit/skills/executor/references/test-runner.md` |
+| `arc-compact.sh` greps the Claude transcript for `/arc-kit:arc` | `SessionStart` on `compact` runs `arc-compact.py`, which reads user messages in the Codex transcript for `$arc`, `arc-kit:arc`, or an injected `<name>arc</name>` block | `arc-kit/scripts/arc-compact.py`, `arc_compact_test.py` |
+| `conventions` writes path-scoped `.claude/rules/*.md` | Marked conventions block in the `AGENTS.md` at each layer's root, with an `Applies to` glob | `arc-kit/skills/conventions/SKILL.md` |
+| `disable-model-invocation` on handoff and conventions | `policy.allow_implicit_invocation: false`, enforced by the validator | `skills/*/agents/openai.yaml` |
 
 Paths in the last column are under `plugins/` unless otherwise stated. Historical changelog entries describe the old releases; active skill instructions and runtime configuration target Codex.
+
+## Sync with the Claude line
+
+The 2.1.0 releases (arc-design, arc-kit) and 1.1.0 (mgi-kit) merge `main` up to `8e91238` (Claude arc-kit 1.7.0, arc-design 1.3.0, mgi-kit 0.2.0). Authorization rules stay as in the original migration: the Claude line's stricter approval gates (brainstorming approval only saves the doc, a go-ahead covering every open recommendation) are not carried over. The next sync starts from that merge.
 
 ## Package behavior
 

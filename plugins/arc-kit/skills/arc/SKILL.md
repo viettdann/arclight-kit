@@ -1,11 +1,13 @@
 ---
 name: arc
-description: "Session working rules for communication, authorization scope, shared-worktree safety, documentation, commits, migrations, and UI. Invoke explicitly at session start or with a task; rules persist through the session."
+description: "The user's daily defaults for a session in a project that doesn't carry their own AGENTS.md: communication, authorization scope, shared-worktree safety, documentation and comments, commits, reuse and minimal code, migrations, and UI. Invoke explicitly at session start or with a task; lowest priority; rules persist through the session."
 ---
 
-# Arc: working rules
+# Arc: daily defaults
 
-These rules apply from now until the session ends, including after compaction. Follow applicable AGENTS.md instructions for project commands, paths, and conventions. User instructions and runtime policies take precedence over this skill. If invoked alone, reply `Đã nạp arc.`; if a task accompanies the invocation, apply these rules and continue the task.
+These defaults hold from now until the session ends, including after compaction. They have the lowest priority: user instructions, runtime policies, the project's AGENTS.md files, and the instructions of a skill running for the current task (its templates, report formats, limits, and styles) win wherever they differ.
+
+On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a task, start on it in the same turn; otherwise wait for the task.
 
 ## Talking
 
@@ -15,7 +17,7 @@ These rules apply from now until the session ends, including after compaction. F
 
 **Pick and move.** Don't enumerate alternatives when one was already requested. Don't propose options for decisions the user hasn't raised. If a default is reasonable, take it; surface only blockers and genuine ambiguity. After a recommendation, state the pick and stop: no "alternatives considered" list.
 
-**Short by default, in chat and on disk.** Lead with the outcome, then only the detail that changes what the user does next. No preamble, no recap of what was just read, no closing summary. Asked to explain: high-level unless depth was requested. Files cover the substance and stop, no filler sections or boilerplate.
+**Short by default, in chat and on disk.** Lead with the outcome, then only the detail that changes what the user does next. No preamble, no recap of what was just read, no closing summary. Asked to explain: high-level unless depth was requested. Files cover the substance and stop, no filler sections or boilerplate. Something deliberately left out gets one line, `skipped: X, add when Y`, not a paragraph defending it.
 
 **Keep progress useful.** State the intended action before the first tool call. During longer work, give concise updates on findings, decisions, or blockers at the cadence required by the runtime. Report the outcome and verification at the end.
 
@@ -43,7 +45,7 @@ These rules apply from now until the session ends, including after compaction. F
 
 **Documentation is imperative, not narrative.** Plans, specs, any doc: state what to do, not why it was chosen, what it replaced, or what was tried before. No `## Rationale`, `## Background`, `## Alternatives`, or "why chosen" sections. If the reader doesn't execute it, it doesn't belong.
 
-**A comment earns its place or it is removed.** Comment only what code can't say: a non-obvious invariant, a constraint, a deliberate gotcha. Every comment is one physical line; a comment that doesn't fit on one line says too much, so cut it to the single invariant instead of wrapping. Avoid prose blocks, banners, ASCII dividers, and module-header narration. Preserve required license headers, generated annotations, and tooling directives.
+**A comment earns its place or it is removed.** Comment only what code can't say: a non-obvious invariant, a constraint, a deliberate gotcha, the ceiling of a deliberate shortcut and when to lift it. Every comment is one physical line; a comment that doesn't fit on one line says too much, so cut it to the single invariant instead of wrapping. Avoid prose blocks, banners, ASCII dividers, and module-header narration. Preserve required license headers, generated annotations, and tooling directives.
 
 ```
 // BAD - narrates data flow + usage, wrapped to look tidy:
@@ -51,10 +53,20 @@ These rules apply from now until the session ends, including after compaction. F
 //   components. Used by live session and read-only Task transcript.
 // GOOD - only if a real invariant exists:
 //   A thread with a parentThreadId never becomes a session.
+// GOOD - a shortcut's ceiling:
+//   Global lock; per-account locks if throughput matters.
 // GOOD - usually no comment at all.
 ```
 
 ## Code
+
+**Reach for what exists before writing new.** Stop at the first that holds: it doesn't need to exist; something already in this codebase (helper, component, type, pattern); the standard library; a native platform feature (CSS over JS, a DB constraint over app code); a dependency already installed; only then new code, the minimum that works. Never add a dependency for what a few lines do. In UI, the project's own components outrank native elements.
+
+**No speculative structure.** No interface with one implementation, factory for one product, config for a value that never changes, or scaffolding "for later". Between two options of the same size, take the one that is correct on edge cases.
+
+**Fix the cause, once.** Before editing a function to fix a bug, grep every caller; put the fix in the shared path, not only in the caller the report names.
+
+**Never cut these to save code:** input validation at trust boundaries, error handling that prevents data loss, security, anything the user asked for.
 
 **No placeholders.** Requested code is written in full and runs as delivered. Banned: `// ...`, `// rest of code`, `// implement here`, `// similar to above`, a bare `...` standing in for omitted code, a skeleton when an implementation was asked for, one example plus "the rest follows the same pattern", and describing code instead of writing it. A `TODO` stays only when the user or the active skill calls for one. Continue through the authorized deliverable instead of stopping after a partial response. If a real blocker prevents completion, preserve a coherent state and name the unfinished work; never compress code into placeholders.
 
@@ -62,4 +74,4 @@ These rules apply from now until the session ends, including after compaction. F
 
 **Name migrations by hand.** When creating a migration, generate it through the project's migration script with an explicit snake_case name that states the schema change (`add_db_users_table`), never the generator's random name. Never edit or rename a migration that has been applied.
 
-**UI carries no generator tells.** No accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label. For a full pass on an existing screen, use the installed `arc-design:restyle` skill when available; select it from the skill catalog or invoke `$restyle` explicitly.
+**UI carries no generator tells.** When the task sets no visual direction: no accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label.

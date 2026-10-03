@@ -1,5 +1,5 @@
 {
-  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by apply_patch",
+  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by apply_patch. Arc reload: re-injects the arc defaults after compaction when $arc was invoked this session",
   "hooks": {
     "PostToolUse": [
       {
@@ -9,6 +9,19 @@
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/scripts/comment-lint.py\"",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "^compact$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/arc-compact.py\"",
+            "timeout": 10,
+            "additionalContextLimit": 4000
           }
         ]
       }

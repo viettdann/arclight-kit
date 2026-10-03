@@ -4,6 +4,8 @@
 Compares hrefs, ids, form field names, form actions, data-* attributes,
 <title>, and meta descriptions between two files or two directories.
 Heuristic regex extraction: works on HTML, JSX/TSX, Vue, Svelte, Astro.
+Skipped as presentation: anything inside <svg>, `name` on icon components,
+and <link> hrefs for stylesheets, fonts, preloads, and icons.
 
 Usage: preserve_check.py <old-file-or-dir> <new-file-or-dir> [--json]
 Exits 1 if anything is missing, 2 if a path is missing or the original has no hooks.
@@ -34,6 +36,25 @@ META = re.compile(r"<meta\b[^>]*>", re.I)
 TAG_ATTR = re.compile(r"""([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{\s*["'`]([^"'`]*)["'`]\s*\})""")
 META_API = re.compile(r"\b(?:export\s+const\s+metadata|generateMetadata|useHead|useSeoMeta|definePageMeta)\b")
 META_FIELD = re.compile(r"""\b(title|description)\s*:\s*(["'`])((?:(?!\2)[^\\]|\\.)*)\2""")
+TAG_NAME = re.compile(r"<([\w.:-]+)")
+ASSET_REL = re.compile(r"""\brel\s*=\s*["'{`]*\s*(?:stylesheet|preconnect|preload|modulepreload|prefetch|dns-prefetch|(?:apple-touch-|mask-|shortcut )?icon)\b""", re.I)
+
+
+def presentation(text, pos, kind):
+    """True for a match that is styling, not a hook: an icon component's name, an asset <link>'s href."""
+    if kind not in ("name", "href"):
+        return False
+    start = text.rfind("<", 0, pos)
+    if start < 0:
+        return False
+    end = text.find(">", pos)
+    tag = text[start:end + 1 if end >= 0 else len(text)]
+    m = TAG_NAME.match(tag)
+    if not m:
+        return False
+    if kind == "name":
+        return "icon" in m.group(1).lower()
+    return m.group(1).lower() == "link" and bool(ASSET_REL.search(tag))
 
 
 def files(path):
@@ -55,8 +76,11 @@ def extract(path):
                 text = fh.read()
         except OSError:
             continue
+        markup = SVG.sub("", text)
         for kind, rx in PATTERNS.items():
-            for m in rx.finditer(text):
+            for m in rx.finditer(markup):
+                if presentation(markup, m.start(), kind):
+                    continue
                 if kind == "data-*":
                     value = next(g for g in m.groups()[1:] if g is not None)
                     found[kind].add(f"{m.group(1)}={value}")

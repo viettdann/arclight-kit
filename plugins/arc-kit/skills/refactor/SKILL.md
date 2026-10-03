@@ -29,7 +29,7 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 
 ## 3. Pin behavior
 
-- Run the tests that cover the scope and record the baseline. Report pre-existing failures; don't fix them.
+- Run the tests that cover the scope and record the baseline. Report pre-existing failures; don't fix them. A slow or large suite runs under the test runner brief (`../executor/references/test-runner.md`), here and in step 5, with this baseline passed in.
 - If meaningful observable behavior is at risk and coverage is thin, write characterization tests first (unit or integration; e2e only when requested): call the code with representative and edge inputs and assert what it returns today, including output that looks wrong. A characterization test that asserts the "correct" value instead of the current one hides a behavior change.
 - For a mechanical rename or low-impact cleanup, existing type checks and consumer inspection may be sufficient; do not create tests that mirror implementation. If behavior cannot be pinned, state the limitation and choose a bounded mechanical transformation. Ask only if completing the requested refactor requires a material unverified behavior risk.
 
@@ -37,7 +37,9 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 
 - One transformation per step. After each: build or type-check, then run the pinned tests. On red, diagnose the failure, correct or manually undo only your own step, and take a smaller one.
 - Prefer LSP rename over text replacement. With text replacement, update every consumer found in step 2 in the same step.
-- Add abstraction only when it removes real duplication: no interface with one implementation, no strategy, builder, or chain for two branches, no shared helper before three real call sites. Fewer layers is the usual win.
+- Add abstraction only when it removes real duplication: no strategy, builder, or chain for two branches, no shared helper before three real call sites. Fewer layers is the usual win.
+- An interface earns its place with two implementations that exist now (production and a test fake counts); with one, it is indirection. Inline it, unless something outside the scope implements or injects it by that name (step 2).
+- Deletion test for a layer (a wrapper, service, helper module): imagine inlining it into its callers. If the complexity disappears, it was a pass-through; inline it. If the same logic would reappear in several callers, it earns its place; keep it.
 - Delete dead code only after step 2's search, string-based lookups included, finds no consumer. If unsure, list it in the report instead.
 - Match the surrounding style. Leave untouched lines alone so the diff stays reviewable.
 

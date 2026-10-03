@@ -1,0 +1,6 @@
+interface:
+  display_name: "Conventions"
+  short_description: "Write a codebase's unwritten conventions into AGENTS.md"
+  default_prompt: "Use $conventions to write this repository's conventions into AGENTS.md."
+policy:
+  allow_implicit_invocation: false

@@ -16,6 +16,6 @@ Revise the middleware and storage design together. Include request cost, cleanup
 
 User: “Fail open and log at error level.”
 
-Apply that decision within the existing authorization. Update the plan's affected files, including schema or migration files discovered from the project, middleware, registration, and concurrency and failure tests. Run required checks after implementation.
+Apply that decision within the existing authorization. The user decided it, so it moves into the design and out of the plan's assumptions. Update the plan's affected files, including schema or migration files discovered from the project, middleware, registration, and concurrency and failure tests. Run required checks after implementation.
 
 For a design-only conversation, present the coherent revised design and finish there. For an implementation request, proceed without another plan approval gate. The latest clear correction supersedes stale assumptions while preserving the original objective.

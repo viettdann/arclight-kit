@@ -14,7 +14,7 @@ Contents: choosing · solid and hairline · lightness layers · shadow · glass 
 | Behind a modal or sheet | Scrim | Scrim | Scrim |
 | One special element (hero media, the featured card) | None | Gradient, texture, or a style material | Same, glow only where the style allows |
 
-Never a full-strength border and a shadow on the same element: the two edges read as a double outline.
+Never a full-strength border and a shadow on the same element: the two edges read as a double outline. Style materials that are built from both (hard offset shadow) are the exception.
 
 ## Solid and hairline
 
@@ -47,7 +47,7 @@ A translucent layer that blurs what passes behind it. It says "this floats above
 - **Where:** sticky or fixed headers and navigation, floating toolbars and tab bars, sheets, popovers, and menus over imagery or a map, captions and controls over video or a photo. Not on in-page surfaces (cards, panels, pricing tiers, form groups, stat tiles), never glass inside glass.
 - **Budget:** one or two glass layers per view, each small relative to the viewport. Every glass layer repaints when the content behind it moves, which is costly on phones; a blurred layer covering most of the screen stutters.
 - **When the brief asks for glass** ("glassy", "frosted", "glassmorphism"), glass is the identity of the page, not an accent: it must be the first thing a visitor notices, so the rules above set how glass is done well, not whether it appears. Give it something real to blur (a moving or image-rich backdrop: a live map, a canvas, media, slow-drifting brand color fields), carry it on the hero's main object and on a few key in-page panels, keep at most two glass layers overlapping in any view, and keep every fallback and contrast check below. The backdrop must visibly show through in the first viewport, otherwise the page reads as white cards: panels without long text can go down to 55–70% opaque when their text passes contrast over the lightest and darkest backdrop, and long text stays at 70–85%. List the in-page glass as a brief-driven departure in the summary.
-- **Tint:** the surface token at an alpha, not white or black at a low one: `color-mix(in oklch, var(--surface) 75%, transparent)`, or `bg-surface/75`. Glass that holds text is 70–85% opaque; the blur hints at what passes behind, it isn't a window.
+- **Tint:** the surface token at an alpha, not white or black at a low one: `color-mix(in oklch, var(--surface) 75%, transparent)`, or `bg-surface/75`. A `color-mix()` value goes into the contrast script as its result: the surface color with the mix percentage as alpha (`var(--surface)` at 75% → `#ffffffbf` on a white surface). Glass that holds text is 70–85% opaque; the blur hints at what passes behind, it isn't a window.
 - **Blur:** 12–24px (`backdrop-blur-md` to `backdrop-blur-xl`), optionally `saturate(140%)` so colors behind don't turn muddy. More blur costs more and reads as fog.
 - **Edge and depth:** a hairline as in solid surfaces, plus an optional 1px inner highlight on the top edge. Floating glass (sheet, popover, floating nav) keeps its overlay shadow; a header flush with the top edge has a bottom hairline only and no corner radius (`radius.md`). In a dark theme the tint is a layer step lighter than what it covers.
 - **Fallback:** opaque by default, translucent only where the blur works, so an unsupported browser never shows unblurred text over busy content: `bg-surface/95 supports-[backdrop-filter]:bg-surface/75 backdrop-blur-md`, or the translucent values inside `@supports (backdrop-filter: blur(1px))`. Under `prefers-reduced-transparency: reduce` and `prefers-contrast: more` the layer is solid, with a stronger border under `more`.
@@ -90,7 +90,7 @@ Belong to one style; use them only when that style is chosen, on the objects the
 
 ## Checks
 
-- [ ] One material per layer per context; no border plus shadow on one element.
+- [ ] One material per layer per context; no border plus shadow on one element (style materials excepted).
 - [ ] Shadows only on floating layers (and marketing lift with meaning); none in-page in the tool profile; dark themes raise with lightness.
 - [ ] Glass only on layers over moving content (or, when the brief asks for glass, clearly visible on the hero and key panels over a real backdrop), at most two overlapping per view, 70–85% opaque with long text (55–70% allowed on a glassy brief's short-text panels, backdrop visible in the first viewport), passing contrast over the lightest and darkest backdrop, opaque without `backdrop-filter` and solid under `prefers-reduced-transparency` and `prefers-contrast: more`.
 - [ ] Gradients and glow only where the profile or style allows, never under body text.

@@ -11,6 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LEGACY = re.compile(r"CLAUDE_|AskUserQuestion|subagent_type|model:\s*[\"']?sonnet|disable-model-invocation|argument-hint:")
+EXPLICIT_ONLY = {"arc", "conventions", "fresh-air", "handoff"}
 BUNDLED_PATH = re.compile(r"(?<![\w/$])((?:\.\./|\./|references/|scripts/|assets/|examples/)[\w./-]+\.(?:md|py|mjs))\b")
 
 
@@ -74,11 +75,12 @@ def ui_metadata(path, skill_name):
             raise ValueError(f"missing interface.{key}")
     if f"${skill_name}" not in fields["interface.default_prompt"]:
         raise ValueError("default prompt must invoke its skill")
-    if skill_name in {"arc", "fresh-air"} and fields.get("policy.allow_implicit_invocation") is not False:
-        raise ValueError("arc and fresh-air must require explicit invocation")
+    if skill_name in EXPLICIT_ONLY and fields.get("policy.allow_implicit_invocation") is not False:
+        raise ValueError(f"{skill_name} must require explicit invocation")
 
 
 def validate(root=ROOT):
+    root = root.resolve()
     errors, names, skill_count = [], set(), 0
     try:
         marketplace = read_json(root / ".agents/plugins/marketplace.json")
@@ -132,6 +134,16 @@ def validate(root=ROOT):
                     if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/comment-lint.py' not in handler["command"]:
                         raise ValueError("invalid hook command")
                 inside(base, "./scripts/comment-lint.py")
+                starts = hook["hooks"].get("SessionStart", [])
+                if starts:
+                    if len(starts) != 1 or starts[0]["matcher"] != "^compact$" or len(starts[0]["hooks"]) != 1:
+                        raise ValueError("arc reload must be one handler on compact")
+                    handler = starts[0]["hooks"][0]
+                    if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/arc-compact.py' not in handler["command"]:
+                        raise ValueError("invalid arc reload command")
+                    inside(base, "./scripts/arc-compact.py")
+                if set(hook["hooks"]) - {"PostToolUse", "SessionStart"}:
+                    raise ValueError("unexpected hook event")
             skills = sorted(inside(base, compat["skills"]).glob("*/SKILL.md"))
             if not skills:
                 raise ValueError("plugin has no skills")

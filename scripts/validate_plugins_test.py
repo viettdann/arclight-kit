@@ -29,7 +29,7 @@ class PackageValidationTest(unittest.TestCase):
     def test_repository_packages(self):
         errors, count = validate(self.root)
         self.assertEqual(errors, [])
-        self.assertEqual(count, 14)
+        self.assertEqual(count, 20)
 
     def test_escaping_marketplace_path(self):
         self.change_json(".agents/plugins/marketplace.json", lambda d: d["plugins"][0]["source"].update(path="./../outside"))
@@ -68,6 +68,19 @@ class PackageValidationTest(unittest.TestCase):
     def test_empty_hook_handlers(self):
         self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["PostToolUse"][0].update(hooks=[]))
         self.assert_error("requires one command handler")
+
+    def test_arc_reload_matcher(self):
+        self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["SessionStart"][0].update(matcher="startup"))
+        self.assert_error("arc reload")
+
+    def test_missing_arc_reload_script(self):
+        (self.root / "plugins/arc-kit/scripts/arc-compact.py").unlink()
+        self.assert_error("missing or escaping path")
+
+    def test_handoff_explicit_invocation(self):
+        path = self.root / "plugins/arc-kit/skills/handoff/agents/openai.yaml"
+        path.write_text(path.read_text().replace("allow_implicit_invocation: false", "allow_implicit_invocation: true"))
+        self.assert_error("handoff must require explicit invocation")
 
     def test_explicit_invocation_policy(self):
         path = self.root / "plugins/arc-kit/skills/arc/agents/openai.yaml"

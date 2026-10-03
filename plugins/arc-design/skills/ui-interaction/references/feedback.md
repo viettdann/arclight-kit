@@ -11,6 +11,19 @@
 
 Don't mix skeletons and spinners in one region.
 
+## Generated content
+
+For output a model writes while the user waits (chat replies, summaries, drafts, suggestions):
+
+- Stream it: text renders as it arrives, never a blank region until the whole answer exists. Hold auto-scroll to the end only while the user hasn't scrolled up, and keep a Stop control in place of Send while it generates.
+- Before the first token, a skeleton shaped like the expected output (paragraph lines for prose, rows for a table), not a generic spinner.
+- Waits that run through steps (search, read files, write) name the current step ("Searching docs…", "Reading 3 files…") instead of one spinner; show only steps that really run.
+- The output is a draft: it can be edited, regenerated, or discarded before it is applied, and applying it is a separate action from generating it.
+- Selecting part of the output offers actions on the selection (rewrite, shorten, explain) without regenerating the whole answer.
+- Actions the model proposes that send, delete, pay, or change permissions wait for an explicit confirmation that shows what will happen (`destructive.md`); applying with one click is only for reversible changes.
+- The prompt box grows with its content up to a cap, then scrolls; Enter sends, Shift+Enter adds a line, and Enter during IME composition does neither.
+- A failure or stop mid-stream keeps the partial text, says it is incomplete, and offers retry; the prompt is never lost.
+
 ## Optimistic updates
 
 - For reversible, almost-always-successful actions (like, favorite, toggle, rename, reorder): update instantly, sync in the background, and on failure roll back with a message while keeping any draft.
@@ -92,4 +105,5 @@ Distinguish first run, no results, filtered out, and error (see `data.md`). Each
 - [ ] Every list and search has distinct loading, empty, and error states.
 - [ ] Every success message names what happened, and every done screen has a next action and a way back.
 - [ ] Copy buttons show the check only after the write resolves, copy the raw value, reset after ~2s, and have a fallback that admits failure.
+- [ ] Generated output streams, names its real steps, stays an editable draft until applied, keeps partial text on failure, and confirms risky proposed actions.
 - [ ] Badges are capped, pinned to the corner, cleared on open, and never flash to zero on refetch; counts and status dots don't share a color or a row.

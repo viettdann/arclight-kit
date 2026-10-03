@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "arc-kit",
-  "version": "2.0.0",
-  "description": "Plan, implement, review, and hand off coding work in Codex.",
+  "version": "2.1.0",
+  "description": "Plan, implement, debug, research, review, document, and hand off coding work in Codex.",
   "author": {
     "name": "viettdann"
   },
@@ -11,7 +11,7 @@
     "com.openai": {
       "interface": {
         "displayName": "Arc Kit",
-        "shortDescription": "Plan, implement, review, and hand off coding work in Codex.",
+        "shortDescription": "Plan, implement, debug, research, review, document, and hand off coding work in Codex.",
         "developerName": "viettdann",
         "category": "Developer Tools",
         "defaultPrompt": [

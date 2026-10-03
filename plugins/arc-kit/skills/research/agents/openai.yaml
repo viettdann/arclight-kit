@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research"
+  short_description: "Answer technical questions from cited primary sources"
+  default_prompt: "Use $research to compare these options against the project's criteria."

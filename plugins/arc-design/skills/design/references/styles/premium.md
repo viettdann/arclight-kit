@@ -2,11 +2,11 @@
 
 Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident motion, lots of air. Reads as considered and physical; fails when every element gets the same treatment and the page becomes a template of rounded cards.
 
-**Fits:** "premium", "luxury", "wellness", "Apple-like", "expensive", "soft", consumer hardware, beauty, hospitality, high-end consumer apps. **Profile:** marketing (and consumer-app onboarding). Not for dense tool screens.
+**Fits:** "premium", "luxury", "Apple-like", "expensive", "soft", wellness, consumer hardware, beauty, hospitality, high-end consumer apps. **Profile:** marketing (and consumer-app onboarding). Not for dense tool screens.
 
 ## Decisions
 
-- **Palette:** either airy (near-white or pale tinted canvas, soft grey text) or deep (near-black canvas, off-white text), picked from the brand, not from habit. One accent. Avoid the default premium clichés (cream + brass + espresso, black + purple orbs) unless the brand really is that; see the design rules on habitual choices.
+- **Palette:** either airy (near-white or pale tinted canvas, soft grey text) or deep (near-black canvas, off-white text, only when the brief asks for dark; built per `dark-mode.md`), picked from the brand, not from habit. One accent. Avoid the default premium clichés (cream + brass + espresso, black + purple orbs) unless the brand really is that; see the design rules on habitual choices.
 - **Type:** a display sans with presence (or a refined serif if the brand is heritage), large and tightly tracked; body 17–18px with relaxed leading.
 - **Radius:** soft, not large. The premium feel comes from light, space, and motion; radius only keeps edges from feeling sharp. Use the marketing profile's radius table with these overrides; every other row stays as the profile sets it:
 
@@ -20,7 +20,7 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
   Secondary buttons, chips, tags, and badges keep the profile's radius; making them pills is a mistake, not a variant.
 - **Depth:** the diffused shadow from `materials.md` (Shadow) on lifted objects only. Depth marks what is important, so most surfaces stay flat.
 - **Space:** section padding 96–160px on desktop; one idea per section.
-- **Motion:** slow and weighted: entrances 400–700ms with a long ease-out (`cubic-bezier(0.32, 0.72, 0, 1)`), a single 16px fade-up per block, run once; press feedback `scale(0.98)`. Every animation still needs a reason (see the marketing profile).
+- **Motion:** slow and weighted: entrances 400–700ms with `--ease-enter` set to `cubic-bezier(0.32, 0.72, 0, 1)`, a single 16px fade-up per block, run once; press feedback `scale(0.98)`. Every animation still needs a reason (see the marketing profile).
 
 ## Signature moves (examples)
 
@@ -33,4 +33,4 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 
 ## Avoid
 
-Blur on scrolling content (repaints kill mobile performance); animating every element on entry; glow orbs and mesh blobs behind text; the same double-bezel card repeated down the page; every button, chip, and tag as a pill, or every card at the outer-container radius, which reads as bubbly rather than premium; shadows on everything, which flattens the hierarchy the shadows were meant to create.
+Large blurred layers over scrolling content (repaints kill mobile performance; the small floating nav stays within the glass budget in `materials.md`); animating every element on entry; glow orbs and mesh blobs behind text; the same double-bezel card repeated down the page; every button, chip, and tag as a pill, or every card at the outer-container radius, which reads as bubbly rather than premium; shadows on everything, which flattens the hierarchy the shadows were meant to create.

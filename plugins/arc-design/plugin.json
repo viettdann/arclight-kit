@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "arc-design",
-  "version": "2.0.0",
-  "description": "Design, redesign, refine, and verify web interfaces.",
+  "version": "2.1.0",
+  "description": "Design, redesign, refine, and verify web interfaces and their UI state.",
   "author": {
     "name": "viettdann"
   },
@@ -11,7 +11,7 @@
     "com.openai": {
       "interface": {
         "displayName": "Arc Design",
-        "shortDescription": "Design, redesign, refine, and verify web interfaces.",
+        "shortDescription": "Design, redesign, refine, and verify web interfaces and their UI state.",
         "developerName": "viettdann",
         "category": "Developer Tools",
         "defaultPrompt": [

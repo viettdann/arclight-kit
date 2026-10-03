@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WCAG 2.x contrast checker. Usage: node contrast.mjs "#fff|#6366f1" "oklch(0.93 0.005 250)|#131316|large" "#0f766e|#fff|ui" ...
+// WCAG 2.x contrast checker. Usage: node contrast.mjs "#fff|#6366f1" "hsl(222 47% 11%)|#fff" "oklch(0.93 0.005 250)|#131316|large" "#0f766e|#fff|ui" ...
 // Pairs are split on "|" because oklch() values contain spaces; a translucent fg is composited over bg first, since that is what the eye sees.
 // A bg written as "<tint> over <backdrop>" (glass) is composited the same way, top layer first.
 
@@ -22,6 +22,14 @@ const oklchToRgb = (L, C, H, a) => {
   return { r: enc(lin[0]), g: enc(lin[1]), b: enc(lin[2]), a };
 };
 
+const hslToRgb = (H, S, L, a) => {
+  const h = ((H % 360) + 360) % 360;
+  const k = (n) => (n + h / 30) % 12;
+  const c = S * Math.min(L, 1 - L);
+  const f = (n) => 255 * (L - c * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)));
+  return { r: f(0), g: f(8), b: f(4), a };
+};
+
 const NUM = String.raw`(\d*\.?\d+)`;
 const alpha = (v, pct) => (v === undefined ? 1 : Math.min(1, Math.max(0, pct ? v / 100 : +v)));
 
@@ -34,6 +42,8 @@ const parse = (input) => {
     const L = ok[2] ? ok[1] / 100 : +ok[1];
     return oklchToRgb(Math.min(1, L), +ok[3], +ok[4], alpha(ok[5], ok[6]));
   }
+  const hsl = s.match(new RegExp(String.raw`^hsla?\(\s*${NUM}(?:deg)?\s*[,\s]\s*${NUM}%\s*[,\s]\s*${NUM}%\s*(?:[,/]\s*${NUM}(%?))?\s*\)$`));
+  if (hsl) return hslToRgb(+hsl[1], Math.min(1, hsl[2] / 100), Math.min(1, hsl[3] / 100), alpha(hsl[4], hsl[5]));
   // rgb(255 255 255 / 0.08) and rgba(255, 255, 255, 0.08), as the dark-mode reference writes borders.
   const rgb = s.match(new RegExp(String.raw`^rgba?\(\s*${NUM}\s*[,\s]\s*${NUM}\s*[,\s]\s*${NUM}\s*(?:[,/]\s*${NUM}(%?))?\s*\)$`));
   if (rgb) {
@@ -65,7 +75,7 @@ const THRESHOLDS = { text: 4.5, large: 3, ui: 3 };
 
 const pairs = process.argv.slice(2);
 if (pairs.length === 0) {
-  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), white, black; bg may be "<translucent> over <opaque>")');
+  console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), hsl(...), white, black; bg may be "<translucent> over <opaque>")');
   process.exit(2);
 }
 

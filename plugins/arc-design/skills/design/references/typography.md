@@ -32,10 +32,10 @@ Line-height drops as size rises; tracking moves only at the extremes.
 
 | Size | Line-height | Tracking |
 | --- | --- | --- |
-| Body and small (up to 16px) | 1.5 | 0 |
+| Body and small (up to 18px) | 1.5; marketing prose 1.5–1.7 | 0 |
 | ~20px | 1.35 | 0 |
 | ~25px | 1.2 | -0.01em |
-| 32px and up | 1.1 | -0.02em |
+| 32px and up | 1.1 (a style may go to 0.9 for uppercase or caseless display with no descenders) | -0.02em |
 | Uppercase label under 16px | as its size | +0.04 to +0.06em |
 
 ## Measure

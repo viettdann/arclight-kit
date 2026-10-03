@@ -2,7 +2,7 @@
 
 ## Three layers
 
-1. **Primitive:** raw scales named by position (`--neutral-50…950`, `--brand-50…950`, `--space-4`, `--radius-md`). Components never reference them directly.
+1. **Primitive:** raw scales named by position (`--neutral-50…950`, `--brand-50…950`, `--space-4`). Components never reference them directly.
 2. **Semantic:** named by role (`--color-bg`, `--color-text-muted`, `--color-accent`, `--color-danger`). A theme switch swaps only this layer.
 3. **Component (optional):** `--button-primary-bg: var(--color-accent)`. Add one only when a component must diverge from the semantic default.
 
@@ -17,13 +17,13 @@
 | Status | `success`, `warning`, `danger`, `info`, each with `-fg`, `-bg`, `-border` |
 | Focus | `focus-ring` |
 | Typography | family (sans, mono), size scale, line-heights, weights, tracking (values from `typography.md`) |
-| Space | 4px base: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96 |
-| Radius | none, sm, md, lg, xl, full; values per profile (roles and rules in `radius.md`) |
+| Space | 4px base: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 160 (128 and 160 for marketing section padding only) |
+| Radius | roles sm, md, lg, xl, full as role tokens (`--radius-chip`, `--radius-control`, `--radius-card`), never `--radius-sm/md/lg`; values per profile (`radius.md`) |
 | Elevation | shadow levels 0–3 (which layers take them: `materials.md`), plus z-index layers: base, dropdown, sticky, overlay, modal, toast, tooltip |
-| Motion | durations 100, 150, 200, 250, 300, 400ms (500–700ms only where a style lists slow motion); easings with explicit curves (below) |
+| Motion | durations 60, 80, 100, 150, 200, 250, 300, 400ms (500–800ms only where a style lists slow motion); easings with explicit curves (below) |
 | Layout | breakpoints, container widths, density (compact, default, comfortable) |
 
-Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate):
+Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate). Where a profile or style says "ease-out", use `--ease-enter`; a style that gives its own curve sets `--ease-enter` to it:
 
 ```css
 --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
@@ -53,7 +53,7 @@ Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate):
 
 ## Themes
 
-- `:root { color-scheme: light dark; }`; semantic tokens per `[data-theme="dark"]` and/or `@media (prefers-color-scheme: dark)`; `light-dark()` where supported.
+- Light only (the default): `:root { color-scheme: light; }`. With a dark theme: `:root { color-scheme: light dark; }`, semantic tokens per `[data-theme="dark"]` and/or `@media (prefers-color-scheme: dark)`; `light-dark()` where supported.
 - Verify contrast in each theme separately.
 - The dark set follows `dark-mode.md`: surfaces stepped in lightness, inks and borders as alphas of one white.
 

@@ -1,10 +1,10 @@
 # arclight-kit for Codex
 
-Three independent Codex plugins, containing 14 skills:
+Three independent Codex plugins, containing 20 skills:
 
-- **arc-design**: design new UI, redesign or refine existing UI, check rendering, and implement interaction states.
-- **arc-kit**: session preferences, planning, execution, review, refactoring, handoffs, reversible project-skill disabling, and a comment-lint hook.
-- **mgi-kit**: audit ASP.NET API contracts against TypeScript and JavaScript consumers.
+- **arc-design**: design new UI, redesign or refine existing UI, check rendering, implement interaction states, and trace what controls do to state.
+- **arc-kit**: daily session defaults, planning, execution, debugging, research, writing, review, refactoring, conventions, handoffs, reversible project-skill disabling, and the comment-lint and arc-reload hooks.
+- **mgi-kit**: audit ASP.NET API contracts against TypeScript and JavaScript consumers, and upgrade .NET solutions.
 
 This branch targets Codex. See [the migration analysis](docs/codex-migration.md) for the platform changes and compatibility limits.
 
@@ -41,17 +41,23 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | Refine a generic UI while preserving layout | arc-design | `$restyle` |
 | Measure rendering and accessibility defects | arc-design | `$ui-check` |
 | Forms, tables, navigation, overlays, and async states | arc-design | `$ui-interaction` |
-| Apply Vietnamese chat / English file and coding preferences | arc-kit | `$arc` (explicit only) |
+| A control does nothing or the wrong thing; trace its state writes | arc-design | `$state-check` |
+| Apply the daily defaults (chat language, scope, git, docs, comments, reuse and minimal code, UI); lowest priority, reloaded after compaction | arc-kit | `$arc` (explicit only) |
 | Explore a non-trivial feature or architectural decision | arc-kit | `$brainstorming` |
 | Audit a proposed implementation plan | arc-kit | `$plan-auditor` |
-| Implement an existing plan | arc-kit | `$executor` |
+| Implement an existing plan; `tdd` turns on test-first | arc-kit | `$executor` |
+| Reproduce a bug, confirm its cause, fix it once, keep a regression test | arc-kit | `$debug` |
+| Compare libraries or approaches, or check a version, limit, price, CVE, or support date, with sources | arc-kit | `$research` |
+| Write, check, or edit prose people read | arc-kit | `$writing` |
 | Restructure code while preserving behavior | arc-kit | `$refactor` |
 | Check completeness and review a change | arc-kit | `$verifier` |
-| Save or resume verified session context | arc-kit | `$handoff` |
+| Carry work somewhere this session can't follow, or `resume` it | arc-kit | `$handoff` (explicit only) |
+| Write an existing codebase's unwritten conventions into `AGENTS.md` | arc-kit | `$conventions` (explicit only) |
 | Disable or restore a project's local skills | arc-kit | `$fresh-air` (explicit only) |
 | Check backend/frontend contract drift | mgi-kit | `$api-contract` |
+| Move a .NET solution to a newer target framework | mgi-kit | `$dotnet-upgrade` |
 
-`arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly.
+`arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly. `executor`, `refactor`, and `verifier` run full or slow suites under the test runner brief (`plugins/arc-kit/skills/executor/references/test-runner.md`), delegated when the runtime allows it, inline otherwise; Codex plugins don't package custom agents.
 
 `design` combines a **profile** (`tool` or `marketing`) with an optional **style**:
 
@@ -68,6 +74,7 @@ Only load references needed by the task. Bundled script paths resolve from the i
 ## Runtime requirements
 
 - Python 3.11+ for `fresh-air` and repository validation; Python 3 for the other Python helpers.
+- `git` and `sh` for the verifier's diff collector; `bash` for the debug skill's human-in-the-loop repro script.
 - Node 22+ for browser helpers; Chrome, Chromium, or Edge available locally (including a supported Playwright browser cache). `CHROME=/absolute/path` selects a browser.
 - A running page or static HTML file for rendering checks. Skill instructions allow starting the project's existing local dev command for an authorized check.
 - Delegation is optional. Workflow skills use available Codex sub-agent tools only when allowed, inherit runtime model/concurrency settings, and work inline when delegation is unavailable.
@@ -91,6 +98,10 @@ python3 plugins/arc-kit/scripts/comment-lint.py --files path/to/file.ts path/to/
 
 The standalone command checks all lines of the named files. The hook checks only added lines it can locate reliably in the final file; ambiguous patch context may leave lines unchecked. Files outside the hook working directory, generated files, unsupported/binary files, and inputs larger than 2 MB are skipped. This is a style aid, not an enforcement boundary.
 
+## Arc reload
+
+`arc-kit` also registers `SessionStart` on `compact`: when `$arc` was invoked earlier in the session (read from the session transcript, whose format Codex doesn't guarantee), `scripts/arc-compact.py` re-injects the `arc` defaults after compaction; otherwise it prints nothing. It needs Python 3 and the same hook trust as comment lint.
+
 ## Fresh air
 
 `$fresh-air` disables discovered project `.agents/skills` using documented `[[skills.config]]` entries in your Codex user configuration. Its `off`, `status`, and `restore` commands operate on a named project; restore removes only entries owned by this helper. Review the skill's [usage and limits](plugins/arc-kit/skills/fresh-air/SKILL.md) before using it. Start a new Codex session after a configuration change.
@@ -103,6 +114,8 @@ Project `AGENTS.md` instructions, plugins, MCP servers, and hooks remain active.
 python3 scripts/validate_plugins.py
 python3 -m unittest discover -s scripts -p '*_test.py'
 python3 plugins/arc-kit/scripts/comment_lint_test.py
+python3 plugins/arc-kit/scripts/arc_compact_test.py
+python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py
 python3 -m unittest discover -s plugins/arc-kit/skills/fresh-air/tests
 ```
 

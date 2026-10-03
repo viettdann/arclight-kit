@@ -1,0 +1,4 @@
+interface:
+  display_name: "State Check"
+  short_description: "Trace what each control does to state, call by call."
+  default_prompt: "Use $state-check to trace why this control does nothing or the wrong thing."

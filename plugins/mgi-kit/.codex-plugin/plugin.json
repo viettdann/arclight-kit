@@ -1,7 +1,7 @@
 {
   "name": "mgi-kit",
-  "version": "1.0.0",
-  "description": "Audit ASP.NET APIs against TypeScript and JavaScript consumers.",
+  "version": "1.1.0",
+  "description": "Audit ASP.NET APIs against TypeScript and JavaScript consumers, and upgrade .NET projects.",
   "author": {
     "name": "viettdann"
   },
@@ -9,11 +9,12 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "MGI Kit",
-    "shortDescription": "Audit ASP.NET APIs against TypeScript and JavaScript consumers.",
+    "shortDescription": "Audit ASP.NET APIs against TypeScript and JavaScript consumers, and upgrade .NET projects.",
     "developerName": "viettdann",
     "category": "Developer Tools",
     "defaultPrompt": [
-      "Audit this API change against its frontend consumers."
+      "Audit this API change against its frontend consumers.",
+      "Upgrade this solution to the next .NET version."
     ]
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Design non-trivial features, components, or architectural changes from verified project context. Use for brainstorm, plan this out, design this, thiết kế, or lên kế hoạch. Resolve facts first, ask about consequential choices, and continue implementation when already authorized. Skip small self-contained edits."
+description: "Design before code: turn an idea into a design and implementation plan from verified project context, asking in rounds only the judgment calls the codebase can't answer, and save docs/plans/<date>-<topic>-design.md for substantial work. Use before a non-trivial feature, component, or architectural change (I want to build, how should I design, brainstorm, tôi muốn làm, thiết kế, lên kế hoạch). Continues into implementation when already authorized. Not for a small self-contained change."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -9,7 +9,7 @@ description: "Design non-trivial features, components, or architectural changes 
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start from the user's stated intent and project context. Resolve facts independently, ask only about consequential unknowns, and present the design with its execution steps.
+Start from the user's stated intent and project context. Resolve facts independently, ask only about consequential unknowns until Understanding is done, and present the design with its execution steps.
 
 ## The Process
 
@@ -24,12 +24,16 @@ Start from the user's stated intent and project context. Resolve facts independe
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
-- **Use `request_user_input` for optional preferences when available and supported in the current mode; otherwise ask in text.**
-  - Group related choices into one question; respect the actual tool schema and question limit
+- **Surface what nobody asked.** The frontier holds only decisions someone knew to make. When the feature enters a domain the codebase hasn't handled yet (money, time zones, i18n, file uploads, permissions, offline sync), list the domain's decisions that usually bite later, each glossed in a few words, and put the ones that apply on the frontier
+- **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier's preference and judgment questions with `request_user_input` when available and supported in the current mode; otherwise ask in text:
+  - A decision that depends on another question still open goes in a later round, not this one; each round's answers unblock the next frontier
+  - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions; respect the actual tool schema and question limit, and when the frontier is larger, ask first the decisions most others depend on
   - Each question states your recommended option and why
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
+  - A fact still being looked up (codebase search, research) blocks only the decisions that depend on it; ask the rest of the frontier meanwhile
 - Focus on: purpose, constraints, success criteria
 - For performance work, record the current measurement and a target number before designing; "faster" is not a success criterion
+- **Done when** the frontier is empty: the purpose and success criterion are stated, every judgment call is answered or defaulted (see Handling Disagreement), and every fact the design relies on is Verified or listed as Assumed. Then present the design.
 
 ### Verification Discipline
 
@@ -50,19 +54,17 @@ See `examples/verify-callout.md` for the recovery flow when a claim turns out to
 
 ### Exploring Approaches
 
-- Compare 2-3 approaches only when a material trade-off needs the user's judgment; otherwise choose the suitable approach and explain it briefly
-- Lead with your recommended option and explain why
-- **Always present the proper solution.** If a workaround or shortcut exists, present it alongside the proper solution with clear trade-offs (effort, tech debt created, future cost). Never present only the workaround
-- **When to ask vs. when to just do it:** If the proper fix is small or obvious, just pick it and move on. Only ask a preference question when the effort difference between proper fix and workaround is significant (e.g., hours vs. minutes, or requires touching many unrelated files) or the trade-off is genuinely ambiguous
+- When more than one approach fits and the trade-off needs the user's judgment, propose 2-3 with their trade-offs, leading with your recommendation and why. When one approach is clearly right, state it and the reason in one line; don't invent weaker options to compare against
+- **Proper fix first.** Never present only a workaround. Take the proper fix without asking when it is small or obvious. Ask only when it costs far more than the workaround (a large refactor, or changes outside the plan's files) or the trade-off is genuinely ambiguous, and then show both: `Proper fix: X (effort). Workaround: Y (debt it creates).`
 
 ### Research (when needed)
 
-Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs.
+Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs. Choosing between libraries or services, or checking current versions, support dates, or prices, goes through the installed `arc-kit:research` skill when available (explicit invocation: `$research`).
 
 ### Presenting the Design
 
 - Present the design together with a concrete implementation plan. Ask for a decision only if one is still needed; do not create repeated confirmation gates for work the user already requested.
-- Cover: architecture, components, data flow, error handling, testing considerations
+- Cover: the goal and its success criterion, architecture, components, data flow, error handling, testing considerations
 - Go back and clarify if something doesn't land correctly
 
 ### Implementation Plan
@@ -86,7 +88,19 @@ For substantial work needing a durable plan, write `docs/plans/YYYY-MM-DD-<topic
 
 Normalize the topic to lowercase kebab case matching `^[a-z0-9-]{1,60}$`, falling back to `untitled`. Use safe file APIs or properly quoted arguments, never raw user text in a shell command. Create `docs/plans/` when the project root is known and writable; otherwise ask for the destination. Never overwrite an unrelated existing plan.
 
-Keep the saved document self-contained for a fresh session: goal, target design, implementation steps with checks, assumptions to validate, completion criteria, and explicit scope boundaries. Use English on disk and Vietnamese in chat unless the user requests otherwise. Follow applicable AGENTS.md instructions.
+Keep the saved document self-contained for a fresh session, since the next session only has the doc. Use these sections, in this order:
+
+```markdown
+# <Topic>
+## Goal                 what it achieves and how success is measured (a target number for performance work)
+## Design               architecture, components, data flow, error handling
+## Implementation Plan  one line per file: path + what changes + the check that proves it
+## Assumptions          what the plan relies on that is not verified yet, and how to verify each
+## Verification         tests to write or run, what counts as done, edge cases to check
+## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
+```
+
+Omit `Assumptions` or `Out of scope` when empty; the other four are always present. Use English on disk and Vietnamese in chat unless the user requests otherwise. Follow applicable AGENTS.md instructions.
 
 For a substantial or uncertain design, use the installed `arc-kit:plan-auditor` skill if available (explicit invocation: `$plan-auditor docs/plans/<filename>`). If it is unavailable, verify the plan's references and assumptions directly. An audit recommendation is not an extra permission gate before authorized implementation.
 
@@ -101,7 +115,7 @@ For a substantial or uncertain design, use the installed `arc-kit:plan-auditor` 
 
 ## Additional Resources
 
-The examples run on a fictional Hono/Bun rate-limiter scenario. Their paths, symbols, and findings do not describe this repository - discover the real codebase fresh. What they pin down is the shape of the exchange: what gets resolved without asking, what gets asked, and when the design lands.
+The examples run on fictional Hono/Bun projects (a rate limiter, and a webhook signature check). Their paths, symbols, and findings do not describe this repository - discover the real codebase fresh. What they pin down is the shape of the exchange: what gets resolved without asking, what gets asked, and when the design lands.
 
 - `examples/happy-path.md`: full workflow when user engages cooperatively
 - `examples/user-pivots.md`: handling contradictions and rollback mid-design

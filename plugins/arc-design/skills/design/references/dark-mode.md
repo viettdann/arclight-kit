@@ -29,8 +29,17 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - Photos are dimmed so they don't take the attention: `filter: brightness(0.8)` in the dark theme.
 - Illustrations, diagrams, and logos get a dark variant, never `filter: invert()`. If the theme is set by a class or `data-theme`, swap them by that selector; `<picture media="(prefers-color-scheme: dark)">` follows only the OS setting.
 
+## Theme on load and native UI
+
+- A stored theme (`localStorage`, a cookie) applied in `useEffect` or after hydration flashes the wrong theme on every load. Set the class or `data-theme` from a small blocking inline script in `<head>`, before first paint; with React SSR, add `suppressHydrationWarning` to `<html>`. A theme the server renders from a cookie needs no script.
+- `color-scheme: light` and `color-scheme: dark` on the root of each theme, so scrollbars, form controls, and the default canvas follow it.
+- `<meta name="theme-color">` matching the page background, one per scheme (`media="(prefers-color-scheme: dark)"`); when a class sets the theme, update the meta with it.
+- Native `<select>` gets explicit `background-color` and `color`; Windows otherwise draws its dropdown in system colors that can clash with or vanish against the dark theme.
+
 ## Checks
 
+- [ ] The stored theme is applied before first paint; no flash on reload.
+- [ ] `color-scheme` set per theme; `theme-color` matches the page; native selects readable in dark.
 - [ ] No `#000` surface and no opaque `#FFF` text; surfaces step up in lightness by what they sit on.
 - [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.
 - [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on.

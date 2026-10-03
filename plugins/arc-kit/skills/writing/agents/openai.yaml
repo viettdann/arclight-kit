@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing"
+  short_description: "Write, check, or edit prose without autopilot patterns"
+  default_prompt: "Use $writing to check this text and tighten its wording."

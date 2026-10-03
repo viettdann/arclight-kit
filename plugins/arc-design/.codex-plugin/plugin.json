@@ -1,7 +1,7 @@
 {
   "name": "arc-design",
-  "version": "2.0.0",
-  "description": "Design, redesign, refine, and verify web interfaces.",
+  "version": "2.1.0",
+  "description": "Design, redesign, refine, and verify web interfaces and their UI state.",
   "author": {
     "name": "viettdann"
   },
@@ -9,7 +9,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Arc Design",
-    "shortDescription": "Design, redesign, refine, and verify web interfaces.",
+    "shortDescription": "Design, redesign, refine, and verify web interfaces and their UI state.",
     "developerName": "viettdann",
     "category": "Developer Tools",
     "defaultPrompt": [

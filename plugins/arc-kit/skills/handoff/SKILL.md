@@ -1,11 +1,15 @@
 ---
 name: handoff
-description: "Save or resume a concise, verified session handoff with the task, current files, checks, decisions, and next action. Use for wrap up, save progress, resume a handoff, lưu tiến độ, ghi handoff, tạm dừng, or tiếp tục từ handoff. Complements Codex compaction and session resume."
+description: "Write a verified handoff file so work can continue in a fresh session, another repo or tool, or with a colleague; with resume, pick up from the latest one."
 ---
 
 # Handoff
 
 Write a short Markdown file that lets a fresh session continue from verified state. Use Vietnamese in chat and English in files unless requested otherwise. Follow applicable AGENTS.md instructions. A handoff supplements the runtime's context compaction and session resume features.
+
+Invoked with `resume`, or as the first thing in a session with no work yet: go to Resume progress. Otherwise save one.
+
+A handoff carries work somewhere this session can't follow: a later session after a restart or a new thread, another repo or directory, another tool, a colleague, or a side task forked off without derailing this one. When the next step continues the same task in this session, `/compact` keeps more of the reasoning. If the user invokes the skill in that case, write the handoff as asked and end the reply with that alternative ready to use: `/compact`, then a focus line in a code block to send right after it, naming the next step, the files it touches, and the decisions it must keep.
 
 ## Save progress
 

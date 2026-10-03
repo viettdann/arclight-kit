@@ -36,6 +36,21 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 
 - Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px at weight 700; 600 doesn't count) and for UI boundaries, icons, and focus rings.
 - Never carry meaning by color alone: pair it with an icon, text, or shape.
+- Text survives 200% zoom or a larger root font size without clipping or overlap: containers that hold text size to their content (`min-height`, padding), never a fixed `height`, and type and spacing use `rem` rather than `px` where the project allows.
+
+## Layout stability
+
+- Every `<img>`, `<video>`, and `<iframe>` reserves its box before it loads: `width` and `height` attributes, or `aspect-ratio` on the element or its wrapper. Content that arrives later (ads, embeds, banners) gets reserved space or appears below the viewport, never pushing visible content down.
+
+## Mobile web and locale
+
+- `touch-action: manipulation` on controls, so fast repeated taps don't zoom. Set `-webkit-tap-highlight-color` deliberately (usually `transparent`, with the control's own pressed state).
+- Modals, drawers, sheets, and scrollable panels get `overscroll-behavior: contain`, so scrolling past their end doesn't scroll the page behind.
+- Full-bleed layouts and fixed bars: `viewport-fit=cover` in the viewport meta, with padding from `env(safe-area-inset-*)` so content clears the notch and the home indicator.
+- `translate="no"` on brand names, code, identifiers, and usernames, so browser translation doesn't rewrite them.
+- Dates, times, numbers, and currency go through `Intl.DateTimeFormat` and `Intl.NumberFormat` with the user's locale, never hand-built strings. Take the language from the user's setting or `navigator.languages`, never from IP.
+- Never `transition: all`: list the properties, or a theme switch and every layout change animate too.
+- Never block paste (`onPaste` with `preventDefault`), in password and confirmation fields included.
 
 ## Server side
 
@@ -66,4 +81,6 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - [ ] Every moving animation or transition has a `prefers-reduced-motion: reduce` override.
 - [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.
+- [ ] No fixed `height` on a container that holds text; images, videos, and iframes reserve their size.
+- [ ] Overlays contain overscroll, fixed bars clear the safe areas, dates and numbers go through `Intl`, no `transition: all`, and paste works in every field.
 - [ ] No control is disabled without an obvious reason: unavailable actions explain themselves, busy buttons keep focus.
