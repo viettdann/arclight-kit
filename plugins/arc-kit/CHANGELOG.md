@@ -2,6 +2,18 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-03
+
+### Added
+
+- `debug`: pins the symptom in one line, reproduces it with a command that fails now (a failure rate for intermittent bugs), checks recent changes and runs `git bisect` in a separate worktree, narrows with ranked hypotheses and the cheapest experiment that could disprove each, fixes the cause in the shared path, and keeps the repro as a regression test seen failing before the fix. Asked only why, it stops at the diagnosis.
+- `research`: answers technical questions from external sources in rounds, primary sources first, with verbatim quotes for figures, dated sources, visible conflicts, a throwaway probe outside the repo when docs can't settle a deciding claim, and a report with a pick, a cited comparison table, and what to re-verify.
+- `test-runner` agent (Haiku): runs a test command or the suite and returns only counts and failures, each with location, trimmed message, cause (`code`, `test`, `env`, `flaky`, `fixture`), and whether reruns pass; it never edits files.
+
+### Changed
+
+- `executor` runs the Phase 4 suite through `test-runner`; `refactor` hands slow baseline and verify runs to it; `brainstorming` sends library and version questions to `research`.
+
 ## [1.2.0] - 2026-10-03
 
 ### Added

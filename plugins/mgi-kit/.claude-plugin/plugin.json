@@ -1,7 +1,7 @@
 {
   "name": "mgi-kit",
-  "version": "0.1.0",
-  "description": "Skills for the MGI .NET and TypeScript stack: api-contract.",
+  "version": "0.2.0",
+  "description": "Skills for the MGI .NET and TypeScript stack: api-contract, dotnet-upgrade.",
   "author": {
     "name": "viettdann"
   }

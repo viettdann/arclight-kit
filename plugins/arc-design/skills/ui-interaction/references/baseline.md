@@ -36,6 +36,11 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 
 - Contrast: 4.5:1 for body text, 3:1 for large text (24px, or 18.66px at weight 700; 600 doesn't count) and for UI boundaries, icons, and focus rings.
 - Never carry meaning by color alone: pair it with an icon, text, or shape.
+- Text survives 200% zoom or a larger root font size without clipping or overlap: containers that hold text size to their content (`min-height`, padding), never a fixed `height`, and type and spacing use `rem` rather than `px` where the project allows.
+
+## Layout stability
+
+- Every `<img>`, `<video>`, and `<iframe>` reserves its box before it loads: `width` and `height` attributes, or `aspect-ratio` on the element or its wrapper. Content that arrives later (ads, embeds, banners) gets reserved space or appears below the viewport, never pushing visible content down.
 
 ## Server side
 
@@ -66,4 +71,5 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - [ ] Every moving animation or transition has a `prefers-reduced-motion: reduce` override.
 - [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.
+- [ ] No fixed `height` on a container that holds text; images, videos, and iframes reserve their size.
 - [ ] No control is disabled without an obvious reason: unavailable actions explain themselves, busy buttons keep focus.

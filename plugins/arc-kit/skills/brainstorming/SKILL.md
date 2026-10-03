@@ -55,7 +55,7 @@ See `examples/verify-callout.md` for the recovery flow when a claim turns out to
 
 ### Research (when needed)
 
-Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs.
+Research covers external dependencies only: whether a library exists, its API surface, its runtime behavior. Check the installed package source and types first, then the official docs. Choosing between libraries or services, or checking current versions, support dates, or prices, goes through `arc-kit:research` when it is installed.
 
 ### Presenting the Design
 

@@ -219,7 +219,7 @@ Beyond task-group parallelism, sub-agents are worth spawning for:
 Final gate after all tasks executed:
 
 1. Run the full build; it must succeed
-2. Run the full test suite; it must pass
+2. Run the full test suite through the `arc-kit:test-runner` agent when it is available; it must pass
 3. Cross-check every plan item against actual changes
 4. Run the `arc-kit:verifier` skill for review
 

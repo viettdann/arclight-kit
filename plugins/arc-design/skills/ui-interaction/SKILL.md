@@ -18,7 +18,7 @@ Generated UI tends to render only the happy path: every column in the table, a d
 | Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips | `references/overlays.md` |
 | Tabs, accordions, navigation, scroll restoration, sticky headers and jump links | `references/navigation.md` |
 | Drag and drop, resizable panes and split handles, swipe, pull to refresh | `references/gestures.md` |
-| Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy | `references/feedback.md` |
+| Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy, AI-generated output (streaming, drafts, prompt box) | `references/feedback.md` |
 | Delete, irreversible actions, undo | `references/destructive.md` |
 | Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |
 

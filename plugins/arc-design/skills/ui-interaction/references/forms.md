@@ -6,6 +6,7 @@
 - Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Turn `spellcheck` off for codes, emails, and usernames.
 - Group fields by meaning (Personal, Shipping, Payment). The gap inside a group is clearly smaller than the gap between groups, so no divider lines are needed.
 - Long forms that split naturally become steps grouped by meaning, not by field count. Show progress, validate within each step, and persist entered data so Back and refresh lose nothing.
+- Never ask for the same information twice in one flow (WCAG 3.3.7): prefill it from an earlier step or offer a choice ("Billing address same as shipping"), unless re-entry is the point (confirming a new password) or the old value is no longer valid.
 
 ## Validation timing
 
@@ -50,4 +51,5 @@
 - [ ] Errors appear on blur, not while typing, and clear live once fixed.
 - [ ] Submit is never disabled for validity, and a double submit is impossible.
 - [ ] Paste works in password, OTP, and masked fields.
+- [ ] No step asks again for information an earlier step already collected.
 - [ ] Inline edit is used only where a typo is cheap; entering edit moves nothing; Enter, Escape, and blur behave the same everywhere; a rejected save rolls back and keeps the draft.

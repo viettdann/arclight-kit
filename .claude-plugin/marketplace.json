@@ -13,12 +13,12 @@
     {
       "name": "arc-kit",
       "source": "./plugins/arc-kit",
-      "description": "Daily session defaults, standalone planning and review skills, handoff, refactor, conventions, fresh-air, and the comment-lint and arc-compact hooks"
+      "description": "Daily session defaults, standalone planning and review skills, debug, research, handoff, refactor, conventions, fresh-air, the test-runner agent, and the comment-lint and arc-compact hooks"
     },
     {
       "name": "mgi-kit",
       "source": "./plugins/mgi-kit",
-      "description": "MGI .NET and TypeScript stack skills: API breaking change detection"
+      "description": "MGI .NET and TypeScript stack skills: API breaking change detection, .NET version upgrades"
     }
   ]
 }

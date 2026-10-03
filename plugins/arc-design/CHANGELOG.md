@@ -2,6 +2,12 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-03
+
+### Added
+
+- `ui-interaction`: generated content rules in `feedback.md` (streaming, output-shaped skeleton, named steps, output as an editable draft, actions on a selection, confirmation for risky proposed actions, growing prompt box, partial text kept on failure); no repeated entry across a multi-step form (WCAG 3.3.7) in `forms.md`; text that survives 200% zoom and reserved sizes for images, videos, and iframes in `baseline.md`.
+
 ## [1.1.0] - 2026-10-03
 
 ### Added
