@@ -72,5 +72,6 @@ Show the files and their line counts. Committed, they apply to every Claude Code
 ## 6. Update
 
 1. Read the rules files and their sha; list what changed with `git diff --stat <sha>..HEAD`, sampling the largest changes when the list is long.
-2. Check the changed files against the rules. A broken rule in one or two files is drift: report it. The same new pattern across several recent files is a possible new direction: ask, as in step 4.
-3. Edit the rules in place, swap golden files that were deleted or rewritten, and update the sha and date. The files hold current rules only, no change log.
+2. Check every file path, command, and symbol named in the rules files, `CLAUDE.md`, `AGENTS.md`, and the README: paths with `git ls-files`, symbols with grep, commands against the scripts or tasks that define them. A dead reference (a deleted golden file, a renamed helper, a removed script) is the first fix: correct it in the rules files, and report the ones in files this skill doesn't own.
+3. Check the changed files against the rules. A broken rule in one or two files is drift: report it. The same new pattern across several recent files is a possible new direction: ask, as in step 4.
+4. Edit the rules in place, swap golden files that were deleted or rewritten, and update the sha and date. The files hold current rules only, no change log.

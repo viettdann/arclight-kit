@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, debug, research, handoff, refactor, conventions, fresh-air, the `test-runner` agent, and the comment-lint and arc-compact hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner` agent, and the comment-lint and arc-compact hooks.
 - `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades).
 
 ## Which skill
@@ -22,6 +22,7 @@ Claude Code marketplace with three plugins:
 | A plan exists (file or chat); implement it step by step with sub-agents and verification; `tdd` turns on test-first | `arc-kit:executor` |
 | Something errors, crashes, returns the wrong result, or regressed: reproduce, narrow with ranked hypotheses, fix the cause, keep a regression test | `arc-kit:debug` |
 | Compare libraries, tools, or approaches, or check a current version, limit, price, CVE, or support date, with a source behind every figure | `arc-kit:research` |
+| Write or check prose people read (README, docs, design docs, release notes, messages): remove autopilot patterns, keep the writer's voice | `arc-kit:writing` |
 | Restructure existing code without changing behavior: extract, rename, split, reduce complexity, remove duplication | `arc-kit:refactor` |
 | This session's work is done or about to be committed: completeness check, then review and fixes | `arc-kit:verifier` |
 | Ending or pausing a session; resuming after `/clear` instead of `/compact` | `arc-kit:handoff` |

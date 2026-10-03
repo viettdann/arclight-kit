@@ -40,6 +40,8 @@ For each interactive element in scope (button, toggle, link with a handler, form
 | Stale closure | A callback captured an old value (`useCallback` or effect deps missing it, `setX(x + 1)` twice instead of the functional form) |
 | Async race | Two requests or a request and a refetch resolve out of order; no abort, request id, or latest-wins guard; an invalidation refetch overwrites an optimistic write |
 | Missing transition | The label promises save, send, or delete, and the handler only validates, sets a flag, or shows success before the request finishes; an optimistic update with no rollback on failure |
+| Stale copy | `useState(prop)`, or a store field seeded once from props or fetched data; the source changes and the copy keeps the old value |
+| Effect chain | One effect's write triggers another effect that overwrites or resets it, so the final state depends on effect order |
 | Dead path | The branch that does the work sits behind a condition that is always false at that moment |
 | Teardown | Navigation or unmount before the await completes drops the result, or a form reset runs after the route changed |
 | Double fire | No pending guard, so a second click or Enter sends the request again |

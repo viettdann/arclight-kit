@@ -2,6 +2,18 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-03
+
+### Added
+
+- `writing`, adapted from conorbronsdon/avoid-ai-writing (MIT): writes or checks prose people read (READMEs, docs, design docs, release notes, messages) in write, check, or edit mode; removes chatbot artifacts, inflated vocabulary, narrated candor, negation reveals, hooks, hedge stacks, bold and header overuse, em-dash splices, and diff-narrating docs, with tolerances per register and the writer's voice kept.
+
+### Changed
+
+- `debug`: a test that passes alone and fails in the suite is narrowed to the test that leaves state behind; the bisect worktree gets dependencies and untracked config, and commits that don't build exit 125; similar working code is diffed against the failing path; multi-layer failures are logged at every boundary in one run; three failed fixes stop for a design discussion. Ideas from obra/superpowers `systematic-debugging` (MIT).
+- `verifier`: quality flags defensive code the surrounding file doesn't use; tests flag test-only production methods, mocks of the side effect under test, and mocks missing fields of the real API; security lists frontend sinks (`dangerouslySetInnerHTML`, unchecked `href` schemes, tokens in `localStorage`, `message` handlers without an origin check, open redirects); the summary ends with what couldn't be verified. `react-performance.md` adds props copied into state, effect chains, a parent's `onChange` called from an effect, and in-place `.sort()` on props or state.
+- `conventions` Update checks that every path, command, and symbol named in the rules, `CLAUDE.md`, `AGENTS.md`, and the README still exists before re-counting patterns. Adapted from Context Architecture by Sergio Azócar (context-architecture.dev, CC BY 4.0), reworded and narrowed to the Update step.
+
 ## [1.3.0] - 2026-10-03
 
 ### Added

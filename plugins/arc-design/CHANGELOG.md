@@ -2,6 +2,15 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-03
+
+### Added
+
+- `ui-check` flags a missing `<html lang>`, a viewport meta that blocks zoom, and a lazy-loaded LCP image; `--perf` adds the LCP element and the elements that shift during load (lab values, layout shift over 0.1 as a `[review]` finding).
+- `dark-mode.md`: the stored theme applied by a blocking inline script before first paint, `color-scheme` per theme, `theme-color` per scheme, and explicit colors on native `<select>`.
+- `baseline.md`: mobile web and locale rules (`touch-action`, overscroll containment on overlays, safe-area insets, `translate="no"`, `Intl` for dates and numbers, no `transition: all`, no blocked paste), drawn from vercel-labs/web-interface-guidelines (MIT).
+- `state-check`: stale copy (`useState(prop)`) and effect chain patterns.
+
 ## [1.2.0] - 2026-10-03
 
 ### Added

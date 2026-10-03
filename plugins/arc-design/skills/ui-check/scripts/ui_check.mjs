@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Measure rendering defects on a live page in headless Chrome: what overflows, clips, overlaps, fails contrast, loses focus, or errors.
 // Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]
-//          [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--json]
+//          [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--json]
 //   --tabs   how many Tab presses the focus check walks (0 skips it); it runs once, at the widest width under 1600.
 //   --shot   also write a screenshot per width and scheme (out-<width>[-<scheme>].png), taken before the focus check; --full for the whole page.
+//   --perf   also report the largest-contentful-paint element and the elements that shift during load (lab values).
 //   --json   print the findings as JSON instead of text.
 //   Other options work as in design/scripts/screenshot.mjs.
 // Findings are P1 (breaks use or access), P2 (degrades it), P3 (minor); [review] marks heuristics to confirm in a screenshot.
@@ -12,10 +13,10 @@ import { writeFileSync } from 'node:fs';
 import { emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from '../../design/scripts/cdp.mjs';
 
 const USAGE = 'Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]'
-  + ' [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--json]';
+  + ' [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--json]';
 const opt = { width: '375,768,1280,1920', height: '900', scheme: 'light', 'wait-for': '', eval: '', wait: '500', root: '', tabs: '40',
-  shot: '', full: false, json: false };
-const pos = await parseArgs(process.argv.slice(2), opt, ['full', 'json'], USAGE);
+  shot: '', full: false, perf: false, json: false };
+const pos = await parseArgs(process.argv.slice(2), opt, ['full', 'perf', 'json'], USAGE);
 if (pos.length !== 1) await fail(USAGE);
 const widths = [...new Set(opt.width.split(',').map(Number))];
 const height = Number(opt.height), wait = Number(opt.wait), tabs = Number(opt.tabs);
@@ -24,8 +25,8 @@ const schemes = [...new Set(opt.scheme.split(','))];
 if (schemes.some((c) => c !== 'light' && c !== 'dark')) await fail('--scheme takes light, dark, or light,dark');
 
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
-  clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2,
-  'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3 };
+  clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
+  'layout-shift': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3 };
 
 // Runs inside the page (installed as window.__cssPath): a short selector that matches only this element, for the report.
 function cssPath(el) {
@@ -247,6 +248,40 @@ function audit({ mobile }) {
     if (cur > prev + 1) add('heading', headings[i], `h${prev} then h${cur}, a level skipped`);
   }
   if (mobile && !document.querySelector('meta[name=viewport]')) add('viewport', null, 'no <meta name=viewport>: phones lay this page out at 980px');
+  if (!document.documentElement.getAttribute('lang')?.trim()) add('lang', null, 'no lang on <html>: screen readers and translation guess the language');
+  const vp = document.querySelector('meta[name=viewport]')?.getAttribute('content') ?? '';
+  const maxScale = /maximum-scale\s*=\s*([\d.]+)/i.exec(vp);
+  if ((maxScale && Number(maxScale[1]) < 2) || /user-scalable\s*=\s*(no|0)\b/i.test(vp)) add('zoom-blocked', null, `viewport "${vp}" blocks pinch zoom`);
+  return out;
+}
+
+// Runs inside the page: the largest-contentful-paint element and the layout shifts so far, from the buffered performance entries.
+async function vitals({ perf }) {
+  const sel = window.__cssPath;
+  const read = (type) => new Promise((resolve) => {
+    try { new PerformanceObserver((list, obs) => { obs.disconnect(); resolve(list.getEntries()); }).observe({ type, buffered: true }); } catch { resolve([]); }
+    setTimeout(() => resolve([]), 300);
+  });
+  const [paints, shifts] = await Promise.all([read('largest-contentful-paint'), read('layout-shift')]);
+  const out = [];
+  const lcp = paints.at(-1);
+  const el = lcp?.element?.isConnected ? lcp.element : null;
+  if (el?.tagName === 'IMG' && el.loading === 'lazy') {
+    out.push({ check: 'lcp-lazy', selector: sel(el), text: '', detail: 'the largest element in view is a lazy image; drop loading="lazy" and add fetchpriority="high"', review: false });
+  }
+  if (!perf) return out;
+  if (el) {
+    const ms = Math.round(lcp.renderTime || lcp.loadTime || lcp.startTime);
+    out.push({ check: 'lcp', selector: sel(el), text: '', detail: `largest contentful paint at ${ms}ms${lcp.url ? ` (${lcp.url})` : ''}, lab value`, review: false });
+  }
+  const moved = shifts.filter((s) => !s.hadRecentInput);
+  const total = moved.reduce((n, s) => n + s.value, 0);
+  if (total > 0.1) {
+    const nodes = [...new Set(moved.flatMap((s) => s.sources ?? []).map((x) => (x.node?.nodeType === 1 ? x.node : x.node?.parentElement)).filter((n) => n?.isConnected))];
+    out.push({ check: 'layout-shift', selector: nodes[0] ? sel(nodes[0]) : '', text: '', review: true,
+      detail: `layout shift ${total.toFixed(2)} during load, over 0.1; this moved` + (nodes.length > 1 ? ` with ${nodes.slice(1, 4).map(sel).join(', ')}` : '')
+        + '; the cause is content above it that arrived late (an image without a size, an injected banner, a late font)' });
+  }
   return out;
 }
 
@@ -311,6 +346,7 @@ for (const width of widths) for (const scheme of schemes) {
   await sleep(wait);
   await evaluate(`window.__cssPath = ${cssPath}`);
   for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700 })})`)) record(f, where);
+  for (const f of await evaluate(`(${vitals})(${JSON.stringify({ perf: opt.perf })})`)) record(f, where);
   for (const e of events) record({ ...e, selector: '', text: '', review: e.check === 'request' && / (Fetch|XHR) /.test(e.detail) }, where);
   if (opt.shot) {
     const [sh] = await evaluate('[document.documentElement.scrollHeight]');

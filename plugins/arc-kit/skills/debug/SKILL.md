@@ -18,11 +18,14 @@ Find the cause before changing code, then fix it once, with a test that failed b
 
 - Get a command that fails now: an existing failing test, a new test at the lowest level that shows the bug (unit before integration, never e2e), or a script, `curl`, or REPL call.
 - Intermittent: run the repro in a loop (20 runs or more) and record the failure rate. A fix is verified only when the same loop shows zero.
+- Passes alone, fails in the suite: an earlier test leaves state behind (a file, a static or singleton, a database row, an environment variable, a faked clock). Run each candidate test followed by the failing one, or halve the list of tests that run before it, until one pair fails.
 - Can't reproduce: don't write a fix. Compare where it fails and where it doesn't (versions, config, data, timing), add a log line at the suspected boundary, and ask the user for the missing input. If it still won't reproduce, report ranked hypotheses with the evidence for each and the observation that would decide between them; fix without a repro only on the user's go-ahead.
 
 ## 3. Narrow
 
-- Recent change first. "It used to work": `git log --since=<date> -- <files in the stack trace>`. A known good commit: `git bisect run <repro>` in a separate worktree (`git worktree add ../<repo>-bisect <good-sha>`), never in the shared one, then `git worktree remove` it. Uncommitted changes are not in that worktree; test them where they are.
+- Recent change first. "It used to work": `git log --since=<date> -- <files in the stack trace>`. A known good commit: `git bisect run <repro>` in a separate worktree (`git worktree add ../<repo>-bisect <good-sha>`), never in the shared one, then `git worktree remove` it. Install dependencies and copy the untracked config the repro needs (`.env`, `appsettings.Development.json`) into it first, and make the repro exit 125 on a commit that doesn't build so bisect skips it instead of blaming it. Uncommitted changes are not in that worktree; test them where they are.
+- Similar code that works (another endpoint, the same flow for another entity, the previous version): list every difference between it and the failing path, however small, and test the differences before dismissing any.
+- A failure that crosses layers (UI → API → service → database, job → queue → worker): in one run, log what enters and leaves each boundary, then start from the first boundary where the value is wrong.
 - List two or three hypotheses, ranked, each with its evidence. For the top one, run the cheapest experiment that could disprove it: a log line, an assertion, a breakpoint, a grep, one changed input. Change one thing per experiment and record the result as confirmed or ruled out, with why.
 - Log the value that actually reaches the failing line; don't infer it from reading code.
 - Temporary log lines start with `DEBUG-<slug>` so one grep removes them all.
@@ -33,6 +36,7 @@ Find the cause before changing code, then fix it once, with a test that failed b
 - Fix the cause, not the symptom. Not a fix: a try/catch that swallows, a null check or default for a value that should never be missing, a retry, sleep, or longer timeout for a race, a widened type, a skipped or loosened test. When the cause is outside the codebase (library bug, external API), a guard is acceptable with a one-line comment naming the cause and the upstream issue.
 - Grep every caller of the function you change and put the fix in the shared path. Search for the same pattern in sibling code; fix the instances in scope and list the rest.
 - The repro becomes the regression test. If it was a script and the project has a test harness, turn it into a test. Run it before applying the fix and see it fail for the bug's reason; a test that never failed proves nothing.
+- Three fixes that each failed or moved the symptom somewhere else: stop. Report the pattern (each fix exposed new coupling or shared state) as a likely design problem and ask before a fourth attempt.
 - Stop and ask before a schema change, a data fix in a shared or production environment, a config change on a shared environment, or a rollback.
 
 ## 5. Verify and report

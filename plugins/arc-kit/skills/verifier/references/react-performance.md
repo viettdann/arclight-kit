@@ -22,6 +22,10 @@ Flag a rule only where the diff breaks it on a path that matters: a component th
 - A selector that returns a new object or array on every call → `useShallow` or separate selectors. (correctness when it loops)
 - A context provider `value` built inline → memoize it, or split state and actions into two contexts.
 - State derived in `useEffect` + `setState` → compute it during render.
+- `useState(prop)` copying a prop that later changes → derive it during render, or reset the child with `key`. (correctness)
+- An effect whose `setState` triggers another effect → compute the result in render, or in the handler that started the change.
+- A parent's `onChange` called from an effect after local state changes → call it in the handler that sets the state. (correctness)
+- `.sort()`, `.reverse()`, or `.splice()` on props or state mutates them in place → `toSorted()`, `toReversed()`, `toSpliced()`, or copy first. (correctness)
 - `?? []`, `{}`, or an inline function passed to a memoized child or into effect deps → a module-level constant, primitive deps, or `useCallback`.
 - A component defined inside another component → move it to module scope; it remounts and loses state on every render. (correctness)
 - Logic that responds to a click placed in an effect watching a flag → run it in the handler.

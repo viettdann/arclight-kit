@@ -123,6 +123,7 @@ Review the same changes for hacky patterns:
 8. **Unsearchable code**: a new exported name that is a bare generic verb or noun (`validate`, `diff`, `handler`), a new synonym for a term the codebase already spells one way, an event name, flag, error code, or log key assembled by interpolation, an error message without a literal prefix that greps back to the throw site, a name the diff left stale after changing its behavior. Fix: rename or write the literal in full; never rename a serialized or string-based contract name.
 9. **Leftovers**: debug output (`console.log`, `print`, `debugger`, `Debug.WriteLine`) and new suppressions added to get green (`any`, `as unknown as`, `@ts-ignore`, `# type: ignore`, `#pragma warning disable`, `!` null-forgiving). Fix: remove the output; fix the type instead of suppressing it.
 10. **Speculative abstraction**: an interface with one implementation, a factory or strategy for two branches, a parameter or option no caller sets, config for a value that never changes, scaffolding for a later feature no task asks for. Fix: inline or delete.
+11. **Defensive code out of place**: a try/catch, null check, or fallback that the surrounding code in the same file doesn't use, guarding a value its callers already validate or its type already guarantees. Fix: remove it; checks at a trust boundary stay.
 
 ### Agent 3: Efficiency Review
 
@@ -157,8 +158,8 @@ Trace each changed code path with concrete inputs. Report only defects with an i
 2. **Fix in one caller only**: a bug fixed at the call site the task names while other callers of the same function or path keep the defect. Grep every caller; name the unfixed ones in `issue`.
 3. **Error paths**: errors swallowed or logged and then ignored, a caught failure returned as success, a fallback default that hides missing data, a failure that leaves partial state behind
 4. **Concurrency**: check-then-act races, mutable state shared across requests or threads, a missing `await`, fire-and-forget work whose failure nobody observes
-5. **Security**: untrusted input reaching SQL, shell commands, HTML, file paths, or outbound URLs without parameterization, encoding, or validation; a new endpoint or action without an authentication or authorization check, including access to another user's records; secrets in code, logs, or error messages; a dependency the diff adds whose exact package name does not exist in the registry or that the ecosystem audit (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`) reports as high or critical
-6. **Tests**: new or changed branches with no test, tests that assert implementation details (mock call counts, private state) instead of observable behavior, tests that pass whatever the code does, tests the diff deletes, skips (`.skip`, `xit`, `[Ignore]`, `Skip =`), or loosens without a planned behavior change
+5. **Security**: untrusted input reaching SQL, shell commands, HTML, file paths, or outbound URLs without parameterization, encoding, or validation; a new endpoint or action without an authentication or authorization check, including access to another user's records; secrets in code, logs, or error messages; a dependency the diff adds whose exact package name does not exist in the registry or that the ecosystem audit (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`) reports as high or critical. In frontend code: `dangerouslySetInnerHTML`, `innerHTML`, `v-html`, or Markdown rendered with raw HTML (`rehype-raw`) on data that isn't sanitized; an `href` or `src` built from user data without a scheme check (`javascript:`); auth tokens kept in `localStorage`; a `message` event handler that doesn't check `event.origin`; a redirect to a `returnTo` or `redirect` parameter without an allowlist
+6. **Tests**: new or changed branches with no test, tests that assert implementation details (mock call counts, private state) instead of observable behavior, tests that pass whatever the code does, tests the diff deletes, skips (`.skip`, `xit`, `[Ignore]`, `Skip =`), or loosens without a planned behavior change, a method or property added to production code only for tests to call, a mock of the very side effect the test is meant to verify, a mock response missing fields the real API returns so the code that reads them never runs under test
 
 ## Phase 2: Deduplicate and Apply Fixes
 
@@ -192,4 +193,8 @@ When done, output:
 ### Checks
 
 - command: pass, or fail with the relevant output
+
+### Not verified
+
+- what could not be checked and why (no test harness, a page behind login, an external service), or "none"
 ```
