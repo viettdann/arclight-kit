@@ -4,6 +4,15 @@
 
 - Pickup shows a lift (shadow, slight scale); the drop target is indicated before release (insertion line between items, highlight for a container); items snap to valid slots.
 - A non-drag alternative exists (move up/down, "Move to…" menu, keyboard reordering).
+
+## Interrupted gestures
+
+Every pointer gesture (drag, resize, swipe, pull) ends cleanly when the platform takes it away.
+
+- Handle `pointercancel` and `lostpointercapture` like a release that commits nothing: restore the start state and drop the overlay and cursor lock. A window `blur` mid-drag does the same.
+- A second pointer during a one-finger gesture cancels it or is ignored, never starts a second drag.
+- Drag surfaces set `touch-action` (`none`, or `pan-y` for a horizontal swipe), or the browser scrolls and cancels the gesture.
+- Desktop device emulation proves the layout, not the gesture: say whether a touch gesture was tried on a real touch device.
 - Every drop can be undone for a few seconds.
 
 ## Resize handles
@@ -40,5 +49,6 @@ A pull is a promise: past the line it refreshes, before the line it doesn't, and
 
 ## Checks
 
+- [ ] Every pointer gesture handles `pointercancel`, lost capture, and blur by restoring its start state, and sets `touch-action`.
 - [ ] Resize handles clamp, snap shut instead of leaving a sliver, survive iframes and reloads, and work from the keyboard.
 - [ ] Pull to refresh resists, fires only when released past the threshold, hands the indicator off to the spinner, and has a non-gesture alternative.

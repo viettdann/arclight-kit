@@ -95,6 +95,7 @@ RULES = [
     ("3-hierarchy", "justified text (uneven word gaps; left-align?)", re.compile(r"text-align:\s*justify\b|(?<![\w-])text-justify(?![\w-])|textAlign:\s*['\"]justify")),
     ("2-decoration", "colored side border (accent bar on a card or block?)", Check(colored_side_border)),
     ("2-decoration", "pulsing dot (signal needs silence)", re.compile(r"\banimate-ping\b|animation:\s*ping\b")),
+    ("2-decoration", "blinking cursor (decorative typing effect)", re.compile(r"(?<![\w-])animate-(?:blink|caret|cursor)\b|(?<![\w-])animate-pulse\b[^<>]*>\s*(?:\||▍|▌|█|_|&#124;|\{['\"`][|▍▌█_]['\"`]\})\s*<|animation(?:-name)?:\s*['\"]?(?:blink|caret|cursor)[\w-]*")),
     ("2-decoration", "zebra stripes (hairline + hover instead?)", re.compile(r"\b(?:even|odd):bg-|(?:\btr|\brow\w*|&)[^{,\s]*:nth-(?:child|of-type)\(\s*(?:even|odd|2n(?:\s*\+\s*1)?)\s*\)")),
     ("4-surface", "large radius (>=16px)", re.compile(r"\brounded(?:-[trblse]{1,2})?-(?:[2-4]xl|\[(?:1[6-9]|[2-9]\d)px\])(?![\w-])|border-radius:\s*(?:(?:1[6-9]|[2-9]\d)px|(?:1(?:\.\d+)?|[2-9](?:\.\d+)?)rem)")),
     ("4-surface", "shadow (ok only on overlays)", re.compile(r"(?<![\w-])shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl|inner))?(?![\w-])|box-shadow:(?!\s*none\b)|\bboxShadow:")),
@@ -114,6 +115,11 @@ RULES = [
     ("7-code", "scroll event listener", re.compile(r"addEventListener\(\s*['\"]scroll|\bonscroll\s*=")),
     ("7-code", "random color (hash a stable id instead?)", re.compile(r"(?:colou?r|\bbg\b|\bhue\b|palette|hsl|['\"`]#)[^;]*Math\.random\(\)|Math\.random\(\)[^;]*(?:colou?r|\bbg\b|\bhue\b|palette)", re.I)),
     ("7-code", "hand-rolled compact number (Intl.NumberFormat notation: 'compact'?)", re.compile(r"/\s*1(?:e[369]|_?000(?:_?000){0,2})\s*\)?\s*\.toFixed\(\d?\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMBkmb](?![A-Za-z])|\.toFixed\(\d\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMB](?![A-Za-z])")),
+    ("7-code", "hand-rolled plural (Intl.PluralRules or the i18n library's plural)", re.compile(r"\?\s*(['\"`])s\1\s*:\s*(['\"`])\2|\?\s*(['\"`])\3\s*:\s*(['\"`])s\4|(?:[!=]==?|[<>]=?)\s*\d\s*\?\s*(['\"`])([A-Za-z][\w ]*?)\5\s*:\s*(['\"`])\6e?s\7|(?:[!=]==?|[<>]=?)\s*\d\s*\?\s*(['\"`])([A-Za-z][\w ]*?)e?s\8\s*:\s*(['\"`])\9\10")),
+    # Both literals carry words and face the variable with a space, so keys, paths, and class lists don't match.
+    ("7-code", "sentence built by concatenation (one translatable string with placeholders)", re.compile(r"^(?!.*\b(?:console|throw|Error|log(?:ger)?)\b).*(['\"])[^'\"]*[A-Za-z]{2}[^'\"]*\s\1\s*\+\s*[\w.$()\[\]]+\s*\+\s*(['\"])\s[^'\"]*[A-Za-z]{2}")),
+    ("7-code", "fixed width on a text button (longer labels and translations overflow; min-w + padding?)", re.compile(r"<[Bb]utton\b[^<>]*?(?:(?<![\w-])w-\d+(?:\.5)?(?![\w-])|(?<![\w-])width:\s*['\"]?\d+(?:px)?\b)[^<>]*>\s*[^<>{}\s]*[A-Za-z]{2}[^<>]*<")),
+    ("7-code", "pointer drag without pointercancel (a stolen gesture leaves it stuck mid-drag)", re.compile(r"^(?!.*removeEventListener).*pointer-?move", re.I)),
     ("7-code", "clipboard write not awaited (check before it lands, no fallback?)", re.compile(r"^(?!.*\b(?:await|return)\s+(?:window\.)?navigator\.clipboard\.writeText).*?\bnavigator\.clipboard\.writeText\((?:[^()]|\([^()]*\))*\)(?!\s*\.(?:then|catch))")),
     ("7-code", "scroll to top (on every route change? breaks Back)", re.compile(r"\bscrollTo\(\s*(?:0\s*,\s*0|\{[^}]*\btop:\s*0\b)")),
     ("7-code", "hard-coded header offset (scroll-padding-top?)", re.compile(r"\bscroll(?:To|By)?\([^;]*-\s*\d{2,3}\b(?!\s*[%*/])")),
@@ -137,7 +143,7 @@ RULES = [
 # 7-code hits that change handlers or behavior; the rest are presentation fixes.
 BEHAVIOR = ("scroll event listener", "clipboard write", "scroll to top", "hard-coded header offset", "mouse events for dragging",
             "indeterminate as an attribute", "disabled for validity", "disabled while busy", "column hidden by viewport",
-            "Enter handler", "context menu blocked")
+            "Enter handler", "context menu blocked", "pointer drag")
 
 FLOATING = re.compile(r"(?<![\w-])(?:fixed|sticky|absolute)\b|position:\s*['\"]?(?:fixed|sticky|absolute)")
 
@@ -157,15 +163,19 @@ SUPPRESS_NEAR = [
     # Keyframe start states are animations that run without JS.
     ("hidden reveal", re.compile(r"@keyframes|(?:^|[\s{])(?:from|to|\d+%)\s*\{"), 0, 0, True),
     ("outline removed", re.compile(r"focus-visible|focus(?:-within)?:(?:ring|border|shadow|bg-|text-|underline|outline-(?!none))|data-\[?highlighted|:focus\b[^{]*\{[^}]*(?:box-shadow|outline:(?!\s*(?:none|0\b)))"), 0, 0, "file"),
+    ("pointer drag", re.compile(r"pointer-?cancel|lostpointercapture", re.I), 0, 0, "file"),
     # The marketing profile's guard: the hidden start state applies only once a script marked the page (`.js .reveal`).
     ("hidden reveal", re.compile(r"(?:^|[\s,{>~+])(?:html|:root|body)?\.js(?=[\s.,{:>\[])|\.no-js\b|\[data-js\]|<noscript\b|classList\.(?:add|remove|replace|toggle)\(\s*['\"](?:no-)?js['\"]", re.M), 0, 0, "file"),
 ]
-FILE_CHECKS = [rx for _, rx, _, _, scope in SUPPRESS_NEAR if scope == "file"]
 REQUIRE_NEAR = [
     ("scroll to top", re.compile(r"pathname|location|router|\$route|\bnavigat(?:e|ion)\b|afterEach|useEffect|watch\(", re.I), 4, 1, False),
     ("hairline border plus", re.compile(r"(?<![\w:.-])border(?=[\s\"'`]|$)|border(?:-width)?:\s*['\"]?(?:1px|thin|0?\.5px)\b"), 0, 0, True),
     ("hidden reveal", re.compile(r"[Rr]eveal|(?<![a-z])in-?view|InView|data-aos|animate-on-scroll|scroll-?(?:anim|reveal|trigger)|data-animate|IntersectionObserver"), 1, 3, True),
+    ("pointer drag", re.compile(r"pointer-?down", re.I), 0, 0, "file"),
+    # A blink keyframe also drives busy indicators; only a caret or typing element makes it a cursor.
+    ("blinking cursor", re.compile(r"caret|cursor(?!\s*:)|typ(?:ing|ewriter)|animate-"), 0, 0, True),
 ]
+FILE_CHECKS = [rx for table in (SUPPRESS_NEAR, REQUIRE_NEAR) for _, rx, _, _, scope in table if scope == "file"]
 # label -> [(skip the hit when the context check returns this value, regex, before, after, scope)]
 CONTEXT = {label: [(want, rx, b, a, scope) for want, table in ((True, SUPPRESS_NEAR), (False, REQUIRE_NEAR))
                    for k, rx, b, a, scope in table if label.startswith(k)] for _, label, _ in RULES}
@@ -180,6 +190,8 @@ LONE_DASH = re.compile("(?:>|['\"`])\\s*(?:[—–]|&[mn]dash;)\\s*(?:<|['\"`])"
 RANGE_DASH = re.compile(r"(?<=\w)(?:–|&ndash;|&#8211;)(?=\w)")
 INLINE_COMMENT = re.compile(r"\{/\*.*?\*/\}|/\*.*?\*/|<!--.*?-->|(?<![:\"'])//.*$")
 COMMENT = re.compile(r"^\s*(?://|/\*|\*|<!--|#|\{/\*)")
+# A few dashes are punctuation; a file thick with them reads as generated, so only saturation is flagged.
+DASH_MIN, DASH_MAX_CHARS = 8, 500
 EYEBROW = re.compile(r"\buppercase\b[^\"'`]*\btracking-(?:wide|wider|widest|\[)|\btracking-(?:wide|wider|widest|\[)[^\"'`]*\buppercase\b")
 NOT_EYEBROW = re.compile(r"<(?:th|td|dt|label|button|legend)\b", re.I)
 SECTION = re.compile(r"<section\b")
@@ -306,6 +318,7 @@ def scan(paths):
                                                 "tell": f"{len(badges)} highlight badges (one tier only?)",
                                                 "snippet": "lines " + ", ".join(map(str, badges[:8]))})
                     break
+        dashes = []
         for i, line in enumerate(lines, 1):
             if len(line) > MAX_LINE:
                 skipped += 1
@@ -319,9 +332,7 @@ def scan(paths):
                         label = ("behavior: " if label.startswith(BEHAVIOR) else "presentation: ") + label
                     hits[principle].append({"file": path, "line": i, "tell": label, "snippet": snippet})
             if markup and DASH.search(line) and not COMMENT.match(line):
-                copy = RANGE_DASH.sub("", LONE_DASH.sub("", INLINE_COMMENT.sub("", line)))
-                if DASH.search(copy):
-                    hits["6-marketing"].append({"file": path, "line": i, "tell": "em/en dash in copy", "snippet": snippet})
+                dashes += [i] * len(DASH.findall(RANGE_DASH.sub("", LONE_DASH.sub("", INLINE_COMMENT.sub("", line)))))
             if ext not in STYLE_EXTS:
                 for d in DELTA.findall(line):
                     key = d.replace(" ", "").replace("−", "-")
@@ -329,6 +340,9 @@ def scan(paths):
                     delta_locs[key].append(f"{path}:{i}")
             if markup and NUMERIC_HINT.search(line):
                 numeric_files.add(path)
+        if len(dashes) >= DASH_MIN and len(text) <= DASH_MAX_CHARS * len(dashes):
+            hits["6-marketing"].append({"file": path, "line": dashes[0], "tell": f"{len(dashes)} em/en dashes in copy, one per {len(text) // len(dashes)} chars (separators?)",
+                                        "snippet": "lines " + ", ".join(map(str, sorted(set(dashes))[:8]))})
 
     for d, (sections, eyebrows) in dir_sections.items():
         if sections >= 3 and len(eyebrows) > -(-sections // 3):

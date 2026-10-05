@@ -2,6 +2,22 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-10-05
+
+Ideas drawn from pbakaus/impeccable (Apache-2.0), rewritten.
+
+### Added
+
+- `ui-check`: contrast of text over images and gradients measured from two screenshots, text still hidden after scrolling, line length, typography floors (leading, tiny text, uppercase and tracked body, edge-flush text), nested cards, icon tiles, heading rhythm, and popovers clipped by `overflow`; `--stress` lengthens text and injects unbroken strings, emoji, CJK, and optionally RTL; `--perf` adds long tasks and blocking time.
+- `scan_tells.py`: hand-rolled plurals, sentences built by concatenation, fixed-width text buttons, pointer drags without `pointercancel`, and decorative blinking cursors.
+- `design`: a Read profile for docs, guides, and changelogs; the profile picked by the visitor's success; mono only for code and data; heading spacing and font loading in `typography.md`; type on dark in `dark-mode.md`; fixed rem scale for tools; a working hero action, a memory test, and habitual display faces for marketing; evidence on hand, anti-references, and named rules in the `DESIGN.md` template.
+- `ui-interaction`: interrupted gestures (`pointercancel`, lost capture, `touch-action`), errors by cause (401, 403, 429), microcopy rules, translatable text, offscreen and interruptible motion, two more empty states, and virtualized long lists.
+- `restyle`: critique looks at the render and walks the task as two users before reading scanner output; fixes sort inconsistencies by kind.
+
+### Changed
+
+- `scan_tells.py`: em dashes are reported once per file, only when dense.
+
 ## [1.4.0] - 2026-10-05
 
 ### Added

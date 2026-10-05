@@ -13,11 +13,14 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 - The audience picks the language, not habit. Public-sector, regulated, or accessibility-first audiences override aesthetic ambition.
 - The three default looks (design skill, Rules: cream, serif, and terracotta; near-black, one neon accent, and glow; newspaper hairlines, italic serif, and tracked mono labels) are habit too: use one only when the brief asks for it. If the product category alone predicts the look, choose again.
 - The move is the page's **second-read moment**: a single unobvious but legible motif used once (an oversized number for a result the reader should remember, one material or color switch, a macro crop of the product). It must help scanning or brand recall. Restraint alone produces a clean page nobody remembers. It is also the one special element that may take a gradient, texture, glow, or style material, and the one highlighted element per view; a chosen style adds at most one more of its signature moves.
+- Memory test: someone who leaves after the first viewport can describe it an hour later in concrete terms. If all they could describe is a mood, the move isn't committed yet.
+- Habitual display faces (Fraunces, Playfair, Cormorant, Space Grotesk, IBM Plex, DM Serif, Instrument Sans, Inter as display) need a reason tied to this product; "the subject is warm or bookish" is not one.
 - If the brief names a real design system (GOV.UK, USWDS, Carbon, Polaris, Primer, Material), use the official package instead of imitating it.
 
 ## Page structure
 
 - Hero: the headline names the outcome, the subhead names the audience and how; one primary CTA, and any secondary action is a text link; a real product visual instead of abstract art.
+- When the category has a first action people come to do (search flights by route and date, pick an open appointment slot, add to cart), the hero carries it in working form; a link to it further down doesn't count.
 - Order: hero → proof → problem → how it works → proof or pricing → final CTA repeating the hero CTA exactly.
 - Proof is attributable: a named person, their role, and a measurable result. Logos only if real and recognizable.
 - Aggregate numbers anywhere on the page (customer counts, "median close time", "% auto-matched", "9 in 10") appear only when the user supplied them. An invented plausible stat reads as proof and ships by accident; while drafting, write a visible placeholder like `[median close time]` and list it in the notes.

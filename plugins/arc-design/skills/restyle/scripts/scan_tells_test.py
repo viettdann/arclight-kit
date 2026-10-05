@@ -123,6 +123,48 @@ class ScanTellsTest(unittest.TestCase):
         items = "".join(f"<p>line {k}</p>\n" for k in range(8))
         self.assertTell("a.tsx", f'<section\n  className="text-center"\n  title="a > b"\n>\n<h2>T</h2>\n{items}</section>\n', "text blocks centered")
 
+    def test_hand_rolled_plural(self):
+        self.assertTell("a.tsx", "const s = `${n} item${n !== 1 ? 's' : ''}`;\n", "hand-rolled plural")
+        self.assertTell("a.ts", "const s = n === 1 ? 'item' : 'items';\n", "hand-rolled plural")
+        self.assertTell("a.ts", 'const s = n + " file" + (count > 1 ? "s" : "");\n', "hand-rolled plural")
+        self.assertTell("a.ts", "const s = n !== 1 ? 'matches' : 'match';\n", "hand-rolled plural")
+        self.assertNoTell("a.ts", "const s = open ? 'open' : 'closed';\n", "hand-rolled plural")
+        self.assertNoTell("a.ts", "const s = tls ? 'https' : 'http';\n", "hand-rolled plural")
+        self.assertNoTell("a.ts", "const s = new Intl.PluralRules('en').select(n);\n", "hand-rolled plural")
+
+    def test_sentence_concatenation(self):
+        self.assertTell("a.tsx", "const msg = 'You have ' + n + ' new messages';\n", "sentence built by concatenation")
+        self.assertNoTell("a.ts", "const url = '/api/' + id + '/items';\n", "sentence built by concatenation")
+        self.assertNoTell("a.ts", "console.log('Loaded ' + n + ' items');\n", "sentence built by concatenation")
+        self.assertNoTell("a.ts", "const cls = 'btn ' + size;\n", "sentence built by concatenation")
+
+    def test_fixed_width_text_button(self):
+        self.assertTell("a.tsx", '<button className="w-32 h-10 rounded-md">Save changes</button>\n', "fixed width on a text button")
+        self.assertTell("a.tsx", "<Button style={{ width: 120 }}>Continue</Button>\n", "fixed width on a text button")
+        self.assertNoTell("a.tsx", '<button className="w-8 h-8"><XIcon /></button>\n', "fixed width on a text button")
+        self.assertNoTell("a.tsx", '<button className="w-full px-4">Save changes</button>\n', "fixed width on a text button")
+        self.assertNoTell("a.tsx", '<button className="min-w-32 px-4">Save changes</button>\n', "fixed width on a text button")
+
+    def test_pointer_drag_without_cancel(self):
+        drag = "<div onPointerDown={start} onPointerMove={move} onPointerUp={end} />\n"
+        self.assertTell("a.tsx", drag, "pointer drag without pointercancel")
+        self.assertNoTell("a.tsx", drag.replace(" />", " onPointerCancel={end} />"), "pointer drag")
+        self.assertNoTell("a.ts", "el.addEventListener('pointerdown', a);\nel.addEventListener('pointermove', b);\nel.addEventListener('lostpointercapture', c);\n", "pointer drag")
+        self.assertNoTell("a.tsx", "<div onPointerMove={hover} />\n", "pointer drag")
+
+    def test_blinking_cursor(self):
+        self.assertTell("a.tsx", '<span className="ml-1 animate-pulse">|</span>\n', "blinking cursor")
+        self.assertTell("a.tsx", '<span className="caret animate-blink" />\n', "blinking cursor")
+        self.assertTell("a.css", ".caret { animation: blink 1s step-end infinite; }\n", "blinking cursor")
+        self.assertNoTell("a.tsx", '<div className="h-4 w-32 animate-pulse rounded bg-zinc-200" />\n', "blinking cursor")
+        self.assertNoTell("a.css", ".btn[aria-busy] {\n  cursor: wait;\n  animation: blink 1s infinite;\n}\n", "blinking cursor")
+
+    def test_dash_saturation(self):
+        self.assertTell("a.html", "<p>Fast — simple — honest.</p>\n" * 4, "em/en dashes in copy")
+        self.assertNoTell("a.html", "<p>Fast — simple — honest.</p>\n" * 3, "em/en dashes")
+        self.assertNoTell("a.html", "<p>Fast — simple — honest.</p>\n" * 4 + f"<p>{'word ' * 1000}</p>\n", "em/en dashes")
+        self.assertNoTell("a.html", "<p>Mon–Fri</p><td>—</td>\n" * 10, "em/en dashes")
+
 
 if __name__ == "__main__":
     unittest.main()

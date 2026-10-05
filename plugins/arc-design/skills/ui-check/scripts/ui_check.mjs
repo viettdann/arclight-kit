@@ -2,27 +2,31 @@
 // Measure rendering defects on a live page in headless Chrome: what overflows, clips, overlaps, fails contrast, loses focus, or errors.
 // Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]
 //          [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--save f.json] [--compare f.json] [--links]
-//          [--cookie name=value]... [--header "Name: value"]... [--json]
+//          [--cookie name=value]... [--header "Name: value"]... [--stress[=rtl]] [--json]
 //   --tabs   how many Tab presses the focus check walks (0 skips it); it runs once, at the widest width under 1600.
 //   --shot   also write a screenshot per width and scheme (out-<width>[-<scheme>].png), taken before the focus check; --full for the whole page.
-//   --perf   also report the LCP element and load-time layout shifts, and print TTFB, FCP, LCP, JS/CSS bytes, and requests of one uncached load.
+//   --perf   also report the LCP element and load-time layout shifts, and print load timings, long tasks, and bytes of one uncached load.
 //   --save   write those numbers (median of 3 uncached loads at the focus-check width) and the console messages to a baseline file.
 //   --compare  as --save; flags timings up >50% and >500ms, JS/CSS bytes up >25% and >1 KB; drops baseline and single-load console messages.
 //   --links  request every same-origin link once (HEAD, GET on 405) and report 4xx, 5xx, and failures; only for a local or private host.
 //   --cookie, --header  send a cookie (name=value, repeatable or comma list) or a header ("Name: value", repeatable) to the target's origin.
+//   --stress  lengthen the page's text ~40%, add unbroken tokens, emoji, and CJK before checking (=rtl also sets dir=rtl on <html>).
 //   --json   print the findings as JSON instead of text.
 //   Other options work as in design/scripts/screenshot.mjs.
 // Findings are P1 (breaks use or access), P2 (degrades it), P3 (minor); [review] marks heuristics to confirm in a screenshot.
 // Exit 0 nothing at P1 or P2, 1 findings at P1 or P2, 2 the check couldn't run (usage, no Chrome, Node < 22, navigation or HTTP error, timeout).
 import { readFileSync, writeFileSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { applyAuth, emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from '../../design/scripts/cdp.mjs';
 
 const USAGE = 'Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]'
   + ' [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--save f.json] [--compare f.json] [--links]'
-  + ' [--cookie name=value]... [--header "Name: value"]... [--json]';
+  + ' [--cookie name=value]... [--header "Name: value"]... [--stress[=rtl]] [--json]';
 const opt = { width: '375,768,1280,1920', height: '900', scheme: 'light', 'wait-for': '', eval: '', wait: '500', root: '', tabs: '40',
-  shot: '', full: false, perf: false, json: false, links: false, save: '', compare: '', cookie: [], header: [] };
-const pos = await parseArgs(process.argv.slice(2), opt, ['full', 'perf', 'json', 'links'], USAGE);
+  shot: '', full: false, perf: false, json: false, links: false, save: '', compare: '', cookie: [], header: [], stress: '' };
+// A bare --stress would otherwise take the next argument as its value.
+const pos = await parseArgs(process.argv.slice(2).map((a) => (a === '--stress' ? '--stress=on' : a)), opt, ['full', 'perf', 'json', 'links'], USAGE);
+if (!['', 'on', 'rtl'].includes(opt.stress)) await fail('--stress takes no value or =rtl');
 if (pos.length !== 1) await fail(USAGE);
 const widths = [...new Set(opt.width.split(',').map(Number))];
 const height = Number(opt.height), wait = Number(opt.wait), tabs = Number(opt.tabs);
@@ -39,9 +43,31 @@ const samples = opt.save || opt.compare ? 3 : opt.perf ? 1 : 0;
 const MESSAGE_CHECKS = ['js-error', 'console'];
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
   clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
-  'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3 };
+  'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3,
+  'text-over-media-contrast': 1, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
+  'wide-tracking': 3, 'edge-flush-text': 3, 'nested-card': 3, 'icon-tile': 3, 'heading-rhythm': 3 };
 
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
+const lum = (rgb) => { const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+
+// Chrome's screenshots are 8-bit RGB or RGBA, non-interlaced; anything else returns null and the text stays unmeasured.
+const decodePng = (b64) => {
+  const buf = Buffer.from(b64, 'base64');
+  const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20), ch = { 2: 3, 6: 4 }[buf[25]];
+  if (buf[24] !== 8 || !ch || buf[28] !== 0) return null;
+  const idat = [];
+  for (let o = 8; o < buf.length; o += 12 + buf.readUInt32BE(o)) if (buf.toString('latin1', o + 4, o + 8) === 'IDAT') idat.push(buf.subarray(o + 8, o + 8 + buf.readUInt32BE(o)));
+  const raw = inflateSync(Buffer.concat(idat)), stride = w * ch, px = Buffer.alloc(h * stride);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)];
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? px[y * stride + x - ch] : 0, b = y ? px[(y - 1) * stride + x] : 0, c = x >= ch && y ? px[(y - 1) * stride + x - ch] : 0;
+      const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+      px[y * stride + x] = raw[y * (stride + 1) + 1 + x] + [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][f];
+    }
+  }
+  return { w, h, ch, px };
+};
 
 // Runs inside the page (installed as window.__cssPath): a short selector that matches only this element, for the report.
 function cssPath(el) {
@@ -154,9 +180,8 @@ function audit({ mobile }) {
     if (ratio < min) add('contrast', el, `${(Math.floor(ratio * 100) / 100).toFixed(2)}:1, needs ${min}:1 (${hex(fg)} on ${hex(bg)})`
       + (positioned ? '; positioned text, the real background may be a sibling' : ''), positioned);
   }
-  if (unmeasured.length) {
-    for (const el of unmeasured.slice(0, 3)) add('contrast-unmeasured', el, 'text over an image, gradient, or glass; check it in the screenshot', true);
-  }
+  // Measured from screenshots by the caller, which reaches the page only through this list.
+  window.__uiMedia = unmeasured;
 
   // Overlap: line boxes of text from different elements that cross each other, cut to what their overflow ancestors let show.
   const clips = new Map();
@@ -277,12 +302,129 @@ function audit({ mobile }) {
     const prev = Number(headings[i - 1].tagName[1]), cur = Number(headings[i].tagName[1]);
     if (cur > prev + 1) add('heading', headings[i], `h${prev} then h${cur}, a level skipped`);
   }
+  // The layout heuristics below are capped per check, so one repeated component doesn't flood the report.
+  const counts = {};
+  const some = (check, el, detail, review = true) => { counts[check] = (counts[check] ?? 0) + 1; if (counts[check] <= 5) add(check, el, detail, review); };
+  const HEADING = 'h1, h2, h3, h4, h5, h6, [role=heading]';
+  const CONTROL = `${INTERACTIVE}, label, nav`;
+  const ownLen = (el) => [...el.childNodes].reduce((n, c) => n + (c.nodeType === 3 ? c.textContent.trim().length : 0), 0);
+
+  // Typography floors and line length, from computed style and the rendered line boxes.
+  for (const el of all) {
+    if (!ownText(el) || !visible(el) || el.closest('svg, pre, code')) continue;
+    const s = getComputedStyle(el), size = parseFloat(s.fontSize), len = ownLen(el);
+    const heading = !!el.closest(HEADING), control = !!el.closest(CONTROL), body = !heading && !control;
+    const lead = (s.lineHeight === 'normal' ? 1.2 * size : parseFloat(s.lineHeight)) / size, track = (parseFloat(s.letterSpacing) || 0) / size;
+    if (!heading && len > 50 && lead < 1.3) some('tight-leading', el, `line-height ${lead.toFixed(2)}× the ${size}px font, under 1.3`);
+    if (!heading && size < (control ? 11 : 12)) some('tiny-text', el, `${size}px ${control ? 'control' : 'body'} text, under ${control ? 11 : 12}px`, false);
+    if (s.textTransform === 'uppercase' && len > 30) some('all-caps-body', el, `${len} characters set in uppercase`);
+    if (body && len > 30 && track > 0.05) some('wide-tracking', el, `letter-spacing ${track.toFixed(2)}em on body text, over 0.05em`);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const r = range.getBoundingClientRect(), edge = Math.min(r.left, vw - r.right);
+    if (body && len > 30 && edge >= 0 && edge < 16) some('edge-flush-text', el, `text ${Math.round(edge)}px from the viewport edge, under 16px`);
+    if (s.display.startsWith('inline') || len <= 80) continue;
+    ctx.font = s.font;
+    const ch = ctx.measureText('0').width || size / 2, rows = [];
+    for (const q of range.getClientRects()) {
+      const c = (q.top + q.bottom) / 2, row = rows.find((w) => Math.abs(w.c - c) < size / 2);
+      if (row) { row.l = Math.min(row.l, q.left); row.r = Math.max(row.r, q.right); } else if (q.width > 1) rows.push({ c, l: q.left, r: q.right });
+    }
+    const long = rows.map((w) => (w.r - w.l) / ch).filter((n) => n > 80);
+    if (long.length >= 2) some('line-length', el, `${long.length} lines over 80 characters, longest ~${Math.round(Math.max(...long))}ch`);
+  }
+
+  // Cards: a shadow, or a radius with a border or a background of its own.
+  const bgOf = (el) => { for (let a = el; a; a = a.parentElement) { const c = getComputedStyle(a).backgroundColor; if (alphaOf(c) > 0) return c; } return canvasColor; };
+  const framed = (s) => parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== 'none';
+  const cardLike = (el) => {
+    const s = getComputedStyle(el);
+    if (['absolute', 'fixed'].includes(s.position) || s.display.startsWith('inline') || el.matches(`${CONTROL}, dialog, [popover], [role=dialog], [role=menu], [role=tooltip], [role=listbox]`)) return false;
+    const tinted = alphaOf(s.backgroundColor) > 0 && s.backgroundColor !== bgOf(el.parentElement);
+    return s.boxShadow !== 'none' || (parseFloat(s.borderTopLeftRadius) > 0 && (framed(s) || tinted));
+  };
+  const cards = new Set(all.filter((el) => visible(el) && box(el).width >= 50 && box(el).height >= 30 && el.textContent.trim().length >= 10 && cardLike(el)));
+  for (const el of cards) {
+    let outer = el.parentElement;
+    while (outer && !cards.has(outer)) outer = outer.parentElement;
+    if (outer) some('nested-card', el, `a card inside the card ${sel(outer)}`);
+  }
+
+  // Heading neighbours: a framed icon tile right above it, and spacing that binds it to what precedes it.
+  const rhythm = [];
+  for (const h of headings) {
+    const prev = h.previousElementSibling, next = h.nextElementSibling, r = box(h);
+    if (!prev || !visible(prev)) continue;
+    const t = box(prev), ts = getComputedStyle(prev), ratio = t.width / t.height;
+    if (t.width >= 32 && t.width <= 128 && ratio >= 0.7 && ratio <= 1.4 && (alphaOf(ts.backgroundColor) > 0 || framed(ts))
+      && parseFloat(ts.borderTopLeftRadius) < t.width / 2 && t.bottom <= r.top + 1 && prev.querySelector('svg, img, i, [class*=icon]')) {
+      some('icon-tile', prev, `${Math.round(t.width)}×${Math.round(t.height)}px icon tile above the heading ${sel(h)}`);
+    }
+    if (!next || !visible(next)) continue;
+    const above = r.top - t.bottom, below = box(next).top - r.bottom;
+    if (above >= 0 && below - above >= 12) rhythm.push({ h, above, below });
+  }
+  if (rhythm.length >= 2) some('heading-rhythm', rhythm[0].h, `${rhythm.length} headings have less space above than below`
+    + ` (${Math.round(rhythm[0].above)}px above, ${Math.round(rhythm[0].below)}px below); they read as part of the previous block`);
+
+  // An absolutely positioned menu or popover is cut only by overflow on its containing block or an ancestor of it.
+  for (const el of all) {
+    if (getComputedStyle(el).position !== 'absolute' || !visible(el) || !el.innerText.trim()) continue;
+    const r = box(el);
+    for (let a = el.offsetParent; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const c = box(a), cut = Math.max(c.left - r.left, r.right - c.right, c.top - r.top, r.bottom - c.bottom);
+      if (cut > 1 && r.right > c.left && r.left < c.right && r.bottom > c.top && r.top < c.bottom) { some('clipped-popover', el, `${Math.round(cut)}px cut off by overflow on ${sel(a)}`); break; }
+    }
+  }
+
+  // Text still transparent after the page was scrolled through: a reveal animation that never ran.
+  let total = 0, hidden = 0, firstHidden = null;
+  const floats = (el) => { for (let a = el; a; a = a.parentElement) if (['absolute', 'fixed'].includes(getComputedStyle(a).position)) return true; return false; };
+  const walker3 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n = walker3.nextNode(); n; n = walker3.nextNode()) {
+    const el = n.parentElement, len = n.textContent.trim().length;
+    if (!el || !len || SKIP.has(el.tagName) || !el.checkVisibility() || !box(el).width) continue;
+    const gone = !el.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+    if (gone && floats(el)) continue;
+    total += len;
+    if (gone) { hidden += len; firstHidden ??= el; }
+  }
+  if (total >= 200 && hidden >= 150 && hidden / total > 0.3) {
+    add('content-hidden-at-rest', firstHidden, `${hidden} of ${total} characters of text stay invisible (opacity 0 or visibility: hidden) after scrolling through the page`, true);
+  }
+
   if (mobile && !document.querySelector('meta[name=viewport]')) add('viewport', null, 'no <meta name=viewport>: phones lay this page out at 980px');
   if (!document.documentElement.getAttribute('lang')?.trim()) add('lang', null, 'no lang on <html>: screen readers and translation guess the language');
   const vp = document.querySelector('meta[name=viewport]')?.getAttribute('content') ?? '';
   const maxScale = /maximum-scale\s*=\s*([\d.]+)/i.exec(vp);
   if ((maxScale && Number(maxScale[1]) < 2) || /user-scalable\s*=\s*(no|0)\b/i.test(vp)) add('zoom-blocked', null, `viewport "${vp}" blocks pinch zoom`);
   return out;
+}
+
+// Runs inside the page: longer copy, an unbroken token, emoji, and CJK in place of the real text, so the layout checks see the worst case.
+function stress({ rtl }) {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent.trim() && !n.parentElement.closest('script, style, noscript, template, textarea, svg')) nodes.push(n);
+  nodes.forEach((n, i) => {
+    const words = n.textContent.trim().split(/\s+/);
+    let t = `${n.textContent} ${words.slice(0, Math.ceil(words.length * 0.4)).join(' ')}`;
+    if (i % 3 === 1) t = t.replace(/\S{3,}/, 'Wolfeschlegelsteinhausenbergerdorff'.repeat(3));
+    if (i % 3 === 2) t += ' 🎉👩‍💻 国際化テキストの確認';
+    n.textContent = t;
+  });
+  if (rtl) document.documentElement.dir = 'rtl';
+}
+
+// Runs inside the page: scrolls to the bottom and back so scroll-triggered reveals and lazy content fire.
+async function settle() {
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  for (let y = 0, i = 0; y < document.documentElement.scrollHeight && i < 60; y += innerHeight * 0.8, i++) { scrollTo({ top: y, behavior: 'instant' }); await pause(50); }
+  scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+  await pause(50);
+  scrollTo({ top: 0, behavior: 'instant' });
+  await pause(700);
 }
 
 // Runs inside the page: the largest-contentful-paint element and the layout shifts so far, from the buffered performance entries.
@@ -329,12 +471,15 @@ function watchClicks() {
 async function timings() {
   const nav = performance.getEntriesByType('navigation')[0];
   const fcp = performance.getEntriesByName('first-contentful-paint')[0];
-  const lcp = await new Promise((resolve) => {
-    try { new PerformanceObserver((list, obs) => { obs.disconnect(); resolve(list.getEntries().at(-1)); }).observe({ type: 'largest-contentful-paint', buffered: true }); } catch { resolve(null); }
-    setTimeout(() => resolve(null), 300);
+  const read = (type) => new Promise((resolve) => {
+    try { new PerformanceObserver((list, obs) => { obs.disconnect(); resolve(list.getEntries()); }).observe({ type, buffered: true }); } catch { resolve([]); }
+    setTimeout(() => resolve([]), 300);
   });
+  const [paints, tasks] = await Promise.all([read('largest-contentful-paint'), read('longtask')]);
+  const lcp = paints.at(-1);
   const ms = (v) => (Number.isFinite(v) ? Math.round(v) : null);
-  return { ttfb: ms(nav && nav.responseStart - nav.startTime), fcp: ms(fcp?.startTime), lcp: ms(lcp && (lcp.renderTime || lcp.loadTime || lcp.startTime)) };
+  return { ttfb: ms(nav && nav.responseStart - nav.startTime), fcp: ms(fcp?.startTime), lcp: ms(lcp && (lcp.renderTime || lcp.loadTime || lcp.startTime)),
+    longtasks: tasks.length, tbt: ms(tasks.reduce((n, t) => n + t.duration - 50, 0)) };
 }
 
 // Runs inside the page: same-origin links worth requesting, deduped without their fragment, each with the selector of its first anchor.
@@ -394,6 +539,34 @@ function prepareFocus() {
   window.__uiCheck = { sig, before: new Map() };
   for (const el of document.querySelectorAll('*')) window.__uiCheck.before.set(el, sig(el) + '#' + sig(el.parentElement));
 }
+
+// Text over an image, gradient, or glass: glyph pixels are those that change when the text is hidden, each compared with the same pixel behind it.
+const mediaContrast = async (i) => {
+  const m = await evaluate(`(() => { const el = window.__uiMedia[${i}]; el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    const b = el.getBoundingClientRect(), s = getComputedStyle(el), t = el.innerText.trim().replace(/\\s+/g, ' '), x = Math.max(0, b.left), y = Math.max(0, b.top);
+    const size = parseFloat(s.fontSize), weight = Number(s.fontWeight) || 400;
+    return { selector: window.__cssPath(el), text: t ? '"' + (t.length > 40 ? t.slice(0, 40) + '…' : t) + '"' : '', min: size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5,
+      clip: { x: x + scrollX, y: y + scrollY, width: Math.min(innerWidth, b.right) - x, height: Math.min(innerHeight, b.bottom) - y, scale: 1 } }; })()`);
+  const { clip, ...found } = m;
+  if (!(clip.width >= 1 && clip.height >= 1)) return found;
+  const shot = async () => decodePng((await send('Page.captureScreenshot', { format: 'png', clip })).data);
+  const shown = await shot();
+  await evaluate(`(() => { const el = window.__uiMedia[${i}]; window.__uiStyle = el.getAttribute('style');
+    el.style.cssText += ';-webkit-text-fill-color: transparent !important; text-shadow: none !important; transition: none !important'; })()`);
+  const bare = await shot();
+  await evaluate(`(() => { const el = window.__uiMedia[${i}], s = window.__uiStyle; if (s === null) el.removeAttribute('style'); else el.setAttribute('style', s); })()`);
+  if (!shown || !bare || shown.px.length !== bare.px.length) return found;
+  const glyph = [];
+  for (let p = 0; p < shown.px.length; p += shown.ch) {
+    const fg = [...shown.px.subarray(p, p + 3)], bg = [...bare.px.subarray(p, p + 3)], diff = Math.max(...fg.map((v, k) => Math.abs(v - bg[k])));
+    const [l1, l2] = [lum(fg), lum(bg)].sort((a, b) => b - a);
+    if (diff >= 10) glyph.push({ diff, ratio: (l1 + 0.05) / (l2 + 0.05) });
+  }
+  // Antialiased edges blend into the backdrop and would pass for low contrast; only pixels at least half as changed as the strongest count.
+  const peak = Math.max(0, ...glyph.map((g) => g.diff)), ratios = glyph.filter((g) => g.diff >= peak / 2).map((g) => g.ratio).sort((a, b) => a - b);
+  if (ratios.length < 8) return found;
+  return { ...found, pixels: ratios.length, ratio: Math.floor(ratios[Math.floor(ratios.length * 0.1)] * 100) / 100 };
+};
 
 const url = await resolveTarget(pos[0], opt.root);
 if (opt.links && !privateHost(new URL(url).hostname)) {
@@ -456,8 +629,21 @@ for (const width of widths) for (const scheme of schemes) {
   if (opt.eval) await evaluate(opt.eval);
   await sleep(wait);
   await evaluate(`window.__cssPath = ${cssPath}`);
-  for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700 })})`)) record(f, where);
+  // Vitals first: the scroll in settle would add lazy-load shifts that aren't part of the load.
   for (const f of await evaluate(`(${vitals})(${JSON.stringify({ perf: opt.perf })})`)) record(f, where);
+  if (opt.stress) await evaluate(`(${stress})(${JSON.stringify({ rtl: opt.stress === 'rtl' })})`);
+  await evaluate(`(${settle})()`);
+  for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700 })})`)) record(f, where);
+  // Each screenshot pair costs a round trip, so only the first 20 texts over media are measured.
+  const media = await evaluate('window.__uiMedia.length');
+  let unmeasured = 0;
+  for (let i = 0; i < media; i++) {
+    const m = i < 20 ? await mediaContrast(i) : await evaluate(`window.__cssPath(window.__uiMedia[${i}])`).then((selector) => ({ selector, text: '' }));
+    const { selector, text } = m;
+    if (m.ratio < m.min) record({ check: 'text-over-media-contrast', selector, text, review: true, detail: `${m.ratio.toFixed(2)}:1 at the 10th percentile of ${m.pixels} glyph pixels, needs ${m.min}:1` }, where);
+    else if (m.ratio === undefined && unmeasured++ < 3) record({ check: 'contrast-unmeasured', selector, text, review: true, detail: 'text over an image, gradient, or glass; check it in the screenshot' }, where);
+  }
+  await evaluate("scrollTo({ top: 0, behavior: 'instant' })");
   for (const e of events) record({ ...e, selector: '', text: '', review: e.check === 'request' && / (Fetch|XHR) /.test(e.detail) }, where);
   countLoad();
   // After the events are recorded, so the link requests' own failures land in the link findings, not in `request`.
@@ -515,7 +701,7 @@ if (samples) {
     countLoad();
   }
   const median = (k) => { const v = runs.map((r) => r[k]).filter((x) => x !== null).sort((a, b) => a - b); return v.length ? v[(v.length - 1) >> 1] : null; };
-  perf = { width: focusWidth, samples, metrics: Object.fromEntries(['ttfb', 'fcp', 'lcp', 'js', 'css', 'requests'].map((k) => [k, median(k)])) };
+  perf = { width: focusWidth, samples, metrics: Object.fromEntries(['ttfb', 'fcp', 'lcp', 'longtasks', 'tbt', 'js', 'css', 'requests'].map((k) => [k, median(k)])) };
 }
 await cdp.close();
 
@@ -553,7 +739,7 @@ if (opt.json) {
   console.log(`ui-check ${url}  widths ${widths.join(',')}  scheme ${schemes.join(',')}\n`);
   if (perf) {
     const m = perf.metrics, t = (v) => (v === null ? 'n/a' : `${v}ms`);
-    console.log(`perf ${perf.width}: TTFB ${t(m.ttfb)} · FCP ${t(m.fcp)} · LCP ${t(m.lcp)} · JS ${kb(m.js)} · CSS ${kb(m.css)} · ${m.requests} requests`
+    console.log(`perf ${perf.width}: TTFB ${t(m.ttfb)} · FCP ${t(m.fcp)} · LCP ${t(m.lcp)} · ${m.longtasks ?? 'n/a'} long tasks, ${t(m.tbt)} blocking · JS ${kb(m.js)} · CSS ${kb(m.css)} · ${m.requests} requests`
       + `${samples > 1 ? ` (median of ${samples} uncached loads)` : ' (one uncached load)'}${opt.save ? `; saved to ${opt.save}` : ''}`);
     if (baseline) console.log(`compared with ${opt.compare}${baseline.url !== url ? ` (baseline was taken on ${baseline.url})` : ''}; ${known} console message(s) also in the baseline and ${once} new one(s) seen in only one load, not reported`);
   }
