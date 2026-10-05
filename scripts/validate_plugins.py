@@ -43,8 +43,8 @@ def skill_metadata(path):
     if not NAME.fullmatch(fields.get("name", "")) or fields["name"] != path.parent.name:
         raise ValueError("skill name must match its directory")
     description = fields.get("description", "")
-    if not isinstance(description, str) or not 1 <= len(description) <= 1024:
-        raise ValueError("description must contain 1–1024 characters")
+    if not isinstance(description, str) or not 1 <= len(description) <= 930:
+        raise ValueError("description must contain 1–930 characters")
     if LEGACY.search(text):
         raise ValueError("Claude-specific runtime instructions remain")
     return fields
@@ -142,7 +142,15 @@ def validate(root=ROOT):
                     if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/arc-compact.py' not in handler["command"]:
                         raise ValueError("invalid arc reload command")
                     inside(base, "./scripts/arc-compact.py")
-                if set(hook["hooks"]) - {"PostToolUse", "SessionStart"}:
+                guards = hook["hooks"].get("PreToolUse", [])
+                if guards:
+                    if len(guards) != 1 or guards[0]["matcher"] != "^Bash$" or len(guards[0]["hooks"]) != 1:
+                        raise ValueError("destructive guard must be one handler on Bash")
+                    handler = guards[0]["hooks"][0]
+                    if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/destructive-guard.py' not in handler["command"] or "ARC_DESTRUCTIVE_GUARD_ENABLED" not in handler["command"]:
+                        raise ValueError("invalid destructive guard command")
+                    inside(base, "./scripts/destructive-guard.py")
+                if set(hook["hooks"]) - {"PostToolUse", "SessionStart", "PreToolUse"}:
                     raise ValueError("unexpected hook event")
             skills = sorted(inside(base, compat["skills"]).glob("*/SKILL.md"))
             if not skills:

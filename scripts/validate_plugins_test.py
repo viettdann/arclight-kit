@@ -73,6 +73,14 @@ class PackageValidationTest(unittest.TestCase):
         self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["SessionStart"][0].update(matcher="startup"))
         self.assert_error("arc reload")
 
+    def test_destructive_guard_matcher(self):
+        self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["PreToolUse"][0].update(matcher="exec_command"))
+        self.assert_error("destructive guard")
+
+    def test_missing_destructive_guard_script(self):
+        (self.root / "plugins/arc-kit/scripts/destructive-guard.py").unlink()
+        self.assert_error("missing or escaping path")
+
     def test_missing_arc_reload_script(self):
         (self.root / "plugins/arc-kit/scripts/arc-compact.py").unlink()
         self.assert_error("missing or escaping path")

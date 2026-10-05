@@ -27,7 +27,13 @@ Paths in the last column are under `plugins/` unless otherwise stated. Historica
 
 ## Sync with the Claude line
 
-The 2.1.0 releases (arc-design, arc-kit) and 1.1.0 (mgi-kit) merge `main` up to `8e91238` (Claude arc-kit 1.7.0, arc-design 1.3.0, mgi-kit 0.2.0). Authorization rules stay as in the original migration: the Claude line's stricter approval gates (brainstorming approval only saves the doc, a go-ahead covering every open recommendation) are not carried over. The next sync starts from that merge.
+The 2.2.0 releases (arc-design, arc-kit) and 1.2.0 (mgi-kit) integrate `main` through `f2bb39d` (Claude arc-kit 1.8.0, arc-design 1.5.0, mgi-kit 0.3.0). Merge commit `8acdccd` records both histories; the following adaptation commit ports runtime differences. The previous sync used a linear imported history through `8e91238`, with Codex adaptations on top, rather than a two-parent merge.
+
+Future syncs fetch `origin` and merge `origin/main` into `codex`; use fast-forward when possible and an ordinary merge when histories diverge. Do not squash or cherry-pick the upstream batch. `git merge-base codex origin/main` identifies the shared upstream point, and `git log codex..origin/main` lists pending commits. Keep subsequent Codex adaptations separate when practical.
+
+Authorization persists across discovery and execution. New workflow guidance retains evidence validation, fresh-context design review when delegation is allowed, and explicit reporting of decisions made without asking. Claude-only tools, approval resets, and platform paths are not carried over.
+
+The new destructive guard uses `ARC_DESTRUCTIVE_GUARD_ENABLED`, disabled by default, and `${PLUGIN_ROOT}`. Codex recognizes shell calls as `Bash`, but does not support the upstream `ask` permission output: both ask and deny findings therefore block with `deny`. The reason directs intended execution outside Codex. This difference was checked against [the official hook contract](https://learn.chatgpt.com/docs/hooks) on 2026-10-05. Skill lint now checks root Codex manifests and discovery metadata, including the upstream 930-character description budget.
 
 ## Package behavior
 
@@ -50,6 +56,8 @@ The comment hook receives completed `apply_patch` calls, maps added lines to fin
 - Keep source and runtime configuration portable: no dependency on a particular user's Codex cache, agent model, or installed connector.
 
 ## Verification
+
+The 2026-10-05 sync passed 145 tests across package and skill lint, comment lint, arc reload, destructive guard, diff collection, fresh-air, and the tell scanner. Package validation, Python compilation, JavaScript syntax checks, and `git diff --check` also passed. Browser behavior and live host installation were not exercised.
 
 Run the commands in the README. The package validator checks the marketplace, both manifest forms, skill discovery metadata, explicit invocation policies, hook wiring, and bundled references. It validates this repository's conventions rather than implementing the entire external plugin schema.
 

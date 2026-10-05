@@ -26,9 +26,11 @@ Before parallel edits, confirm each assignment has disjoint files, no dependency
 - Read existing files before changing them; preserve unrelated edits in the shared worktree.
 - Edit only assigned files; report required scope expansions to the coordinator.
 - Do not stage, commit, stash, reset, revert, restore, clean, or discard changes.
+- Never perform irreversible actions (data deletion, external publishing, schema drops, force operations); report the required action to the coordinator.
 - Run lint and the tests that cover your own files after meaningful changes; never the project-wide build or type-check, which other workers' half-written files make fail.
 - Follow the TDD mode stated in this assignment.
 - Return completed tasks, changed paths, actual checks and results (lint and tests for your own files, and with TDD on, each test and the failure seen before implementing), and unresolved issues.
+- Include "Decided for you" in the report: each judgment call resolved without asking and the alternative not taken, or "none".
 
 A worker cannot see this skill: its assignment carries these rules, the section 3 implement-and-validate steps, the TDD mode text with whether it is on, and the report fields verbatim.
 
@@ -71,3 +73,7 @@ Inspect git status and stage explicit paths containing only this task's changes.
 Resolve codebase facts before escalating. Pick the existing project pattern when several routine implementations fit. Never apply a workaround silently: take the proper fix without asking when it is small or obvious; ask only when it costs far more than the workaround (a large refactor, or changes outside the plan's files) or the trade-off is genuinely ambiguous, and then show both: `Proper fix: X (effort). Workaround: Y (debt it creates).` Reuse an installed dependency before adding one; raise a new dependency only if it introduces a material scope, licensing, operational, or maintenance choice. Flag unnecessary plan steps with evidence rather than silently dropping them.
 
 Use `request_user_input` for optional preferences only when available and supported by the active mode; otherwise ask in text. Required approval follows the runtime's approval mechanism. Never invent unavailable tools or claim a check was run when it was only proposed.
+
+## Decisions and delegated limits
+
+Record judgment calls resolved without asking under "Decided for you", including the alternative, in worker reports and the execution summary. Workers never perform irreversible actions (data deletion, external publishing, schema drops, force operations); report them to the orchestrator. The orchestrator checks existing authorization and asks only for actions outside it.

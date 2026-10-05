@@ -444,10 +444,10 @@ def guard():
     found = check_command(cmd)
     denies = [r for d, r in found if d == "deny"]
     if denies:
-        return decide("deny", f"blocked: {denies[0]}. Run it yourself outside Claude if intended")
+        return decide("deny", f"blocked: {denies[0]}. Run it yourself outside Codex if intended")
     asks = list(dict.fromkeys(r for d, r in found if d == "ask"))
     if asks:
-        return decide("ask", "; ".join(asks))
+        return decide("deny", "; ".join(asks) + ". Run it yourself outside Codex if intended")
     return 0
 
 

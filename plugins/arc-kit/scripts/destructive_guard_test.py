@@ -12,11 +12,11 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "destructive-guard.py")
-ON = {"CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED": "true"}
+ON = {"ARC_DESTRUCTIVE_GUARD_ENABLED": "true"}
 
 
 def run(stdin, options=ON, cwd=None, tmpdir="/var/folders/xy/T"):
-    env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE_PLUGIN_OPTION_") and k != "TMPDIR"}
+    env = {k: v for k, v in os.environ.items() if not k.startswith("ARC_") and k != "TMPDIR"}
     env.update(options or {})
     if tmpdir is not None:
         env["TMPDIR"] = tmpdir
@@ -52,14 +52,14 @@ class DestructiveGuardTest(unittest.TestCase):
                 self.assertEqual(self.decision(command, cwd, **kw), decision)
 
     def test_disabled_is_silent(self):
-        for options in (None, {"CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED": "false"}, {"CLAUDE_PLUGIN_OPTION_destructive_guard_enabled": "true"}):
+        for options in (None, {"ARC_DESTRUCTIVE_GUARD_ENABLED": "false"}, {"ARC_destructive_guard_enabled": "true"}):
             r = bash("rm -rf /", options=options)
             self.assertEqual((r.returncode, r.stdout, r.stderr), (0, "", ""))
 
     def test_uppercase_option_name_enables(self):
         for value in ("true", "1", "YES", " on "):
             with self.subTest(value=value):
-                out = json.loads(bash("rm -rf /", options={"CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED": value}).stdout)
+                out = json.loads(bash("rm -rf /", options={"ARC_DESTRUCTIVE_GUARD_ENABLED": value}).stdout)
                 self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny")
 
     def test_hook_command_gates_on_the_same_values(self):
@@ -68,7 +68,7 @@ class DestructiveGuardTest(unittest.TestCase):
         stdin = json.dumps({"tool_name": "Bash", "tool_input": {"command": "rm -rf /"}})
         for value, expected in (("true", "deny"), ("1", "deny"), ("Yes", "deny"), ("ON", "deny"), (" tRuE ", "deny"), ("false", ""), ("", ""), ("true x", ""), ("*", "")):
             with self.subTest(value=value):
-                env = {**os.environ, "CLAUDE_PLUGIN_ROOT": os.path.dirname(HERE), "CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED": value}
+                env = {**os.environ, "PLUGIN_ROOT": os.path.dirname(HERE), "ARC_DESTRUCTIVE_GUARD_ENABLED": value}
                 r = subprocess.run(["sh", "-c", command], input=stdin, capture_output=True, text=True, env=env)
                 got = json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] if r.stdout.strip() else ""
                 self.assertEqual((r.returncode, got), (0, expected), r.stderr)
@@ -102,7 +102,7 @@ class DestructiveGuardTest(unittest.TestCase):
         )
 
     def test_rm_other_recursive_asks(self):
-        self.expect("ask", "rm -rf src", "rm -r docs", "rm -rf node_modules src", "rm -rf /tmp", "find . | xargs rm -rf", "rm -rf ../node_modules")
+        self.expect("deny", "rm -rf src", "rm -r docs", "rm -rf node_modules src", "rm -rf /tmp", "find . | xargs rm -rf", "rm -rf ../node_modules")
 
     def test_rm_artifacts_allowed(self):
         self.expect(
@@ -114,15 +114,15 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_artifact_names_only_count_for_relative_paths(self):
         self.expect(
-            "ask",
+            "deny",
             "rm -rf /usr/bin", "rm -rf /bin", "rm -rf ~/bin", "rm -rf ~/.cache", "rm -rf /usr/lib/node_modules",
             "rm -rf /opt/app/out", "rm -rf $HOME/node_modules", "rm -rf $X/dist",
         )
 
     def test_tmp_paths_need_a_literal_suffix_and_a_real_tmpdir(self):
-        self.expect("ask", "rm -rf /tmp/$X", "rm -rf /tmp/${X}/y", "rm -rf $TMPDIR/$X", "rm -rf /tmp/a/$(id -u)")
-        self.expect("ask", "rm -rf $TMPDIR/x", "rm -rf ${TMPDIR}/x", tmpdir=None)
-        self.expect("ask", "rm -rf $TMPDIR/x", tmpdir="")
+        self.expect("deny", "rm -rf /tmp/$X", "rm -rf /tmp/${X}/y", "rm -rf $TMPDIR/$X", "rm -rf /tmp/a/$(id -u)")
+        self.expect("deny", "rm -rf $TMPDIR/x", "rm -rf ${TMPDIR}/x", tmpdir=None)
+        self.expect("deny", "rm -rf $TMPDIR/x", tmpdir="")
 
     def test_shell_c_flag_variants_check_the_script(self):
         self.expect("deny", "bash -lc 'rm -rf /'", "sh -ec 'rm -rf /'", "bash -xc 'rm -rf /'", "bash -c -- 'rm -rf /'", "bash -o pipefail -c 'rm -rf /'")
@@ -154,7 +154,7 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_git_discard_asks(self):
         self.expect(
-            "ask",
+            "deny",
             "git reset --hard HEAD~1", "git checkout -- .", "git checkout .", "git restore src/a.ts", "git clean -fdx",
             "git stash drop", "git stash clear", "git branch -D feature", "git -C repo reset --hard",
         )
@@ -162,7 +162,7 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_sql_asks(self):
         self.expect(
-            "ask",
+            "deny",
             'psql -c "DROP TABLE users"', "mysql -e 'drop database app'", 'psql -c "truncate orders"',
             'psql -c "DELETE FROM users"', 'echo "drop schema s cascade" | psql', 'docker exec db psql -c "Drop Table x"',
         )
@@ -170,12 +170,12 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_infra_asks(self):
         self.expect(
-            "ask",
+            "deny",
             "docker system prune -af", "docker volume rm data", "docker volume prune", "docker rm -f web", "kubectl delete pod x",
             "terraform destroy", "chmod -R 777 .", "dd if=img of=/dev/sda", "mkfs.ext4 /dev/sdb1",
         )
         self.expect(
-            "ask",
+            "deny",
             "docker compose down -v", "docker compose -f dev.yml down --volumes", "docker-compose down -v", "docker image prune -a",
             "docker container prune", "docker network prune", "docker builder prune", "rsync -a --delete src/ dst/", "rsync -a --delete-after a b",
         )
@@ -189,7 +189,7 @@ class DestructiveGuardTest(unittest.TestCase):
             "echo $(rm -rf /)", "echo `rm -rf /`", 'git commit -m "$(rm -rf /)"', "bash -c 'rm -rf /'",
             "(cd x && rm -rf ..)", "rm -rf node_modules && rm -rf /",
         )
-        self.expect("ask", "npm test | tee log && git reset --hard")
+        self.expect("deny", "npm test | tee log && git reset --hard")
 
     def test_quoted_text_does_not_trigger(self):
         self.expect(
@@ -200,7 +200,7 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_find_delete(self):
         self.expect("deny", "find / -delete", "find ~ -name x -delete", "find / -exec rm -rf {} \\;", "find -L / -delete", "sudo find $HOME -delete")
-        self.expect("ask", "find . -name '*.pyc' -delete", "find src -type f -exec rm {} +", "find -delete")
+        self.expect("deny", "find . -name '*.pyc' -delete", "find src -type f -exec rm {} +", "find -delete")
         self.expect("allow", "find . -name '*.py'", "find / -name passwd")
 
     def test_heredoc_body_is_data(self):
@@ -218,7 +218,7 @@ class DestructiveGuardTest(unittest.TestCase):
 
     def test_heredoc_fed_to_a_shell_is_checked(self):
         self.expect("deny", "bash <<'EOF'\nrm -rf /\nEOF", "cat <<EOF | sudo sh\nrm -rf ~\nEOF")
-        self.expect("ask", "psql <<'EOF'\nDROP TABLE users;\nEOF")
+        self.expect("deny", "psql <<'EOF'\nDROP TABLE users;\nEOF")
 
     def test_unparseable_with_keyword_denies(self):
         self.expect("deny", 'rm -rf "/')

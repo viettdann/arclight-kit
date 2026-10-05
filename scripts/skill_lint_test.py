@@ -98,14 +98,13 @@ class SkillLintTest(unittest.TestCase):
     def test_every_component_is_listed(self):
         readme = read(os.path.join(ROOT, "README.md"))
         for plugin, name, path in components():
-            manifest = json.loads(read(os.path.join(PLUGINS, plugin, ".claude-plugin", "plugin.json")))
             listed = f"{plugin}:{name}" if "/skills/" in path else f"`{name}`"
-            self.assertTrue(listed in readme, f"skill-lint: README does not list {listed}")
-            self.assertRegex(manifest["description"], rf"(?<![\w-]){re.escape(name)}(?![\w-])", f"skill-lint: {plugin} plugin.json description omits {name}")
+            self.assertTrue(listed in readme or re.search(rf"^\|[^\n]*\| {re.escape(plugin)} \| `\${re.escape(name)}`(?: \([^\n]*\))? \|$", readme, re.M), f"skill-lint: README does not list {listed}")
+            self.assertTrue(os.path.isfile(os.path.join(os.path.dirname(path), "agents", "openai.yaml")), f"skill-lint: {plugin}:{name} lacks discovery metadata")
 
     def test_version_matches_changelog(self):
         for plugin in sorted(os.listdir(PLUGINS)):
-            manifest = json.loads(read(os.path.join(PLUGINS, plugin, ".claude-plugin", "plugin.json")))
+            manifest = json.loads(read(os.path.join(PLUGINS, plugin, "plugin.json")))
             m = re.search(r"^## \[(\d+\.\d+\.\d+)\]", read(os.path.join(PLUGINS, plugin, "CHANGELOG.md")), re.M)
             self.assertIsNotNone(m, f"skill-lint: no version heading in {plugin}/CHANGELOG.md")
             self.assertEqual(manifest["version"], m.group(1), f"skill-lint: {plugin} plugin.json and CHANGELOG disagree")

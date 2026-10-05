@@ -1,13 +1,13 @@
 {
-  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by apply_patch. Arc reload: re-injects the arc defaults after compaction when $arc was invoked this session",
+  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by apply_patch. Arc reload: re-injects the arc defaults after compaction when $arc was invoked this session; opt-in destructive guard blocks dangerous shell commands",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "^Bash$",
         "hooks": [
           {
             "type": "command",
-            "command": "set -f; set -- $CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED; case \"$*\" in [Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss]|[Oo][Nn]) exec python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/destructive-guard.py\";; esac",
+            "command": "set -f; set -- $ARC_DESTRUCTIVE_GUARD_ENABLED; case \"$*\" in [Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss]|[Oo][Nn]) exec python3 \"${PLUGIN_ROOT}/scripts/destructive-guard.py\";; esac",
             "timeout": 10
           }
         ]

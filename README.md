@@ -3,7 +3,7 @@
 Three independent Codex plugins, containing 20 skills:
 
 - **arc-design**: design new UI, redesign or refine existing UI, check rendering, implement interaction states, and trace what controls do to state.
-- **arc-kit**: daily session defaults, planning, execution, debugging, research, writing, review, refactoring, conventions, handoffs, reversible project-skill disabling, and the comment-lint and arc-reload hooks.
+- **arc-kit**: daily session defaults, planning, execution, debugging, research, writing, review, refactoring, conventions, handoffs, reversible project-skill disabling, and the comment-lint, arc-reload, and opt-in destructive-guard hooks.
 - **mgi-kit**: audit ASP.NET API contracts against TypeScript and JavaScript consumers, and upgrade .NET solutions.
 
 This branch targets Codex. See [the migration analysis](docs/codex-migration.md) for the platform changes and compatibility limits.
@@ -59,7 +59,7 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 
 `arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly. `executor`, `refactor`, and `verifier` run full or slow suites under the test runner brief (`plugins/arc-kit/skills/executor/references/test-runner.md`), delegated when the runtime allows it, inline otherwise; Codex plugins don't package custom agents.
 
-`design` combines a **profile** (`tool` or `marketing`) with an optional **style**:
+`design` combines a **profile** (`tool`, `marketing`, or `read`) with an optional **style**:
 
 | Style | Direction |
 | --- | --- |
@@ -98,6 +98,12 @@ python3 plugins/arc-kit/scripts/comment-lint.py --files path/to/file.ts path/to/
 
 The standalone command checks all lines of the named files. The hook checks only added lines it can locate reliably in the final file; ambiguous patch context may leave lines unchecked. Files outside the hook working directory, generated files, unsupported/binary files, and inputs larger than 2 MB are skipped. This is a style aid, not an enforcement boundary.
 
+## Destructive guard
+
+Enable with `ARC_DESTRUCTIVE_GUARD_ENABLED=true` in the environment that launches Codex; it is off by default. The `PreToolUse` hook matches `Bash`, including unified exec. It blocks the upstream destructive-command patterns: recursive deletion, Git discards, broad SQL deletion, container and infrastructure teardown, raw device writes, and encoded shell payloads. Relative build artifacts and temporary paths follow the upstream allowlist. `git push` is not checked.
+
+Codex does not support `permissionDecision: "ask"` yet, so both upstream ask and deny findings return `deny`. The reason tells the user to run an intended command outside Codex. See [the hook output contract](https://learn.chatgpt.com/docs/hooks). This is a guardrail; interactive stdin and specialized tool paths can bypass inspection.
+
 ## Arc reload
 
 `arc-kit` also registers `SessionStart` on `compact`: when `$arc` was invoked earlier in the session (read from the session transcript, whose format Codex doesn't guarantee), `scripts/arc-compact.py` re-injects the `arc` defaults after compaction; otherwise it prints nothing. It needs Python 3 and the same hook trust as comment lint.
@@ -112,9 +118,12 @@ Project `AGENTS.md` instructions, plugins, MCP servers, and hooks remain active.
 
 ```bash
 python3 scripts/validate_plugins.py
+node --test scripts/cdp_auth_test.mjs
 python3 -m unittest discover -s scripts -p '*_test.py'
 python3 plugins/arc-kit/scripts/comment_lint_test.py
 python3 plugins/arc-kit/scripts/arc_compact_test.py
+python3 plugins/arc-kit/scripts/destructive_guard_test.py
+python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py
 python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py
 python3 -m unittest discover -s plugins/arc-kit/skills/fresh-air/tests
 ```

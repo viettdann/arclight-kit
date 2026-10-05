@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "arc-design",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Design, redesign, refine, and verify web interfaces and their UI state.",
   "author": {
     "name": "viettdann"

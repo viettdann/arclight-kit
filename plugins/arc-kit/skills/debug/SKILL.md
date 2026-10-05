@@ -45,7 +45,7 @@ Follow applicable AGENTS.md instructions. Use Vietnamese in chat and English in 
 - Grep every caller of the function you change and put the fix in the shared path. Search for the same pattern in sibling code; fix the instances in scope and list the rest.
 - The repro becomes the regression test. If it was a script and the project has a test harness, turn it into a test. Run it before applying the fix and see it fail for the bug's reason; a test that never failed proves nothing. Put it where it exercises the bug the way the call site does; when the only reachable level can't (the bug needs two callers or the full chain, and a unit test can't build that), don't write a shallow test that passes either way: report the missing seam as a finding.
 - Three fixes that each failed or moved the symptom somewhere else: stop. Report the pattern (each fix exposed new coupling or shared state) as a likely design problem and ask before a fourth attempt.
-- Stop and ask before a fix that touches more than 5 files, a schema change, a data fix in a shared or production environment, a config change on a shared environment, or a rollback.
+- Stop and ask before a schema change, a data fix in a shared or production environment, a config change on a shared environment, or a rollback.
 
 ## 5. Verify and report
 

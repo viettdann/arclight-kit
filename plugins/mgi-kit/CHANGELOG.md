@@ -2,6 +2,12 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-05
+
+### Changed
+
+- Sync the Codex package with main through `f2bb39d` using a recorded Git merge; adapt new instructions and checks to Codex.
+
 ## [1.1.0] - 2026-10-04
 
 Brings the Codex package up to the Claude line's 0.2.0.

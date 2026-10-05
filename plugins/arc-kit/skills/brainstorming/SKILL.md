@@ -124,3 +124,7 @@ The examples run on fictional Hono/Bun projects (a rate limiter, and a webhook s
 - `examples/user-pivots.md`: handling contradictions and rollback mid-design
 - `examples/skip-design.md`: handling "just do it" requests without losing alignment
 - `examples/verify-callout.md`: recovering when a codebase claim turns out to be wrong
+
+## Fresh-context review
+
+After saving the design, when delegation is allowed, use one subagent with no conversation context: give only the doc path and repo root. Ask about contradictions, missing scope, implementability, and simpler approaches. Fix factual issues and surface unresolved judgment calls. Run at most two rounds, stopping on repeated findings. Otherwise check these inline and report the lack of fresh-context review. This adds no approval gate before authorized implementation.
