@@ -40,6 +40,12 @@ For output a model writes while the user waits (chat replies, summaries, drafts,
 | An action failed transiently | Toast with retry |
 | Blocking (no permission, fatal) | Full panel or page state with a way out |
 
+By cause:
+
+- Session expired (401): re-authenticate in place (a dialog or a return-to redirect) and replay the action; the input is never lost.
+- Forbidden (403): say who can grant access, or hide the action from those who can't use it (`baseline.md`, Unavailable actions).
+- Rate limited (429): say when it can be retried (from `Retry-After`) and retry or re-enable then, never an instant retry loop.
+
 - Copy says what happened, why if known, and what to do next. Raw codes go behind a "Details" disclosure for support, not in the headline.
 - Every error has a way forward: retry, edit, go back, or contact.
 - User input survives every error.
@@ -54,7 +60,7 @@ For output a model writes while the user waits (chat replies, summaries, drafts,
 
 ## Empty states
 
-Distinguish first run, no results, filtered out, and error (see `data.md`). Each gets specific copy and one next action. No bare "No data".
+Distinguish first run, no results, filtered out, error, no permission, and cleared by the user (see `data.md`). Each gets specific copy and one next action. No bare "No data".
 
 ## Notifications
 
@@ -97,6 +103,10 @@ Distinguish first run, no results, filtered out, and error (see `data.md`). Each
 
 - Buttons are verb plus object or outcome: "Save changes", "Create project", "Delete 3 files". Not "Submit", "OK", or "Yes".
 - Errors are human and specific with a next step: "That email already has an account. Log in instead?", not "Invalid input".
+- Labels name the outcome, not the gesture: "Show archived", not "Click to toggle".
+- Helper text answers the question the user would ask next (format, limits, who sees it), never repeats the label.
+- Say each thing once: an intro under a heading that restates the heading goes.
+- One term per concept across the product ("workspace" everywhere, never also "team" or "org"), and required or optional fields marked one way everywhere.
 
 ## Checks
 

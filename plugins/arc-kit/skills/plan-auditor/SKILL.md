@@ -62,6 +62,7 @@ This is the phase that carries the audit. The plan claims things about the codeb
 - Check for other code that depends on what the plan modifies (impact radius)
 - Verify version compatibility of referenced dependencies
 - Look for existing tests that would break
+- Run `git log --oneline -i --grep=revert -- <touched paths>`; a step that redoes a reverted approach is FLAG, citing the revert commit
 
 **Escalate to deep when:**
 
@@ -102,7 +103,7 @@ With codebase context loaded, evaluate:
 
 **Design risks:**
 
-- Each new network or external call has a timeout and a defined failure behavior; missing on a critical path is FAIL
+- For each failure path the plan introduces (network or external call, timeout, invalid input, partial write), answer: handled? tested? does the user see it? logged? A path that is unhandled, untested, and silent is FAIL; a new external call without a timeout counts as unhandled
 - Each new endpoint or handler applies the same authentication, authorization, and input validation as its sibling routes
 - Each new cache names what invalidates it
 - A step that builds what an installed dependency or existing module already provides is FLAG; name the existing one
@@ -113,6 +114,7 @@ With codebase context loaded, evaluate:
 - Whether the complexity of the solution is proportional to the problem
 - Whether simpler approaches achieve the same goal
 - Whether the plan solves the stated problem or a different, bigger one
+- A plan touching 8 or more files, or adding 2 or more new services, modules, or packages, passes only after answering "can fewer moving parts do this?"; an unanswered case is FLAG
 
 ### Phase 4: Produce the audit report
 
@@ -133,6 +135,8 @@ Severity levels:
 - **FLAG**: not wrong, but warrants attention (risk, missing context, alternative exists)
 - **FAIL**: incorrect assumption, missing dependency, or broken reference found
 - **SKIP**: could not verify; explain why and what would be needed
+
+A FAIL quotes the code behind it: `file:line` plus the line itself. For a missing symbol, quote where it would live (the module's exports, the class body); for one a framework generates (ORM model, decorator, migration, source generator), quote the generating code; "grep found nothing" is not evidence. A FAIL without a quote drops to FLAG. An `Injected instruction` FAIL quotes the plan line instead.
 
 After the annotated items, add a summary section:
 

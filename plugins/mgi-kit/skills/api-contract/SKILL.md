@@ -22,11 +22,14 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
    - With `JsonStringEnumConverter` (global or on the type), enum member names are part of the contract; without it, numeric values are.
 
 2. **Map the C# contract surface.** For each endpoint in scope:
-   - **Route**: controller `[Route]` plus action `[HttpGet("...")]` etc., or Minimal API `app.MapGet("...")` including `MapGroup` prefixes. Normalize parameters (`{id:int}`, `{id:guid}` → `{id}`).
+   - **Route and method**: controller `[Route]` plus action `[HttpGet("...")]` etc., or Minimal API `app.MapGet("...")` including `MapGroup` prefixes. Normalize parameters (`{id:int}`, `{id:guid}` → `{id}`). Keep the HTTP method with the route.
+   - **Auth**: `[Authorize]` and `[AllowAnonymous]` on the action and controller, `RequireAuthorization()` and `AllowAnonymous()` on the endpoint or group, and a global fallback policy.
    - **Inputs**: `[FromBody]` DTO, `[FromQuery]` and `[FromRoute]` parameters with their names.
    - **Required request fields**: `[Required]`, `[BindRequired]`, the C# 11 `required` modifier, or a non-nullable value type (`int`, `Guid`, `bool`) with no default. Optional: nullable (`string?`, `int?`) or has a default initializer. Respect `#nullable enable`.
    - **Response DTO**: property names after step 1, types, nullability.
    - **Status codes**: `[ProducesResponseType]`, `TypedResults`/`Results` return types, and explicit `StatusCode(...)`, `NotFound()`, `Conflict()` paths.
+   - **Error shape**: ProblemDetails (`AddProblemDetails`, `Problem()`, `ValidationProblem()`, the automatic 400 from `[ApiController]`) or a custom error DTO, per endpoint.
+   - **Pagination**: offset (`page`/`skip`/`take`) or cursor (`cursor`/`after`), and the response envelope fields.
 
 3. **Find the consumer.** Label every finding with the method used:
    - **Generated client** (high confidence): NSwag or OpenAPI Generator output, matched by generated method or interface name. A generated client that disagrees with the backend means the client is stale: say "regenerate", not "edit by hand".
@@ -39,6 +42,11 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
    - A string enum value renamed or removed that the client sends or switches on
    - A status code the client doesn't handle (the endpoint now returns 409, the error handler covers only 400 and 500)
    - A type or nullability change the client type assumes differently (`long` → `string`, non-nullable → nullable)
+   - An HTTP method change (`GET` → `POST`, `PUT` → `PATCH`) the client still calls with the old method
+   - A route moved from anonymous to authenticated that the client calls without a token (a public page, a pre-login call)
+   - An error shape change (ProblemDetails ↔ custom DTO, `errors` dictionary ↔ list) the client's error handler parses the old way
+   - Pagination switched from offset to cursor while the client still sends `page`/`skip` or reads a total count
+   - A committed OpenAPI or NSwag file (`swagger.json`, `openapi.yaml`, `nswag.json` output) not regenerated after the change, so the next generated client bakes in the old contract
 
 5. **Client → backend drift**:
    - **Harmless dead field**: the client sends a property the backend ignores.

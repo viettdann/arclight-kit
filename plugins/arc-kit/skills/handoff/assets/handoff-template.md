@@ -29,7 +29,10 @@
 
 ## Next step
 
-<One concrete next action with the file, symbol, or command when known. Include remaining checklist items when necessary.>
+<The single, concrete next thing to try. One clear action, not a menu. Include
+the specific file/function/command if known. Note alternatives in one line.
+End each claim it rests on with how you know it: `(<cmd> run, exit 0)`,
+`(<path> read)`, or `(assumed)`.>
 
 ## Open questions / unverified
 

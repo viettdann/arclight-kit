@@ -1,6 +1,6 @@
 ---
 name: state-check
-description: "Trace what each button, toggle, form submit, or shortcut actually does to state, call by call, to find handlers whose calls each work but leave the wrong final state: a later call or a store action resetting what an earlier one set, an effect that reverts the change, async responses landing out of order, stale closures, a read of state set earlier in the same handler, a label that promises a save the handler never makes. Use when a control \"does nothing\" or does the wrong thing (\"bấm nút không ăn\", \"bấm không có tác dụng\", \"state bị reset\", \"click không chạy\"), after changing a shared store action (Zustand, Redux, context, query cache) to audit its callers, after a refactor that touched shared state, or before shipping a critical flow. Reports first; fixes only when asked. Not for rendering defects (use ui-check), API contract drift between backend and frontend, or visual design."
+description: "Trace what each button, toggle, form submit, or shortcut does to state, call by call, to find handlers whose calls each work but leave the wrong final state: a later call or store action resetting what an earlier one set, an effect reverting the change, async responses landing out of order, stale closures, a read of state set earlier in the same handler, a label promising a save the handler never makes. Use when a control \"does nothing\" or does the wrong thing (\"bấm nút không ăn\", \"state bị reset\", \"click không chạy\"), after changing a shared store action (Zustand, Redux, context, query cache) to audit its callers, after a refactor touching shared state, or before shipping a critical flow. Reports first, fixes only when asked. Not for rendering defects (ui-check), backend/frontend API contract drift, or visual design."
 ---
 
 # State check
@@ -50,6 +50,8 @@ For each interactive element in scope (button, toggle, link with a handler, form
 ## 4. Confirm
 
 A trace is a hypothesis. For each P1 and P2, confirm it before reporting it as fact: a failing test with the project's component test setup (React Testing Library with `user-event`, Vue Test Utils) that clicks the control and asserts the promised state, or a reproduction in a dev server that is already running. When neither is possible, report the finding as `[unconfirmed]`. Without a fix request, a run leaves the repo as it found it: delete the confirming tests after recording their result (name and failure in the report); step 6 recreates them when the fix is asked for.
+
+Optional runtime confirmation for a control suspected to do nothing, when a page that renders it is already running: `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/screenshot.mjs <url> /tmp/state-check.png --click <css> --ax-diff` (repeat `--click` for a sequence; `--eval` or `--wait-for` to reach the state first; `--cookie` or `--header` for a page behind login). It clicks with the real pointer and prints how the accessibility tree changed; "no accessibility-tree change" confirms the control does nothing visible to assistive technology, and "the pointer lands on …" names an element covering it (a wiring defect, step 1). A change that only adds the wrong state still needs the trace. It runs outside the project: add no e2e tooling or test files for it.
 
 ## 5. Report
 

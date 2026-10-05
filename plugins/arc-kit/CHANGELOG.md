@@ -4,6 +4,26 @@ All notable changes to `arc-kit` are documented here. The format follows [Keep a
 
 ## [2.1.0] - 2026-10-04
 
+## [1.8.0] - 2026-10-05
+
+### Added
+
+- `destructive-guard` hook (`PreToolUse` on `Bash`, off by default, `destructive_guard_enabled`; when off it exits before starting Python): splits compound commands, including `$( )`, backticks, `bash -c`/`-lc`, and wrappers, and treats heredoc bodies as data; denies recursive `rm` or `find -delete` of `/`, `~`, `$HOME`, or `..`, `${IFS}`, and decoded payloads piped into a shell; asks before other recursive deletes, `rsync --delete`, git discards, destructive SQL sent to a SQL client, and docker, compose, kubectl, or terraform teardown; lets build artifacts by relative path and temp paths through. Tested by `destructive_guard_test.py`.
+- `scripts/plugin_options.py`: the one reader of `CLAUDE_PLUGIN_OPTION_<KEY>` for `comment-lint` and `destructive-guard`.
+
+### Changed
+
+- `verifier`: each finding quotes `file:line` and the line (the generating code for a framework-generated symbol); an unquoted finding is listed as unconfirmed, never applied. Security or race fixes that change behavior, design decisions, fixes over about 20 lines, removed functionality, user-visible changes, and cross-file helper extractions are asked before applying. Reviewers share a do-not-flag list. Phase 0 runs the plan's behavioral assertions and adds `changed` and `unverifiable`. Correctness covers new enum values and their consumers, conditional side effects, data migrations, flaky and denied-case tests, webhooks, constant-time comparison, CSPRNG tokens, untrusted deserialization, CI injection, and LLM output as input. Checks record the command's own exit code; 127 and uncaptured output are failures.
+- `test-runner`: reports the command's exit code, taken before any pipe.
+- `plan-auditor`: a FAIL quotes its code line or drops to FLAG; a failure-mode table (handled, tested, visible, logged) replaces the timeout check; medium depth checks revert history on touched paths; 8+ files or 2+ new modules must answer whether fewer moving parts would do.
+- `brainstorming`: checks the premise; lists siblings of a touched family member and overlapping designs in `docs/plans/`; one question holds one choice and names the default; a fresh-context subagent reviews the written doc, up to 2 rounds.
+- `executor`: a "Decided for you" list in the summary and agent reports; irreversible actions are always escalated, and sub-agents never take them.
+- `debug`: external error searches strip hosts, IPs, paths, SQL, tokens, and customer data; a fix over 5 files is asked first.
+- `handoff`: claims behind the next step carry `(run, exit 0)`, `(read)`, or `(assumed)`; resume re-checks the unrun ones.
+- Repo: `scripts/skill_lint_test.py` checks frontmatter, description and body budgets, referenced paths, qualified skill names, README and `plugin.json` listings, and that each `plugin.json` version matches its changelog.
+
+## [1.7.0] - 2026-10-04
+
 Brings the Codex package up to the Claude line's 1.7.0. Authorization stays as in 2.0.0: an implementation request is the go-ahead, and approval gates are not repeated.
 
 ### Added

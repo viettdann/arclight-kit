@@ -6,6 +6,43 @@ All notable changes to `arc-design` are documented here. The format follows [Kee
 
 Brings the Codex package up to the Claude line's 1.3.0.
 
+## [1.5.0] - 2026-10-05
+
+Ideas drawn from pbakaus/impeccable (Apache-2.0), rewritten.
+
+### Added
+
+- `ui-check`: contrast of text over images and gradients measured from two screenshots, text still hidden after scrolling, line length, typography floors (leading, tiny text, uppercase and tracked body, edge-flush text), nested cards, icon tiles, heading rhythm, and popovers clipped by `overflow`; `--stress` lengthens text and injects unbroken strings, emoji, CJK, and optionally RTL; `--perf` adds long tasks and blocking time.
+- `scan_tells.py`: hand-rolled plurals, sentences built by concatenation, fixed-width text buttons, pointer drags without `pointercancel`, and decorative blinking cursors.
+- `design`: a Read profile for docs, guides, and changelogs; the profile picked by the visitor's success; mono only for code and data; heading spacing and font loading in `typography.md`; type on dark in `dark-mode.md`; fixed rem scale for tools; a working hero action, a memory test, and habitual display faces for marketing; evidence on hand, anti-references, and named rules in the `DESIGN.md` template.
+- `ui-interaction`: interrupted gestures (`pointercancel`, lost capture, `touch-action`), errors by cause (401, 403, 429), microcopy rules, translatable text, offscreen and interruptible motion, two more empty states, and virtualized long lists.
+- `restyle`: critique looks at the render and walks the task as two users before reading scanner output; fixes sort inconsistencies by kind.
+
+### Changed
+
+- `scan_tells.py`: em dashes are reported once per file, only when dense.
+
+## [1.4.0] - 2026-10-05
+
+### Added
+
+- `screenshot.mjs`: `--click <css>` (in order, warns when another element covers the target) and `--ax-diff`, which prints the accessibility-tree change across the clicks; `state-check` uses it to confirm a control that does nothing.
+- `screenshot.mjs` and `ui_check.mjs`: `--cookie` and `--header` for pages behind login, sent only to the target's origin.
+- `ui-check`: clickable elements a keyboard can't reach; `--links` checks same-origin links on local and private hosts only; `--perf` reports TTFB, FCP, LCP, JS and CSS bytes, and request count, and `--save`/`--compare` flag regressions against a baseline (median of 3 loads, new console messages only); a first-impression check on the widest shot.
+- `scan_tells.py`: colored side borders, overshoot easing, `transition: all` and layout-property transitions, tracking below -0.04em, hairline border with a wide shadow, justified text, `outline: none` without a focus-visible style, unguarded `opacity: 0` reveals, stock headline phrases, "Learn more" as the only CTA, and mostly centered text. Tested by `scan_tells_test.py`.
+- `design`: the three default looks as a habitual-choice test, optional variant exploration as static HTML, and safe choices versus departures in the summary; `tokens.md` themes selection, caret, accent, scrollbar, and underline offset.
+- `restyle` and `redesign`: a first-impression check against the chosen primary. `ui-interaction`: a state table per feature and the trunk test for navigation.
+
+### Fixed
+
+- `cdp.mjs`: a bare `host:port` target (`172.17.0.1:3000`, `docker:3000`) loads over http instead of failing as a file or a URL scheme; Chrome gets `--no-sandbox` when running as root.
+
+### Changed
+
+- `restyle` and `ui-check` descriptions fit the 1024-character limit.
+
+## [1.3.0] - 2026-10-03
+
 ### Added
 
 - `state-check`: maps every state writer in scope (store actions and the fields they reset, effects, query cache, URL), traces each control's handler call by call against what its label promises, and reports sequential undo, effect undo, read after set, stale closure, stale copy, effect chain, async race, missing transition, dead path, teardown, and double fire. P1 and P2 findings are confirmed with a failing test or a reproduction; fixes go to the writer, not the handler, and only when asked (in the request, or after the report). A dead control is first checked for a handler that never runs; report-only runs delete their confirming tests. Whole-app audits delegate per page only when the runtime and the user allow it.

@@ -23,7 +23,7 @@ export const fail = async (msg) => { console.error(msg); await cleanup(); proces
 process.on('uncaughtException', (e) => fail(e?.message ?? String(e)));
 process.on('unhandledRejection', (e) => fail(e?.message ?? String(e)));
 
-// Parses `--key value`, `--key=value`, and boolean flags into `defaults`; returns the positional arguments.
+// Parses `--key value`, `--key=value`, and boolean flags into `defaults`; returns the positional arguments. An array default collects repeats.
 export const parseArgs = async (argv, defaults, flags, usage) => {
   const pos = [];
   for (let i = 0; i < argv.length; i++) {
@@ -33,15 +33,18 @@ export const parseArgs = async (argv, defaults, flags, usage) => {
     if (flags.includes(k)) { defaults[k] = true; continue; }
     if (!Object.hasOwn(defaults, k)) await fail(`unknown option ${a}\n${usage}`);
     if (v === undefined) { v = argv[++i]; if (v === undefined) await fail(`missing value for ${a}`); }
-    defaults[k] = v;
+    if (Array.isArray(defaults[k])) defaults[k].push(v); else defaults[k] = v;
   }
   return pos;
 };
 
-// A URL stays as is; a local file is served over http from `root` (default: its directory), so root-relative assets load.
+const HOST_PORT = /^(\[[0-9a-f:.]+\]|[a-z0-9]([\w-]*[a-z0-9])?(\.[a-z0-9]([\w-]*[a-z0-9])?)*):\d{1,5}([/?#]|$)/i;
+
+// A URL stays as is, `host:port[/path]` becomes http; a local file is served from `root` (default: its directory), so root-relative assets load.
 export const resolveTarget = async (target, root) => {
-  if (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target)) return `http://${target}`;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) return target;
+  if (/^(localhost|127\.0\.0\.1|\[::1\])([/?#]|$)/i.test(target)) return `http://${target}`;
+  if (HOST_PORT.test(target) && !existsSync(resolve(target))) return `http://${target}`;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(target) || /^(data|about|blob|javascript):/i.test(target)) return target;
   const file = resolve(target);
   if (!existsSync(file)) await fail(`no such file: ${target}`);
   const base = resolve(root || (statSync(file).isDirectory() ? file : dirname(file)));
@@ -101,8 +104,10 @@ export const launch = async (timeoutMs) => {
   setTimeout(() => fail('timed out'), timeoutMs).unref();
   profile = mkdtempSync(join(tmpdir(), 'shot-'));
   // Port 0 lets Chrome pick a free port and write it to DevToolsActivePort, so parallel runs never share a browser.
-  chrome = spawn(chromePath, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
-    '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+  const args = ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--remote-debugging-port=0', `--user-data-dir=${profile}`];
+  // Chrome refuses to start as root (the usual container user) unless its sandbox is off.
+  if (process.getuid?.() === 0) args.push('--no-sandbox');
+  chrome = spawn(chromePath, [...args, 'about:blank'], { stdio: 'ignore' });
   chrome.on('error', (e) => fail(`cannot start ${chromePath}: ${e.message}`));
 
   let page;
@@ -147,6 +152,36 @@ export const launch = async (timeoutMs) => {
   };
   const close = async () => { ws.close(); await cleanup(); };
   return { send, once, on, evaluate, close };
+};
+
+// `--cookie name=value` (repeatable or comma list), `--header "Name: value"` (repeatable), both for the target's origin only. Call before `load`.
+export const applyAuth = async ({ send, on }, url, cookies = [], headers = []) => {
+  const list = cookies.flatMap((c) => c.split(/,(?=\s*[^\s=,;]+=)/)).map((c) => c.trim()).filter(Boolean);
+  for (const c of list) {
+    const i = c.indexOf('=');
+    if (i < 1) await fail(`--cookie takes name=value, got ${c}`);
+    const { success } = await send('Network.setCookie', { name: c.slice(0, i).trim(), value: c.slice(i + 1).trim(), url, path: '/' });
+    if (success === false) await fail(`Chrome rejected --cookie ${c} for ${url}`);
+  }
+  const extra = [];
+  for (const h of headers) {
+    const m = /^\s*([!#$%&'*+.^_`|~0-9A-Za-z-]+)\s*:\s*([^\r\n]*)$/.exec(h);
+    if (!m) await fail(`--header takes "Name: value" on one line, got ${JSON.stringify(h)}`);
+    if (/^(host|content-length|connection|transfer-encoding|upgrade|keep-alive|te|trailer)$/i.test(m[1])) await fail(`--header cannot set ${m[1]}`);
+    extra.push({ name: m[1], value: m[2].trim() });
+  }
+  if (!extra.length) return;
+  const { origin } = new URL(url);
+  // Network.setExtraHTTPHeaders would also send them to third-party hosts, so only requests to the target's origin are rewritten.
+  const names = new Set(extra.map((h) => h.name.toLowerCase()));
+  // Every paused request must be continued, or the page hangs until the global timeout.
+  on('Fetch.requestPaused', ({ requestId, request }) => {
+    const kept = Object.entries(request.headers).filter(([n]) => !names.has(n.toLowerCase())).map(([name, value]) => ({ name, value }));
+    send('Fetch.continueRequest', { requestId, headers: [...kept, ...extra] })
+      .catch((e) => { console.error(`--header rejected by Chrome (${e.message}); request sent without it: ${request.url}`); return send('Fetch.continueRequest', { requestId }); })
+      .catch(() => {});
+  });
+  await send('Fetch.enable', { patterns: [{ urlPattern: `${origin}/*` }] });
 };
 
 // Loads `url` and waits for the load event (15s cap), fonts (3s cap), and an HTTP status below 400.

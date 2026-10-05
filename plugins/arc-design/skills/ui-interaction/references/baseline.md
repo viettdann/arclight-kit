@@ -49,6 +49,7 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 - Full-bleed layouts and fixed bars: `viewport-fit=cover` in the viewport meta, with padding from `env(safe-area-inset-*)` so content clears the notch and the home indicator.
 - `translate="no"` on brand names, code, identifiers, and usernames, so browser translation doesn't rewrite them.
 - Dates, times, numbers, and currency go through `Intl.DateTimeFormat` and `Intl.NumberFormat` with the user's locale, never hand-built strings. Take the language from the user's setting or `navigator.languages`, never from IP.
+- Text is translatable whole: plurals through `Intl.PluralRules` or the i18n library, never `item${n !== 1 ? 's' : ''}`; one message with placeholders, never a sentence glued from pieces (word order changes per language). Buttons and labels size to their text (`min-width` plus padding, never a fixed width): translations run about 40% longer.
 - Never `transition: all`: list the properties, or a theme switch and every layout change animate too.
 - Never block paste (`onPaste` with `preventDefault`), in password and confirmation fields included.
 
@@ -62,6 +63,7 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - Press/tap feedback appears within 100ms, regardless of the network.
 - Exits are faster than entrances, roughly 60–70% of the entrance duration.
 - Animate `transform` and `opacity`, not `top`/`left`/`width`/`height`.
+- Loops (spinners aside) pause when offscreen or when the tab is hidden. An animation interrupted midway (a second click, a reversed hover) continues from where it is, never jumps to the start; use View Transitions or FLIP when an element must visibly move between two layouts.
 - No `scroll` event listeners and no scroll position, pointer position, or animation frames stored in React (or other framework) state: each frame re-renders the tree. Use `IntersectionObserver`, CSS scroll-driven animations, or the animation library's motion values (`useScroll`, `useMotionValue`, GSAP `ScrollTrigger`), and clean them up on unmount.
 
 ## Platform CSS worth using

@@ -54,8 +54,14 @@ Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate).
 ## Themes
 
 - Light only (the default): `:root { color-scheme: light; }`. With a dark theme: `:root { color-scheme: light dark; }`, semantic tokens per `[data-theme="dark"]` and/or `@media (prefers-color-scheme: dark)`; `light-dark()` where supported.
+- Theme the browser's own surfaces from the semantic tokens too, next to `color-scheme`: `::selection` (accent at low alpha behind `text`, or `accent` behind `on-accent`), `caret-color` and `accent-color` (native checkbox, radio, range, progress) from `accent`, `scrollbar-color` from `border-strong` on `bg`, and `text-underline-offset` on links as a token so underlines clear descenders the same way everywhere.
 - Verify contrast in each theme separately.
 - The dark set follows `dark-mode.md`: surfaces stepped in lightness, inks and borders as alphas of one white.
+
+## Checks
+
+- [ ] `color-scheme` matches the themes the page ships.
+- [ ] `::selection`, `caret-color`, `accent-color`, `scrollbar-color`, and link `text-underline-offset` come from tokens, in each theme.
 
 ## Minimal example
 

@@ -38,6 +38,15 @@ Line-height drops as size rises; tracking moves only at the extremes.
 | 32px and up | 1.1 (a style may go to 0.9 for uppercase or caseless display with no descenders) | -0.02em |
 | Uppercase label under 16px | as its size | +0.04 to +0.06em |
 
+## Space around headings
+
+A heading belongs to the text below it: the space above a heading is larger than the space below it, so the heading groups with its section instead of floating between two.
+
+## Loading fonts
+
+- Load only the families and weights the scale uses, `font-display: swap`, and preload the one file the first viewport needs.
+- Match the fallback's metrics (`size-adjust`, `ascent-override`, or the framework's font loader such as `next/font`) so the swap doesn't reflow the page; ui-check reports that reflow as layout shift.
+
 ## Measure
 
 - Prose runs 45–75 characters per line (`max-width: 65ch`, `max-w-prose`).
@@ -71,5 +80,7 @@ Real content is longer than the sample: a 40-character name, an email on a long 
 - [ ] Rank inside a row comes from ink, and all three inks pass 4.5:1.
 - [ ] Line-height drops as size rises; tracking only from ~25px up and on uppercase labels.
 - [ ] Prose is capped at 45–75ch.
+- [ ] Space above each heading is larger than below it.
+- [ ] Only used weights load, and the fallback is metric-matched.
 - [ ] Every text slot holds a long value and an unbroken string: it truncates in CSS (middle when both ends matter, the full value reachable) or wraps, and nothing pushes past its container.
 - [ ] Stacked and live numbers are tabular with one precision per column; compact only where it summarizes, with the exact value reachable; relative time only under a day.

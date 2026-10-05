@@ -14,6 +14,8 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - The floor for readable text is about 50%; below that it fails 4.5:1 on the lighter layers. `text-disabled` (about 38%) misses 4.5:1 by design but stays above 3:1, and is for disabled controls only (`typography.md`).
 - Check each ink on the darkest and the lightest surface it sits on with the design skill's `scripts/contrast.mjs` (8-digit hex for alpha: `#ffffffde|<surface>|text`).
 
+- Light text on dark reads thinner and tighter than the same text on light: raise body line-height by about 0.05–0.1, add about 0.01em tracking, and go one weight step up if the face looks spindly.
+
 ## Calm the accent
 
 - A saturated accent glows past its edges on dark. Keep the hue, raise the lightness, lower the chroma in OKLCH until it sits calmly on the surfaces.
@@ -42,7 +44,7 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - [ ] `color-scheme` set per theme; `theme-color` matches the page; native selects readable in dark.
 - [ ] No `#000` surface and no opaque `#FFF` text; surfaces step up in lightness by what they sit on.
 - [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.
-- [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on.
+- [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on; body text on dark has slightly more line-height and tracking.
 - [ ] Accent calmed in chroma, with `on-accent` re-checked.
 - [ ] Hairlines are alpha; input boundaries pass 3:1.
 - [ ] Photos dimmed; illustrations and logos have dark variants.

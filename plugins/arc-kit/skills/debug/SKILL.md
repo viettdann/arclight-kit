@@ -34,6 +34,7 @@ Follow applicable AGENTS.md instructions. Use Vietnamese in chat and English in 
 - List three to five hypotheses, ranked, each with its evidence and the prediction it makes: `If X is the cause, changing Y makes the failure disappear.` A hypothesis without a prediction gets sharpened or dropped. Show the ranked list to the user before testing (they may already have ruled one out) and continue without waiting for a reply.
 - For the top one, run the cheapest experiment that tests its prediction: a breakpoint, a log line, an assertion, a grep, one changed input. Change one thing per experiment and record the result as confirmed or ruled out, with why.
 - Slow, not wrong: measure a baseline first (a timing harness, the profiler, the query plan), then bisect or cut against that number; logs rarely find a performance regression.
+- Searching an error externally: strip hosts, IPs, internal paths, SQL, tokens, and customer data first; search only the error class or message template and the library name.
 - Log the value that actually reaches the failing line; don't infer it from reading code.
 - Temporary log lines start with `DEBUG-<slug>` so one grep removes them all.
 - Asked only why: report the diagnosis (section 5 without Fix and Test) and stop.
@@ -44,7 +45,7 @@ Follow applicable AGENTS.md instructions. Use Vietnamese in chat and English in 
 - Grep every caller of the function you change and put the fix in the shared path. Search for the same pattern in sibling code; fix the instances in scope and list the rest.
 - The repro becomes the regression test. If it was a script and the project has a test harness, turn it into a test. Run it before applying the fix and see it fail for the bug's reason; a test that never failed proves nothing. Put it where it exercises the bug the way the call site does; when the only reachable level can't (the bug needs two callers or the full chain, and a unit test can't build that), don't write a shallow test that passes either way: report the missing seam as a finding.
 - Three fixes that each failed or moved the symptom somewhere else: stop. Report the pattern (each fix exposed new coupling or shared state) as a likely design problem and ask before a fourth attempt.
-- Stop and ask before a schema change, a data fix in a shared or production environment, a config change on a shared environment, or a rollback.
+- Stop and ask before a fix that touches more than 5 files, a schema change, a data fix in a shared or production environment, a config change on a shared environment, or a rollback.
 
 ## 5. Verify and report
 

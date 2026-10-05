@@ -50,6 +50,7 @@
 - Page or cursor, filters, sort, and search live in the URL so refresh and shared links reproduce the view.
 - Returning from a detail view restores the list's scroll position and state (see "Scroll position in client-side routing" in `navigation.md`).
 - Numbered pagination shows first, last, current, and its neighbors, with ellipses for gaps. Infinite scroll is for feeds only; anything with a footer or a need to find an item again uses "Load more" or numbers.
+- A list that renders more than about 1,000 rows at once is virtualized (TanStack Virtual, or the grid's built-in), keeping row height fixed so the scrollbar doesn't jump.
 
 ## Search
 
@@ -76,7 +77,7 @@
 
 ## Empty states for collections
 
-Four different cases, each with its own copy and one next action:
+Distinct cases, each with its own copy and one next action:
 
 | Case | Content |
 | --- | --- |
@@ -84,6 +85,8 @@ Four different cases, each with its own copy and one next action:
 | No results | The query echoed, a clear action, suggestions |
 | Filtered out | Which filters hide the items, "Clear filters" |
 | Error | What failed, retry (see `feedback.md`) |
+| No permission | That items may exist but this user can't see them, and who grants access |
+| Cleared by the user | Confirmation that it's done ("Inbox zero"), no create prompt pushed |
 
 ## Checks
 

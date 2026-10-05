@@ -6,6 +6,14 @@ All notable changes to `mgi-kit` are documented here. The format follows [Keep a
 
 Brings the Codex package up to the Claude line's 0.2.0.
 
+## [0.3.0] - 2026-10-05
+
+### Added
+
+- `api-contract`: HTTP method changes, routes moved from anonymous to authenticated, error-shape drift (ProblemDetails versus a custom DTO), offset-to-cursor pagination, and a committed OpenAPI or NSwag file left stale.
+
+## [0.2.0] - 2026-10-03
+
 ### Added
 
 - `dotnet-upgrade`: inventories projects, where each TFM is set, central package files, Docker images, CI, and tools; fetches Microsoft's breaking-change pages for each version crossed; records a build and test baseline; upgrades consumers before dependencies so the solution builds at every step; bumps runtime-tied packages with the TFM; checks EF Core model drift after an EF major bump; stops at .NET Framework projects.

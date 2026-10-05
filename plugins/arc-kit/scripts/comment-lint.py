@@ -6,6 +6,8 @@ import os
 import re
 import sys
 
+from plugin_options import option
+
 DEFAULT_WIDTH = 150
 WRAP_MIN = 60
 MAX_BYTES = 2_000_000
@@ -17,7 +19,7 @@ def option(key, default):
 
 
 def lint_enabled():
-    return option("COMMENT_LINT_ENABLED", "true").lower() not in ("false", "0", "no", "off")
+    return option("comment_lint_enabled", "true").lower() not in ("false", "0", "no", "off")
 
 
 def lint_width():
