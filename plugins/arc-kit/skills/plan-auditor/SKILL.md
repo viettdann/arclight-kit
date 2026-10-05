@@ -1,19 +1,7 @@
 ---
 name: plan-auditor
 argument-hint: "[plan-file-or-description]"
-description: >
-  Audit, stress-test, and validate AI-generated plans before execution.
-  Use this skill whenever a plan, implementation strategy, or multi-step proposal
-  has been generated and needs verification before work begins. Trigger on phrases
-  like "review this plan", "audit the plan", "does this plan make sense",
-  "check for gaps", "verify the approach", "validate the strategy", or any time
-  the user expresses doubt about a generated plan's completeness or correctness.
-  Also trigger when the user says "before we start", "before executing",
-  "hold on let me check", or pastes a plan and asks for feedback. Vietnamese:
-  "review plan", "audit plan", "kiểm tra plan", "plan này ổn không", "soát lại kế hoạch".
-  This skill is specifically designed to catch the failure modes of AI-generated
-  plans: hallucinated APIs, missing edge cases, understated complexity,
-  over-engineered solutions, and assumptions that don't match the actual codebase.
+description: "Audit and stress-test AI-generated plans before execution, catching their typical failure modes: hallucinated APIs, missing edge cases, understated complexity, over-engineering, and assumptions that don't match the codebase. Use whenever a plan, implementation strategy, or multi-step proposal needs verification before work begins or the user doubts its completeness (\"review this plan\", \"audit the plan\", \"does this plan make sense\", \"check for gaps\", \"verify the approach\", \"before we start\", \"hold on let me check\", \"review plan\", \"kiểm tra plan\", \"plan này ổn không\", \"soát lại kế hoạch\"), or pastes a plan and asks for feedback."
 ---
 
 # Plan Auditor
