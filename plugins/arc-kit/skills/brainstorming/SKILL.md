@@ -19,16 +19,19 @@ Start from a high-level description of what the user wants to build and the curr
 - **Targeted codebase discovery:** informed by the user's stated intent:
   - If the project is empty or the user explicitly states it's a greenfield/new project, skip codebase discovery entirely and note this assumption
   - Otherwise, search and read the local codebase
+  - When the change touches one member of a family (one endpoint, one worker, one handler), list its siblings and which of them share the gap
+  - Grep `docs/plans/` for designs that overlap the topic; when one does, name it and ask whether to build on it or start fresh
   - Summarize findings before proceeding: enough for the user to check your reading of the codebase, and no more
 - **Self-verify before asking.** Before formulating any question for the user, apply this gate:
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
 - **Surface what nobody asked.** The frontier holds only decisions someone knew to make. When the feature enters a domain the codebase hasn't handled yet (money, time zones, i18n, file uploads, permissions, offline sync), list the domain's decisions that usually bite later, each glossed in a few words, and put the ones that apply on the frontier
+- **Check the premise.** Before choosing an approach, ask yourself: is this the right problem, what does doing nothing cost, and does the request fix the pain or a proxy for it. Raise a doubtful premise in the first round; when the premise is sound, don't invent doubt
 - **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier with the AskUserQuestion tool, for preference/judgment questions only:
   - A decision that depends on another question still open goes in a later round, not this one; each round's answers unblock the next frontier
-  - Group related choices into one question (e.g., all storage choices together); independent decisions go in separate questions of the same call (up to 4 per call; a larger frontier asks first the decisions most others depend on)
-  - Each question states your recommended option and why
+  - One question holds one choice: alternative mechanisms for the same thing go together (e.g., storage options); a choice the user could accept while rejecting another is independent and goes in its own question of the same call (up to 4 per call; a larger frontier asks first the decisions most others depend on)
+  - Each question states your recommended option and why, and the default an engineer would ship if nobody decides
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
   - A fact still being looked up (codebase search, research) blocks only the decisions that depend on it; ask the rest of the frontier meanwhile
 - Focus on: purpose, constraints, success criteria
@@ -106,6 +109,7 @@ The saved design doc describes the target state only. When a draft element is dr
   ```
 
   Omit `Assumptions` or `Out of scope` when empty; the other four are always present.
+- **Fresh-context review.** After writing the doc and before replying with its path, spawn one subagent with the Agent tool and no conversation context: give it only the doc path and the repo root, and ask whether the doc contradicts itself, whether someone could implement it without asking, whether anything in scope is missing, and whether a simpler approach fits. Fix factual issues in the doc yourself; bring judgment calls to the user in the reply. Run at most 2 rounds; stop early when a round returns the same issues
 - In the reply with the doc path, suggest an optional audit: "Run `/arc-kit:plan-auditor docs/plans/<filename>` to stress-test before execution."
 
 ## Key Principles

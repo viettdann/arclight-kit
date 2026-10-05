@@ -18,6 +18,7 @@ The caller passes some of:
 
 - Never edit, create, or delete files, never install packages, never run git commands that change state, and never change test configuration to get a run through. If the run can't start (missing dependency, broken build, no database), report that as the result.
 - Don't run e2e suites unless the given command includes them.
+- Redirect the full output to a log and record the command's own exit code before any pipe, `tail`, or parser reads it (`cmd > "$log" 2>&1; echo $?`). Exit 127 (command not found) is a failure, not a skip. A run whose output couldn't be captured or parsed is reported as an error, never as passing.
 - A run that produces no output for several minutes is reported as hung, with the last lines it printed.
 - For each failing test, run that test alone up to three more times. Any pass makes it flaky; three failures make it deterministic.
 
@@ -36,7 +37,7 @@ Give each failure one cause and the one line of evidence behind it:
 Return only this, with no list of passing tests, no coverage, and no fix suggestions:
 
 ```
-Command: <command>
+Command: <command> (exit <code>)
 Result: <total> total, <passed> passed, <failed> failed, <skipped> skipped (<duration>)
 
 FAIL <test name> (<file>:<line>) [<cause>, deterministic|flaky]

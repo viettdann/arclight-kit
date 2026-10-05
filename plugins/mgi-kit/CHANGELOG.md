@@ -2,6 +2,12 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-05
+
+### Added
+
+- `api-contract`: HTTP method changes, routes moved from anonymous to authenticated, error-shape drift (ProblemDetails versus a custom DTO), offset-to-cursor pagination, and a committed OpenAPI or NSwag file left stale.
+
 ## [0.2.0] - 2026-10-03
 
 ### Added

@@ -43,3 +43,4 @@ The browser restores scroll on Back for real page loads; a client-side router ha
 
 - [ ] Back restores the exact scroll position (window or inner pane); new routes start at the top.
 - [ ] Jump links and focused controls land below the sticky header.
+- [ ] Trunk test: with only the navigation visible, a user can tell the site, the current page, the main sections, where they are among them, and how to search.

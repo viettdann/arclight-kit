@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner` agent, and the comment-lint and arc-compact hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner` agent, and the comment-lint, arc-compact, and destructive-guard hooks.
 - `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades).
 
 ## Which skill
@@ -54,7 +54,7 @@ claude plugin install mgi-kit@arclight-kit
 
 Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint hook and `fresh-air`.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint and destructive-guard hooks and `fresh-air`.
 
 ## Agents
 
@@ -68,10 +68,17 @@ Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, 
 | --- | --- | --- |
 | `comment_lint_enabled` | `true` | Turn the hook off without disabling the plugin. |
 | `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
+| `destructive_guard_enabled` | `false` | Turn on the destructive-command guard. |
 
 Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-kit/scripts/comment_lint_test.py`.
 
+`arc-kit` also registers `destructive-guard` (`PreToolUse` on `Bash`), off by default. It splits compound commands, including `$( )`, backticks, `bash -c` (and `-lc`), and wrappers such as `sudo`, `timeout`, and `xargs`, and treats heredoc bodies as data. It blocks recursive `rm` or `find -delete` of `/`, `~`, `$HOME`, or `..`, `${IFS}` tricks, and base64 piped into a shell. It asks first for other recursive `rm` and `find -delete`, `rsync --delete`, git discards (`reset --hard`, `checkout .`, `restore`, `clean -f`, `stash drop`, `branch -D`), SQL `DROP`/`TRUNCATE`/`DELETE` without `WHERE` sent to a SQL client, `docker system|image|container|network|builder prune`, `docker volume rm|prune`, `docker rm -f`, `docker compose down -v`, `kubectl delete`, `terraform destroy`, `chmod -R 777`, `dd of=/dev/`, and `mkfs`. `git push` is never checked. Deleting build artifacts by relative path and temp paths goes through without a prompt. Turn it on with `destructive_guard_enabled`; when off, the hook exits before starting Python. Tests: `python3 plugins/arc-kit/scripts/destructive_guard_test.py`.
+
 `arc-kit` also registers `arc-compact` (`SessionStart` on `compact`): when `/arc-kit:arc` was typed earlier in the session, it re-injects the `arc` rules after compaction; otherwise it prints nothing. It needs `sh`, `sed`, and `grep`.
+
+## Checks
+
+`python3 scripts/skill_lint_test.py` checks every skill and agent: frontmatter, description and body budgets, referenced paths, qualified skill names, README and `plugin.json` listings, and that each `plugin.json` version matches its changelog. `python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py` and `python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py` cover their scripts.
 
 ## Changes
 

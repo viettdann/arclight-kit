@@ -15,7 +15,7 @@ MID = "  // " + "x" * 100
 
 def run(tool, tool_input, options=None, **payload):
     env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE_PLUGIN_OPTION_")}
-    env.update({f"CLAUDE_PLUGIN_OPTION_{k}": v for k, v in (options or {}).items()})
+    env.update(options or {})
     data = json.dumps({"tool_name": tool, "tool_input": tool_input, **payload})
     return subprocess.run([sys.executable, SCRIPT], input=data, capture_output=True, text=True, env=env)
 
@@ -64,7 +64,7 @@ class CommentLintTest(unittest.TestCase):
         with open(path, "w", encoding="utf-8") as f:
             f.write(f"{MID}\n")
         self.assertEqual(run("Write", {"file_path": path}).returncode, 0)
-        r = run("Write", {"file_path": path}, {"COMMENT_LINT_WIDTH": "100"})
+        r = run("Write", {"file_path": path}, {"CLAUDE_PLUGIN_OPTION_COMMENT_LINT_WIDTH": "100"})
         self.assertEqual(r.returncode, 2)
         self.assertIn("comment 105 cols > 100", r.stderr)
 
@@ -72,7 +72,13 @@ class CommentLintTest(unittest.TestCase):
         path = os.path.join(self.root, "a.ts")
         with open(path, "w", encoding="utf-8") as f:
             f.write(f"{LONG}\n")
-        self.assertEqual(run("Write", {"file_path": path}, {"COMMENT_LINT_ENABLED": "false"}).returncode, 0)
+        self.assertEqual(run("Write", {"file_path": path}, {"CLAUDE_PLUGIN_OPTION_COMMENT_LINT_ENABLED": "false"}).returncode, 0)
+
+    def test_lowercase_option_name_is_ignored(self):
+        path = os.path.join(self.root, "a.ts")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"{LONG}\n")
+        self.assertEqual(run("Write", {"file_path": path}, {"CLAUDE_PLUGIN_OPTION_comment_lint_enabled": "false"}).returncode, 2)
 
     def test_same_tool_use_id_reports_once(self):
         path = os.path.join(self.root, "a.ts")

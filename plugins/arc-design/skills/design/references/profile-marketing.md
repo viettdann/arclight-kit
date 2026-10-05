@@ -11,6 +11,7 @@ Contents: Design read · Page structure · Layout rules · Pricing · Imagery ·
 Before markup, decide one line, and open the summary with it: **page kind · audience · visual language · the one move that makes it this brand's page.** Example: "Launch page for procurement leads · calm, document-like · the product's approval trail runs down the page as the spine."
 
 - The audience picks the language, not habit. Public-sector, regulated, or accessibility-first audiences override aesthetic ambition.
+- The three default looks (design skill, Rules: cream, serif, and terracotta; near-black, one neon accent, and glow; newspaper hairlines, italic serif, and tracked mono labels) are habit too: use one only when the brief asks for it. If the product category alone predicts the look, choose again.
 - The move is the page's **second-read moment**: a single unobvious but legible motif used once (an oversized number for a result the reader should remember, one material or color switch, a macro crop of the product). It must help scanning or brand recall. Restraint alone produces a clean page nobody remembers. It is also the one special element that may take a gradient, texture, glow, or style material, and the one highlighted element per view; a chosen style adds at most one more of its signature moves.
 - If the brief names a real design system (GOV.UK, USWDS, Carbon, Polaris, Primer, Material), use the official package instead of imitating it.
 
@@ -77,6 +78,8 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 | Section header split into big headline left, small paragraph floating right | Headline with the paragraph directly beneath it |
 | Version tags in the hero (`v0.6`, `BETA`, `Invite-only`) when it isn't a launch | Nothing |
 | "Scroll to explore", bouncing chevrons | Nothing; the fold is not a problem to label |
+| Stock headline openers ("Built for…", "Meet your new…", "The future of…") | The concrete outcome, in the reader's words |
+| "Learn more" as a CTA label | What the click gets ("See pricing", "Read the API docs") |
 | City, local time, or weather strips; `Brand · No. 01` micro-meta; build numbers in the footer | Nothing, or a real contact address once |
 | Pills or credit captions laid over photos (`Plate 03 · Archive`) | The image alone, or a one-line caption below it |
 | Decorative colored dots before nav items, labels, list rows | Nothing; dots only for real live state |

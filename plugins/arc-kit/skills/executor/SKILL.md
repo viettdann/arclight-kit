@@ -33,6 +33,7 @@ Other sessions and your own sub-agents write to the same checkout. These rules b
 - Uncommitted changes in files you never edited belong to someone else. Leave them, don't remark on them, don't work around them.
 - Never run `git stash`, `git reset`, `git revert`, `git checkout --`, `git restore`, or `git clean`, and never overwrite a file you didn't edit this session, unless the user asked for that exact operation.
 - Sub-agents never stage or commit; commits happen only in Phase 5.
+- Sub-agents never take an irreversible action (data deletion, external publish, schema drop, force operations); report it for the orchestrator to escalate.
 - If a foreign change blocks the task, say what it blocks and stop.
 
 ## Progress Checklist
@@ -192,6 +193,9 @@ Each sub-agent must return a structured report upon completion:
 - Tests (covering own files): PASS/FAIL/N/A
 - TDD failing runs (TDD on): test name → failure seen
 
+### Decided for you
+- (none / decision taken → alternative not taken)
+
 ### Issues encountered
 - (none / description + resolution)
 ```
@@ -238,6 +242,9 @@ Final gate after all tasks executed:
 ### Issues Found & Fixed
 - Issue description → fix applied
 
+### Decided for you
+- Decision taken → alternative not taken
+
 ### Remaining / Deferred
 - Task N: reason deferred
 ```
@@ -274,6 +281,8 @@ Decision types:
 - **Plan step seems unnecessary**: Flag to user, don't skip silently
 - **New dependency needed**: Check if an existing dep already covers the need. If so, use it. If truly new, check with user before adding.
 - **Scope creep detected**: Flag, let user decide to include or defer
+- **Judgment call resolved without asking**: list it under "Decided for you" in the Execution Summary, with the alternative not taken, so the user can reverse it. Sub-agent reports carry theirs up.
+- **Irreversible action** (data deletion, external publish, schema drop, force operations): always ask with AskUserQuestion, even when the plan or codebase seems to settle it; never self-decide.
 
 ## Anti-Patterns
 

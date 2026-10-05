@@ -7,6 +7,8 @@ import sys
 import tempfile
 import time
 
+from plugin_options import option
+
 DEFAULT_WIDTH = 150
 WRAP_MIN = 60
 MAX_BYTES = 2_000_000
@@ -14,17 +16,13 @@ LOCK_TTL = 3600
 LOCK_DIR = os.path.join(tempfile.gettempdir(), f"comment-lint-{os.getuid() if hasattr(os, 'getuid') else 'user'}")
 
 
-def option(key, default):
-    return os.environ.get(f"CLAUDE_PLUGIN_OPTION_{key}", "").strip() or default
-
-
 def lint_enabled():
-    return option("COMMENT_LINT_ENABLED", "true").lower() not in ("false", "0", "no", "off")
+    return option("comment_lint_enabled", "true").lower() not in ("false", "0", "no", "off")
 
 
 def lint_width():
     try:
-        return max(int(float(option("COMMENT_LINT_WIDTH", str(DEFAULT_WIDTH)))), WRAP_MIN)
+        return max(int(float(option("comment_lint_width", str(DEFAULT_WIDTH)))), WRAP_MIN)
     except ValueError:
         return DEFAULT_WIDTH
 

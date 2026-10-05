@@ -21,9 +21,69 @@ MAX_LINE = 2000  # longer lines are minified or generated; skip them
 EMOJI = re.compile("[\U0001F1E6-\U0001F1FF\U0001F300-\U0001FAFF☀-➿⭐⭕⌚⌛⏩-⏳⏸-⏺]")
 COLORS = r"(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)"
 DISABLED = r"(?<![\w-])(?:v-bind)?:?disabled=[{\"]"
+QUOTED = re.compile(r"[\"'`]([^\"'`]*)[\"'`]")
+
+
+class Check:
+    """A rule matcher built from a function, for conditions one regex can't express."""
+    def __init__(self, fn):
+        self.search = fn
+
+
+def same_string(*patterns):
+    """True when every pattern hits inside one quoted string, i.e. on one element's class list."""
+    rxs = [re.compile(p) for p in patterns]
+    return lambda line: any(all(rx.search(s) for rx in rxs) for s in QUOTED.findall(line))
+
+
+SIDE_TW = same_string(r"(?<![\w-])border-[lrse]-(?:[2-8]|\[[2-8]px\])(?![\w-])",
+                      # A color under 40% alpha is a structural line, not an accent.
+                      r"(?<![\w-])border-(?:[lrse]-)?(?:" + COLORS + r"-\d{2,3}|primary|accent|brand)(?![\w-]|/[1-3]?\d(?!\d))")
+SIDE_CSS = re.compile(r"border-(?:left|right|inline-start|inline-end):\s*['\"]?[2-8]px\s+solid\s+([^;'\"}]+)", re.I)
+NEUTRAL_COLOR = re.compile(r"transparent|currentcolor|inherit|gr[ae]y|silver|black|white|neutral|zinc|slate|stone|border|divider|muted|subtle|line", re.I)
+HEX = re.compile(r"#([0-9a-f]{3,8})\b", re.I)
+RGB = re.compile(r"rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)")
+
+
+def colored_side_border(line):
+    if SIDE_TW(line):
+        return True
+    m = SIDE_CSS.search(line)
+    if not m or NEUTRAL_COLOR.search(m[1]):
+        return False
+    h, rgb = HEX.search(m[1]), RGB.search(m[1])
+    if h:
+        s = h[1] if len(h[1]) > 4 else "".join(c * 2 for c in h[1])
+        rgb = [int(s[k:k + 2], 16) for k in (0, 2, 4)]
+    elif rgb:
+        rgb = [int(v) for v in rgb.groups()]
+    # Channels this close together are a grey hairline, not an accent.
+    return not rgb or max(rgb) - min(rgb) >= 30
+
+
+BEZIER = re.compile(r"cubic-bezier\(([^)]*)\)")
+
+
+def overshoot_easing(line):
+    for m in BEZIER.finditer(line):
+        parts = m[1].replace("_", " ").split(",")
+        try:
+            y1, y2 = float(parts[1]), float(parts[3])
+        except (IndexError, ValueError):
+            continue
+        if not (0 <= y1 <= 1 and 0 <= y2 <= 1):
+            return True
+    return False
+
+
+WIDE_SHADOW_TW = r"(?<![\w-])shadow-(?:xl|2xl)(?![\w-])|(?<![\w-])shadow-\[(?:-?[\d.]+(?:px)?_){2}(?:2[4-9]|[3-9]\d|\d{3})px"
+HAIRLINE_SHADOW_TW = same_string(r"(?<![\w:-])border(?![\w-])", WIDE_SHADOW_TW)
+WIDE_SHADOW_CSS = re.compile(r"box-?[sS]hadow:\s*['\"]?(?:inset\s+)?(?:-?[\d.]+(?:px|rem)?\s+){2}(?:2[4-9]|[3-9]\d|\d{3})px")
+NEG_EM = r"-(?:0?\.(?:04\d*[1-9]|0[5-9]|[1-9])\d*|[1-9]\d*(?:\.\d+)?)em"
+STOCK = r"\b(?:built for|meet your new|the future of)\b"
 
 RULES = [
-    # (principle, label, regex)
+    # (principle, label, regex or Check)
     ("1-color", "gradient", re.compile(r"\bbg-gradient-to-\w+|\bbg-(?:linear|radial|conic)(?:-[\w\[]|\b)|(?:linear|radial|conic)-gradient\(|\bbg-clip-text\b")),
     ("1-color", "glow/colored shadow", re.compile(r"\bshadow-(?:[a-z]+)-\d{3}(?:/\d+)?\b|drop-shadow-\[|\bshadow-\[0_0_[1-9]|(?<!\d\s)\b0 0 [1-9]\d*px\s+(?:rgba?\(|hsla?\(|#|oklch\()")),
     ("1-color", "pure black surface (near-black + layers?)", re.compile(r"^(?!.*(?<![\w-])(?:bg-)?opacity-\d).*?(?<![\w/-])bg-black(?![\w/-])|(?:background(?:-color)?:\s*|backgroundColor:\s*['\"]|bg-\[)(?:#000(?:000)?\b|black\b|rgb\(\s*0[\s,]+0[\s,]+0\s*\))")),
@@ -31,16 +91,22 @@ RULES = [
     ("3-hierarchy", "arbitrary font size (on the scale?)", re.compile(r"\btext-\[(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em)\]|\bfontSize:\s*['\"]?\.?\d")),
     ("3-hierarchy", "weight above 600", re.compile(r"\bfont-(?:bold|extrabold|black)\b|font-weight:\s*(?:[7-9]00|bold(?:er)?)\b|\bfontWeight:\s*['\"]?(?:[7-9]00|bold)")),
     ("3-hierarchy", "weight other than 400/600 (500 or thin weights)", re.compile(r"\bfont-(?:thin|extralight|light|medium)\b|font-weight:\s*(?:[1-3]00|500)\b|\bfontWeight:\s*['\"]?(?:[1-3]00|500)\b")),
+    ("3-hierarchy", "display tracking tighter than -0.04em", re.compile(r"(?<![\w-])tracking-tighter\b|(?<![\w-])tracking-\[" + NEG_EM + r"\]|letter-?[sS]pacing:\s*['\"]?" + NEG_EM)),
+    ("3-hierarchy", "justified text (uneven word gaps; left-align?)", re.compile(r"text-align:\s*justify\b|(?<![\w-])text-justify(?![\w-])|textAlign:\s*['\"]justify")),
+    ("2-decoration", "colored side border (accent bar on a card or block?)", Check(colored_side_border)),
     ("2-decoration", "pulsing dot (signal needs silence)", re.compile(r"\banimate-ping\b|animation:\s*ping\b")),
     ("2-decoration", "zebra stripes (hairline + hover instead?)", re.compile(r"\b(?:even|odd):bg-|(?:\btr|\brow\w*|&)[^{,\s]*:nth-(?:child|of-type)\(\s*(?:even|odd|2n(?:\s*\+\s*1)?)\s*\)")),
     ("4-surface", "large radius (>=16px)", re.compile(r"\brounded(?:-[trblse]{1,2})?-(?:[2-4]xl|\[(?:1[6-9]|[2-9]\d)px\])(?![\w-])|border-radius:\s*(?:(?:1[6-9]|[2-9]\d)px|(?:1(?:\.\d+)?|[2-9](?:\.\d+)?)rem)")),
     ("4-surface", "shadow (ok only on overlays)", re.compile(r"(?<![\w-])shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl|inner))?(?![\w-])|box-shadow:(?!\s*none\b)|\bboxShadow:")),
+    ("4-surface", "hairline border plus a large shadow (double edge: keep one)", Check(lambda l: HAIRLINE_SHADOW_TW(l) or bool(WIDE_SHADOW_CSS.search(l)))),
     ("4-surface", "all corners rounded on an edge-flush element (rounded-t-*?)", re.compile(r"^(?=.*(?<![\w:-])fixed\b)(?=.*(?<![\w:-])(?:bottom-0|inset-x-0|inset-y-0)\b)(?=.*(?<![\w:-])rounded(?:-(?:sm|md|lg|xl|2xl|3xl))?(?![\w-]))")),
     ("4-surface", "glass on an in-page surface? (fine on fixed, sticky, or overlay layers)", re.compile(r"\bbackdrop-blur(?:-\w+)?\b|backdrop-filter:")),
     ("5-copy", "greeting / filler", re.compile(r"welcome back|good (?:morning|afternoon|evening)|here'?s what'?s happening|\bhello,|hi there|>\s*(?:hi|hey|hello)\b[\s,!]", re.I)),
     ("5-copy", "emoji in UI text", EMOJI),
     ("5-copy", "filler verb", re.compile(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer)\b", re.I)),
     ("5-copy", "placeholder name/text", re.compile(r"lorem ipsum|\bjohn doe\b|\bjane doe\b|(?<![@\w/-])acme\b(?![/-])", re.I)),
+    ("6-marketing", "stock headline phrase (state the concrete outcome)", re.compile(STOCK, re.I)),
+    ("6-marketing", "'Learn more' as the CTA label (name what the click gets)", re.compile(r">\s*learn more\s*(?:→|&rarr;|›|&rsaquo;|»|&raquo;|&gt;)?\s*<|\b(?:label|text|cta|title)\s*[:=]\s*['\"`]learn more['\"`]", re.I)),
     ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*[A-Za-z]")),
     ("6-marketing", "scroll cue", re.compile(r"\bscroll\s+(?:down|to\s+(?:explore|discover|learn|see|continue|begin|start|view))\b|↓\s*scroll|>\s*scroll\s*<", re.I)),
     ("6-marketing", "saving as a percent (write it in money)", re.compile(r"\bsave\s+(?:up\s+to\s+)?\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?\s?%\s+off\b|>\s*[-−]\s?\d{1,2}\s?%\s*<", re.I)),
@@ -60,6 +126,11 @@ RULES = [
     ("7-code", "break-all splits every word (overflow-wrap: anywhere?)", re.compile(r"(?<![\w-])break-all\b|word-break:\s*break-all")),
     ("7-code", "Enter handler without isComposing (IME users commit mid-word)", re.compile(r"^(?!.*isComposing).*(?:\bkey\s*===?\s*['\"]Enter['\"]|['\"]Enter['\"]\s*===?\s*(?:\w+\.)*key\b|@key(?:down|up|press)\.enter\b|\bcase\s+['\"]Enter['\"])")),
     ("7-code", "context menu blocked page-wide (only on its own objects?)", re.compile(r"(?:document|window|document\.body)\.(?:addEventListener\(\s*['\"]contextmenu['\"]|oncontextmenu\s*=)|\boncontextmenu=['\"]\s*return false")),
+    ("7-code", "transition: all (list the properties)", re.compile(r"(?<![\w-])transition-all(?![\w-])|transition(?:-property)?:\s*['\"]?all\b|transitionProperty:\s*['\"]all\b")),
+    ("7-code", "transition on a layout property (transform, or grid-template-rows for a collapse?)", re.compile(r"(?:transition(?:-property)?:|transitionProperty:)\s*['\"]?[^;'\"}]*?(?<![\w-])(?:max-|min-)?(?:width|height|top|left|right|bottom)\b|(?<![\w-])transition-\[[^\]]*?(?<![\w-])(?:max-|min-)?(?:width|height|top|left|right|bottom)\b")),
+    ("7-code", "bounce or overshoot easing (cubic-bezier y outside 0-1)", Check(overshoot_easing)),
+    ("7-code", "outline removed with no focus-visible style in the file", re.compile(r"(?<![\w:-])outline-none(?![\w-])|(?<![\w-])outline:\s*['\"]?(?:none|0)(?![\w.-])")),
+    ("7-code", "hidden reveal start state without a JS guard (blank if the script fails)", re.compile(r"(?<![\w-])opacity:\s*['\"]?0(?![\w.%])|(?<![\w:-])opacity-0(?![\w-])")),
     ("7-code", "escalated z-index", re.compile(r"\bz-\[\d{3,}\]|z-index:\s*\d{3,}|\bzIndex:\s*\d{3,}")),
 ]
 
@@ -70,20 +141,34 @@ BEHAVIOR = ("scroll event listener", "clipboard write", "scroll to top", "hard-c
 
 FLOATING = re.compile(r"(?<![\w-])(?:fixed|sticky|absolute)\b|position:\s*['\"]?(?:fixed|sticky|absolute)")
 
-# Context checks on nearby lines: (label prefix, regex, lines before, lines after).
+# Context checks: (label prefix, regex, lines before, lines after, scope: False nearby lines, True a stylesheet hit's rule block, "file" the whole file).
 SUPPRESS_NEAR = [
-    ("Enter handler", re.compile(r"isComposing|keyCode\s*===?\s*229"), 6, 1),
-    ("clipboard write", re.compile(r"^\s*\.(?:then|catch)\b"), 0, 1),
+    ("Enter handler", re.compile(r"isComposing|keyCode\s*===?\s*229"), 6, 1, False),
+    ("clipboard write", re.compile(r"^\s*\.(?:then|catch)\b"), 0, 1, False),
     # Glass on a layer that floats over moving content is the legitimate use (design materials.md).
-    # Markup is checked on its own line; a stylesheet by its rule block (see css_block).
-    ("glass on", FLOATING, 0, 0),
+    ("glass on", FLOATING, 0, 0, True),
+    # A side border marking the current item or a quote is information, not an accent bar.
+    ("colored side border", re.compile(r"aria-current|\bactive\b|isActive|selected|\bcurrent\b|blockquote"), 1, 0, True),
+    # Floating layers (menus, dialogs, toasts) may pair a hairline with their shadow.
+    ("hairline border plus", re.compile(FLOATING.pattern + r"|z-\[|z-index|\b(?:popover|menu|dropdown|dialog|modal|toast|tooltip)", re.I), 0, 0, True),
+    # Overlay containers take programmatic focus and need no ring; list rows show focus as their highlighted state.
+    ("outline removed", re.compile(r"\bfixed\b|tabIndex|tabindex|role=|origin-\[|shadow-(?:lg|xl|2xl)|animate-in|data-(?:open|closed)\b|data-\[state=|\bactive\b|highlighted|selected"), 0, 1, False),
+    ("stock headline", re.compile(r"(?://|/\*|^\s*\*|<!--|^\s*#).*" + STOCK, re.I), 0, 0, False),
+    # Keyframe start states are animations that run without JS.
+    ("hidden reveal", re.compile(r"@keyframes|(?:^|[\s{])(?:from|to|\d+%)\s*\{"), 0, 0, True),
+    ("outline removed", re.compile(r"focus-visible|focus(?:-within)?:(?:ring|border|shadow|bg-|text-|underline|outline-(?!none))|data-\[?highlighted|:focus\b[^{]*\{[^}]*(?:box-shadow|outline:(?!\s*(?:none|0\b)))"), 0, 0, "file"),
+    # The marketing profile's guard: the hidden start state applies only once a script marked the page (`.js .reveal`).
+    ("hidden reveal", re.compile(r"(?:^|[\s,{>~+])(?:html|:root|body)?\.js(?=[\s.,{:>\[])|\.no-js\b|\[data-js\]|<noscript\b|classList\.(?:add|remove|replace|toggle)\(\s*['\"](?:no-)?js['\"]", re.M), 0, 0, "file"),
 ]
+FILE_CHECKS = [rx for _, rx, _, _, scope in SUPPRESS_NEAR if scope == "file"]
 REQUIRE_NEAR = [
-    ("scroll to top", re.compile(r"pathname|location|router|\$route|\bnavigat(?:e|ion)\b|afterEach|useEffect|watch\(", re.I), 4, 1),
+    ("scroll to top", re.compile(r"pathname|location|router|\$route|\bnavigat(?:e|ion)\b|afterEach|useEffect|watch\(", re.I), 4, 1, False),
+    ("hairline border plus", re.compile(r"(?<![\w:.-])border(?=[\s\"'`]|$)|border(?:-width)?:\s*['\"]?(?:1px|thin|0?\.5px)\b"), 0, 0, True),
+    ("hidden reveal", re.compile(r"[Rr]eveal|(?<![a-z])in-?view|InView|data-aos|animate-on-scroll|scroll-?(?:anim|reveal|trigger)|data-animate|IntersectionObserver"), 1, 3, True),
 ]
-# label -> (skip the hit when the context check returns this value, regex, before, after)
-CONTEXT = {label: (want, rx, b, a) for _, label, _ in RULES
-           for want, table in ((True, SUPPRESS_NEAR), (False, REQUIRE_NEAR)) for k, rx, b, a in table if label.startswith(k)}
+# label -> [(skip the hit when the context check returns this value, regex, before, after, scope)]
+CONTEXT = {label: [(want, rx, b, a, scope) for want, table in ((True, SUPPRESS_NEAR), (False, REQUIRE_NEAR))
+                   for k, rx, b, a, scope in table if label.startswith(k)] for _, label, _ in RULES}
 
 MARKUP_EXTS = {".html", ".htm", ".jsx", ".tsx", ".vue", ".svelte", ".astro", ".mdx", ".erb", ".php",
                ".twig", ".liquid", ".njk", ".hbs", ".ejs", ".cshtml", ".razor"}
@@ -109,6 +194,36 @@ CTA_INTENTS = {
     "signup": ["get started", "sign up", "try free", "try it free", "start free", "start for free", "start your trial", "create account"],
     "demo": ["book a demo", "request a demo", "get a demo", "see a demo", "schedule a demo"],
 }
+
+# Attribute values may hold ">" inside quotes or one level of nested JSX braces; a bare "<" and one-line quotes keep a stray "<" (a < b) from scanning to the end of the file.
+TAG = re.compile(r"<(/?)([A-Za-z][\w.:-]*)((?:[^<>\"'{]|\"[^\"\n]*\"|'[^'\n]*'|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})*?)(/?)>")
+TEXT_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "figcaption", "dt", "dd"}
+VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+CENTER = re.compile(r"(?<![\w-])text-center(?![\w-])|text-align:\s*['\"]?center|textAlign:\s*['\"]center")
+# Any explicit other alignment, at any breakpoint, counts as not centered.
+NOT_CENTER = re.compile(r"(?<![\w-])text-(?:left|start|right|end|justify)(?![\w-])|text-align:\s*['\"]?(?:left|start|right|end|justify)|textAlign:\s*['\"](?:left|start|right|end|justify)")
+CENTER_MIN_BLOCKS = 8
+
+
+def centered_share(text):
+    """(centered, total) text blocks in a markup file; a block inherits centering from its nearest aligned ancestor."""
+    stack, centered, total = [], 0, 0
+    for close, name, attrs, self_close in TAG.findall(text):
+        name = name.lower()
+        if close:
+            k = next((k for k in range(len(stack) - 1, -1, -1) if stack[k][0] == name), None)
+            if k is not None:
+                del stack[k:]
+            continue
+        own = False if NOT_CENTER.search(attrs) else True if CENTER.search(attrs) else None
+        here = own if own is not None else bool(stack and stack[-1][1])
+        if name in TEXT_TAGS:
+            total += 1
+            centered += here
+        if not self_close and name not in VOID_TAGS:
+            stack.append((name, here))
+    return centered, total
+
 
 DELTA = re.compile(r"(?<![\w(,.\-])(?<!,\s)[+\-−]\s?\d+(?:\.\d+)?%(?!\s*[,)])")
 NUMERIC_HINT = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b")
@@ -137,6 +252,17 @@ def css_block(lines, i):
     return "".join(lines[start:end + 1])
 
 
+def skip_hit(label, lines, i, style, file_found):
+    for want, rx, before, after, scope in CONTEXT[label]:
+        if scope == "file":
+            found = file_found[rx]
+        else:
+            found = bool(rx.search(css_block(lines, i))) if scope and style else near(lines, i, rx, before, after)
+        if found == want:
+            return True
+    return False
+
+
 def scan(paths):
     hits = defaultdict(list)
     deltas = Counter()
@@ -157,10 +283,15 @@ def scan(paths):
         if "tabular-nums" in text or "font-variant-numeric" in text:
             tabular_files.add(path)
         markup = ext in MARKUP_EXTS
+        file_found = {rx: bool(rx.search(text)) for rx in FILE_CHECKS}
         if markup:
             agg = dir_sections[os.path.dirname(path)]
             agg[0] += len(SECTION.findall(text))
             agg[1] += [(path, i) for i, l in enumerate(lines, 1) if EYEBROW.search(l) and not NOT_EYEBROW.search(l)]
+            centered, blocks = (0, 0) if any(len(l) > MAX_LINE for l in lines) else centered_share(text)
+            if blocks >= CENTER_MIN_BLOCKS and centered > 0.6 * blocks:
+                hits["3-hierarchy"].append({"file": path, "line": 0,
+                                            "tell": f"{centered} of {blocks} text blocks centered (left-align body, lists, and long copy?)", "snippet": ""})
             low = text.lower()
             for intent, labels in CTA_INTENTS.items():
                 for lab in labels:
@@ -182,10 +313,7 @@ def scan(paths):
             snippet = line.strip()[:140]
             for principle, label, rx in RULES:
                 if rx.search(line):
-                    ctx = CONTEXT.get(label)
-                    if ctx and near(lines, i, *ctx[1:]) == ctx[0]:
-                        continue
-                    if label.startswith("glass on") and ext in STYLE_EXTS and FLOATING.search(css_block(lines, i)):
+                    if skip_hit(label, lines, i, ext in STYLE_EXTS, file_found):
                         continue
                     if principle == "7-code":
                         label = ("behavior: " if label.startswith(BEHAVIOR) else "presentation: ") + label

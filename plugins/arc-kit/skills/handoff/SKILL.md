@@ -66,7 +66,7 @@ Handoff files accumulate. Recommend deleting or archiving a handoff once its tas
 
 1. Find the latest handoff: `ls -t docs/handoff-*.md | head -5`, pick the relevant one (confirm if ambiguous). If none exist, say so and ask whether to start cold or point you at a specific file - do not invent prior context.
 2. Read it fully.
-3. Re-ground as in Step 1: run `git status` and `git diff`, confirm the repo still matches _Current state_ and _Files in flight_ (files may have changed since it was written).
+3. Re-ground as in Step 1: run `git status` and `git diff`, confirm the repo still matches _Current state_ and _Files in flight_ (files may have changed since it was written). Re-check every claim marked `(assumed)` or `(<path> read)`, and every command not marked `exit 0`, before acting on it.
 4. State the plan back in one or two lines (goal + next step), then proceed.
 
 If the repo and the handoff disagree, trust the repo and say so; don't act on stale notes. If the handoff lacks a detail you need, tell the user they can reopen the original transcript with `claude --resume` and the session ID in its header.

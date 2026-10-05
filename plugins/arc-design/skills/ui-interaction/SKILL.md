@@ -22,7 +22,7 @@ Generated UI tends to render only the happy path: every column in the table, a d
 | Delete, irreversible actions, undo | `references/destructive.md` |
 | Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |
 
-2. For each new component, or existing component that gains a new async state, note in one or two lines which states apply and which you skip and why, e.g. "UserTable: loading skeleton, empty (no users / no match), error with retry; skipped bulk selection (not requested)." Put it in the summary or PR description, not in code comments. Skip the note when the change adds no new component and no new async state.
+2. For each new component, or existing component that gains a new async state, decide its states before building: loading, empty, error, success, and partial (some items failed, some data missing, a stream cut off). For a new screen, write a state table: one row per feature, one column per state, and every cell holds a decided design (what shows and what the user can do next) or `n/a` with the reason. For a single component, one or two lines do, e.g. "UserTable: loading skeleton, empty (no users / no match), error with retry, partial (failed rows marked, retry per row); skipped bulk selection (not requested)." Put it in the summary or PR description, not in code comments. Skip it when the change adds no new component and no new async state.
 3. Build what was asked. Don't add surfaces nobody requested (offline banner, bulk selection, settings panel); suggest them instead.
 4. Verify:
    - Check the code against the `Checks` of the loaded references and fix what fails.

@@ -2,6 +2,25 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-05
+
+### Added
+
+- `screenshot.mjs`: `--click <css>` (in order, warns when another element covers the target) and `--ax-diff`, which prints the accessibility-tree change across the clicks; `state-check` uses it to confirm a control that does nothing.
+- `screenshot.mjs` and `ui_check.mjs`: `--cookie` and `--header` for pages behind login, sent only to the target's origin.
+- `ui-check`: clickable elements a keyboard can't reach; `--links` checks same-origin links on local and private hosts only; `--perf` reports TTFB, FCP, LCP, JS and CSS bytes, and request count, and `--save`/`--compare` flag regressions against a baseline (median of 3 loads, new console messages only); a first-impression check on the widest shot.
+- `scan_tells.py`: colored side borders, overshoot easing, `transition: all` and layout-property transitions, tracking below -0.04em, hairline border with a wide shadow, justified text, `outline: none` without a focus-visible style, unguarded `opacity: 0` reveals, stock headline phrases, "Learn more" as the only CTA, and mostly centered text. Tested by `scan_tells_test.py`.
+- `design`: the three default looks as a habitual-choice test, optional variant exploration as static HTML, and safe choices versus departures in the summary; `tokens.md` themes selection, caret, accent, scrollbar, and underline offset.
+- `restyle` and `redesign`: a first-impression check against the chosen primary. `ui-interaction`: a state table per feature and the trunk test for navigation.
+
+### Fixed
+
+- `cdp.mjs`: a bare `host:port` target (`172.17.0.1:3000`, `docker:3000`) loads over http instead of failing as a file or a URL scheme; Chrome gets `--no-sandbox` when running as root.
+
+### Changed
+
+- `restyle` and `ui-check` descriptions fit the 1024-character limit.
+
 ## [1.3.0] - 2026-10-03
 
 ### Added

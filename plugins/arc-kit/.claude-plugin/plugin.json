@@ -1,7 +1,7 @@
 {
   "name": "arc-kit",
-  "version": "1.7.0",
-  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner agent, and the comment-lint and arc-compact hooks.",
+  "version": "1.8.0",
+  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner agent, and the comment-lint, arc-compact, and destructive-guard hooks.",
   "author": {
     "name": "viettdann"
   },
@@ -19,6 +19,12 @@
       "default": 150,
       "min": 80,
       "max": 300
+    },
+    "destructive_guard_enabled": {
+      "type": "boolean",
+      "title": "Destructive command guard",
+      "description": "Deny or ask before destructive Bash commands (recursive rm of root paths, git discards, SQL drops, infra teardown)",
+      "default": false
     }
   }
 }

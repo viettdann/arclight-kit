@@ -1,32 +1,47 @@
 #!/usr/bin/env node
 // Measure rendering defects on a live page in headless Chrome: what overflows, clips, overlaps, fails contrast, loses focus, or errors.
 // Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]
-//          [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--json]
+//          [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--save f.json] [--compare f.json] [--links]
+//          [--cookie name=value]... [--header "Name: value"]... [--json]
 //   --tabs   how many Tab presses the focus check walks (0 skips it); it runs once, at the widest width under 1600.
 //   --shot   also write a screenshot per width and scheme (out-<width>[-<scheme>].png), taken before the focus check; --full for the whole page.
-//   --perf   also report the largest-contentful-paint element and the elements that shift during load (lab values).
+//   --perf   also report the LCP element and load-time layout shifts, and print TTFB, FCP, LCP, JS/CSS bytes, and requests of one uncached load.
+//   --save   write those numbers (median of 3 uncached loads at the focus-check width) and the console messages to a baseline file.
+//   --compare  as --save; flags timings up >50% and >500ms, JS/CSS bytes up >25% and >1 KB; drops baseline and single-load console messages.
+//   --links  request every same-origin link once (HEAD, GET on 405) and report 4xx, 5xx, and failures; only for a local or private host.
+//   --cookie, --header  send a cookie (name=value, repeatable or comma list) or a header ("Name: value", repeatable) to the target's origin.
 //   --json   print the findings as JSON instead of text.
 //   Other options work as in design/scripts/screenshot.mjs.
 // Findings are P1 (breaks use or access), P2 (degrades it), P3 (minor); [review] marks heuristics to confirm in a screenshot.
 // Exit 0 nothing at P1 or P2, 1 findings at P1 or P2, 2 the check couldn't run (usage, no Chrome, Node < 22, navigation or HTTP error, timeout).
-import { writeFileSync } from 'node:fs';
-import { emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from '../../design/scripts/cdp.mjs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { applyAuth, emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from '../../design/scripts/cdp.mjs';
 
 const USAGE = 'Usage: node ui_check.mjs <url|file> [--width 375,768,1280,1920] [--height 900] [--scheme light|dark|light,dark] [--wait-for css]'
-  + ' [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--json]';
+  + ' [--eval "js"] [--wait 500] [--root dir] [--tabs 40] [--shot out.png] [--full] [--perf] [--save f.json] [--compare f.json] [--links]'
+  + ' [--cookie name=value]... [--header "Name: value"]... [--json]';
 const opt = { width: '375,768,1280,1920', height: '900', scheme: 'light', 'wait-for': '', eval: '', wait: '500', root: '', tabs: '40',
-  shot: '', full: false, perf: false, json: false };
-const pos = await parseArgs(process.argv.slice(2), opt, ['full', 'perf', 'json'], USAGE);
+  shot: '', full: false, perf: false, json: false, links: false, save: '', compare: '', cookie: [], header: [] };
+const pos = await parseArgs(process.argv.slice(2), opt, ['full', 'perf', 'json', 'links'], USAGE);
 if (pos.length !== 1) await fail(USAGE);
 const widths = [...new Set(opt.width.split(',').map(Number))];
 const height = Number(opt.height), wait = Number(opt.wait), tabs = Number(opt.tabs);
 if (widths.some((w) => !(w > 0)) || !(height > 0) || !(wait >= 0) || !(tabs >= 0)) await fail('--width, --height, --wait, and --tabs take numbers');
 const schemes = [...new Set(opt.scheme.split(','))];
 if (schemes.some((c) => c !== 'light' && c !== 'dark')) await fail('--scheme takes light, dark, or light,dark');
+let baseline = null;
+if (opt.compare) {
+  try { baseline = JSON.parse(readFileSync(opt.compare, 'utf8')); } catch (e) { await fail(`--compare: cannot read ${opt.compare}: ${e.message}`); }
+  if (!baseline?.metrics) await fail(`--compare: ${opt.compare} is not a file written by --save`);
+}
+const samples = opt.save || opt.compare ? 3 : opt.perf ? 1 : 0;
 
+const MESSAGE_CHECKS = ['js-error', 'console'];
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
   clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
-  'layout-shift': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3 };
+  'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3 };
+
+const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 
 // Runs inside the page (installed as window.__cssPath): a short selector that matches only this element, for the report.
 function cssPath(el) {
@@ -228,6 +243,21 @@ function audit({ mobile }) {
       + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px', true);
   }
 
+  // Cursor is inherited, so only the element that sets it counts; a pointer or listener on a wrapper of real controls is fine.
+  const NATIVE = 'a[href], button, input, select, textarea, summary, label, option, video, audio, iframe, [contenteditable]:not([contenteditable=false])';
+  for (const el of all) {
+    const onclick = typeof el.onclick === 'function', clicker = !!window.__uiClickers?.has(el), ownPointer = getComputedStyle(el).cursor === 'pointer';
+    if (!onclick && !clicker && !ownPointer) continue;
+    if (el.matches(NATIVE) || el.hasAttribute('role') || el.hasAttribute('tabindex') || !visible(el) || el.parentElement.closest(`${INTERACTIVE}, ${NATIVE}`)) continue;
+    const wraps = !!el.querySelector(`${INTERACTIVE}, ${NATIVE}`);
+    const pointer = !wraps && ownPointer && getComputedStyle(el.parentElement).cursor !== 'pointer';
+    const r = box(el);
+    const listener = !wraps && clicker && r.width * r.height < 0.5 * vw * innerHeight;
+    if (!onclick && !pointer && !listener) continue;
+    add('clickable', el, `clickable (${onclick ? 'onclick' : listener ? 'click listener' : 'cursor: pointer'}) but no keyboard access:`
+      + ' use a <button> or <a href>, or add a role, tabindex="0", and Enter/Space handling', !onclick && !listener);
+  }
+
   for (const img of document.images) {
     if (getComputedStyle(img).display === 'none') continue;
     if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) { add('broken-image', img, `failed to load ${img.currentSrc || img.src}`); continue; }
@@ -285,6 +315,69 @@ async function vitals({ perf }) {
   return out;
 }
 
+// Installed before any page script: remembers elements that get a click-like listener, which no DOM property exposes.
+function watchClicks() {
+  const set = new WeakSet(), add = EventTarget.prototype.addEventListener;
+  EventTarget.prototype.addEventListener = function (type, ...rest) {
+    if (this instanceof Element && /^(click|mousedown|mouseup|pointerdown|pointerup)$/.test(type)) set.add(this);
+    return add.call(this, type, ...rest);
+  };
+  Object.defineProperty(window, '__uiClickers', { value: set });
+}
+
+// Runs inside the page: navigation and paint timings, read field by field because PerformanceEntry getters don't survive JSON.
+async function timings() {
+  const nav = performance.getEntriesByType('navigation')[0];
+  const fcp = performance.getEntriesByName('first-contentful-paint')[0];
+  const lcp = await new Promise((resolve) => {
+    try { new PerformanceObserver((list, obs) => { obs.disconnect(); resolve(list.getEntries().at(-1)); }).observe({ type: 'largest-contentful-paint', buffered: true }); } catch { resolve(null); }
+    setTimeout(() => resolve(null), 300);
+  });
+  const ms = (v) => (Number.isFinite(v) ? Math.round(v) : null);
+  return { ttfb: ms(nav && nav.responseStart - nav.startTime), fcp: ms(fcp?.startTime), lcp: ms(lcp && (lcp.renderTime || lcp.loadTime || lcp.startTime)) };
+}
+
+// Runs inside the page: same-origin links worth requesting, deduped without their fragment, each with the selector of its first anchor.
+function collectLinks() {
+  const skip = /log-?out|sign-?out|delete|destroy|remove|cancel|unsubscribe/i;
+  const urls = new Map();
+  for (const a of document.querySelectorAll('a[href]')) {
+    const raw = a.getAttribute('href').trim();
+    if (!raw || raw.startsWith('#') || /^(mailto|tel|sms|javascript|data|blob):/i.test(raw)) continue;
+    let u;
+    try { u = new URL(a.href); } catch { continue; }
+    u.hash = '';
+    if (u.origin !== location.origin || skip.test(u.pathname + u.search) || urls.has(u.href)) continue;
+    urls.set(u.href, window.__cssPath(a));
+  }
+  return [...urls].map(([url, selector]) => ({ url, selector }));
+}
+
+// Runs inside the page, so requests carry the session's cookies. A redirect counts as fine: following it could reach another origin or a logout.
+async function checkLinks(links) {
+  const one = async (link) => {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 5000);
+    const get = (method) => fetch(link.url, { method, redirect: 'manual', credentials: 'same-origin', cache: 'no-store', signal: ctl.signal });
+    try {
+      let r = await get('HEAD');
+      if (r.status === 405 || r.status === 501) r = await get('GET');
+      link.status = r.type === 'opaqueredirect' ? 300 : r.status;
+    } catch (e) { link.error = ctl.signal.aborted ? 'timeout after 5s' : e.message; } finally { clearTimeout(timer); }
+  };
+  const queue = [...links];
+  await Promise.all(Array.from({ length: 8 }, async () => { while (queue.length) await one(queue.shift()); }));
+  return links;
+}
+
+// The hosts --links may send authenticated requests to: loopback, private IPv4 ranges, and single-label names such as docker services.
+const privateHost = (hostname) => {
+  const h = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (h === 'localhost' || h.endsWith('.localhost') || h === '::1') return true;
+  const v4 = /^(\d+)\.(\d+)\.\d+\.\d+$/.exec(h);
+  if (v4) { const [a, b] = [Number(v4[1]), Number(v4[2])]; return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168); }
+  return !!h && !h.includes('.') && !h.includes(':');
+};
+
 // Runs inside the page before tabbing: remembers how each focusable element and its parent look unfocused.
 function prepareFocus() {
   const PROPS = ['outlineStyle', 'outlineWidth', 'outlineColor', 'boxShadow', 'borderTopColor', 'borderBottomColor', 'borderBottomWidth',
@@ -302,14 +395,28 @@ function prepareFocus() {
   for (const el of document.querySelectorAll('*')) window.__uiCheck.before.set(el, sig(el) + '#' + sig(el.parentElement));
 }
 
-const cdp = await launch(20000 + widths.length * schemes.length * 45000);
+const url = await resolveTarget(pos[0], opt.root);
+if (opt.links && !privateHost(new URL(url).hostname)) {
+  await fail(`--links runs only against a local or private host (localhost, 127/8, 10/8, 172.16/12, 192.168/16, a docker service name), not ${new URL(url).host}:`
+    + ' every request carries the session\'s cookies');
+}
+const cdp = await launch(20000 + widths.length * schemes.length * 45000 + samples * 30000 + (opt.links ? 150000 : 0));
 const { send, evaluate, on } = cdp;
 await send('Page.enable');
 await send('Runtime.enable');
 await send('Network.enable');
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `(${watchClicks})()` });
+await applyAuth(cdp, url, opt.cookie, opt.header);
 
 let events = [];
 const urls = new Map();
+const types = new Map();
+let net = { requests: 0, js: 0, css: 0 };
+on('Network.loadingFinished', (p) => {
+  net.requests++;
+  const t = types.get(p.requestId);
+  if (t === 'Script') net.js += p.encodedDataLength; else if (t === 'Stylesheet') net.css += p.encodedDataLength;
+});
 on('Runtime.exceptionThrown', (p) => events.push({ check: 'js-error', detail: (p.exceptionDetails.exception?.description ?? p.exceptionDetails.text).split('\n')[0] }));
 on('Runtime.consoleAPICalled', (p) => {
   if (p.type !== 'error' && p.type !== 'assert') return;
@@ -317,18 +424,22 @@ on('Runtime.consoleAPICalled', (p) => {
 });
 on('Network.requestWillBeSent', (p) => urls.set(p.requestId, p.request.url));
 on('Network.responseReceived', (p) => {
+  types.set(p.requestId, p.type);
   if (p.response.status < 400) return;
   const favicon = /\/favicon\.ico(\?|$)/.test(p.response.url);
   const asset = ['Document', 'Stylesheet', 'Script', 'Font', 'Image'].includes(p.type);
   events.push({ check: favicon ? 'favicon' : asset ? 'request-asset' : 'request', detail: `HTTP ${p.response.status} ${p.type} ${p.response.url}` });
 });
 on('Network.loadingFailed', (p) => {
+  net.requests++;
   if (!p.canceled) events.push({ check: 'request', detail: `${p.errorText} ${p.type} ${urls.get(p.requestId) ?? ''}`.trim() });
 });
 
-const url = await resolveTarget(pos[0], opt.root);
 const focusWidth = [...widths].filter((w) => w < 1600).sort((a, b) => b - a)[0] ?? widths[0];
 const found = new Map();
+const seenIn = new Map();
+const countLoad = () => { for (const d of new Set(events.filter((e) => MESSAGE_CHECKS.includes(e.check)).map((e) => e.detail))) seenIn.set(d, (seenIn.get(d) ?? 0) + 1); };
+let linkReport = null;
 const record = (f, where) => {
   const key = `${f.check}|${f.selector}|${f.selector ? '' : f.detail}`;
   const prev = found.get(key);
@@ -348,6 +459,17 @@ for (const width of widths) for (const scheme of schemes) {
   for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700 })})`)) record(f, where);
   for (const f of await evaluate(`(${vitals})(${JSON.stringify({ perf: opt.perf })})`)) record(f, where);
   for (const e of events) record({ ...e, selector: '', text: '', review: e.check === 'request' && / (Fetch|XHR) /.test(e.detail) }, where);
+  countLoad();
+  // After the events are recorded, so the link requests' own failures land in the link findings, not in `request`.
+  if (opt.links && !linkReport) {
+    const landed = new URL(await evaluate('location.href'));
+    if (landed.origin !== new URL(url).origin && !privateHost(landed.hostname)) await fail(`--links: the page redirected to ${landed.origin}, which is not a local or private host`);
+    const all = await evaluate(`(${collectLinks})()`);
+    const checked = await evaluate(`(${checkLinks})(${JSON.stringify(all.slice(0, 200))})`);
+    const broken = checked.filter((l) => l.error || l.status >= 400);
+    for (const l of broken) record({ check: 'broken-link', selector: l.selector, text: '', review: false, detail: `${l.error ? l.error : `HTTP ${l.status}`} ${l.url}` }, 'links');
+    linkReport = { found: all.length, checked: checked.length, broken: broken.length };
+  }
   if (opt.shot) {
     const [sh] = await evaluate('[document.documentElement.scrollHeight]');
     const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: opt.full,
@@ -376,16 +498,67 @@ for (const width of widths) for (const scheme of schemes) {
     }
   }
 }
+
+// Uncached loads at the focus-check width; each metric is the median of its samples.
+let perf = null;
+if (samples) {
+  await send('Network.setCacheDisabled', { cacheDisabled: true });
+  await emulate(cdp, { width: focusWidth, height, scheme: schemes[0] });
+  const runs = [];
+  for (let i = 0; i < samples; i++) {
+    net = { requests: 0, js: 0, css: 0 };
+    events = [];
+    await load(cdp, url);
+    if (opt['wait-for']) await waitFor(cdp, opt['wait-for']);
+    await sleep(wait);
+    runs.push({ ...(await evaluate(`(${timings})()`)), ...net });
+    countLoad();
+  }
+  const median = (k) => { const v = runs.map((r) => r[k]).filter((x) => x !== null).sort((a, b) => a - b); return v.length ? v[(v.length - 1) >> 1] : null; };
+  perf = { width: focusWidth, samples, metrics: Object.fromEntries(['ttfb', 'fcp', 'lcp', 'js', 'css', 'requests'].map((k) => [k, median(k)])) };
+}
 await cdp.close();
+
+const messages = [...new Set([...found.values()].filter((f) => MESSAGE_CHECKS.includes(f.check)).map((f) => f.detail))];
+let known = 0, once = 0;
+if (baseline) {
+  const old = new Set(baseline.messages ?? []);
+  for (const [k, f] of found) {
+    if (!MESSAGE_CHECKS.includes(f.check)) continue;
+    if (old.has(f.detail)) { found.delete(k); known++; } else if ((seenIn.get(f.detail) ?? 0) < 2) { found.delete(k); once++; }
+  }
+  const b = baseline.metrics, m = perf.metrics;
+  for (const k of ['ttfb', 'fcp', 'lcp']) {
+    if (b[k] != null && m[k] != null && m[k] > b[k] * 1.5 && m[k] - b[k] > 500) {
+      record({ check: 'perf-regression', selector: '', text: '', review: false, detail: `${k.toUpperCase()} ${b[k]}ms → ${m[k]}ms (median of ${samples})` }, String(focusWidth));
+    }
+  }
+  // The 1 KB floor keeps a tiny asset that changes size from reading as a regression.
+  for (const k of ['js', 'css']) {
+    if (b[k] != null && m[k] > b[k] * 1.25 && m[k] - b[k] > 1024) {
+      record({ check: 'perf-regression', selector: '', text: '', review: false, detail: `${k.toUpperCase()} ${kb(b[k])} → ${kb(m[k])} transferred (median of ${samples})` }, String(focusWidth));
+    }
+  }
+}
+if (opt.save) writeFileSync(opt.save, JSON.stringify({ url, width: focusWidth, scheme: schemes[0], samples, date: new Date().toISOString(), metrics: perf.metrics, messages }, null, 2) + '\n');
 
 const findings = [...found.values()].sort((a, b) => a.severity - b.severity || a.check.localeCompare(b.check));
 const allWhere = widths.length * schemes.length;
 for (const f of findings) f.where = f.where.length === allWhere && allWhere > 1 ? ['all'] : f.where;
 const failing = findings.some((f) => f.severity <= 2);
 if (opt.json) {
-  console.log(JSON.stringify({ url, widths, schemes, findings }, null, 2));
+  console.log(JSON.stringify({ url, widths, schemes, findings, ...(perf && { perf }), ...(linkReport && { links: linkReport }),
+    ...(baseline && { baselineMessages: known, singleLoadMessages: once }) }, null, 2));
 } else {
   console.log(`ui-check ${url}  widths ${widths.join(',')}  scheme ${schemes.join(',')}\n`);
+  if (perf) {
+    const m = perf.metrics, t = (v) => (v === null ? 'n/a' : `${v}ms`);
+    console.log(`perf ${perf.width}: TTFB ${t(m.ttfb)} · FCP ${t(m.fcp)} · LCP ${t(m.lcp)} · JS ${kb(m.js)} · CSS ${kb(m.css)} · ${m.requests} requests`
+      + `${samples > 1 ? ` (median of ${samples} uncached loads)` : ' (one uncached load)'}${opt.save ? `; saved to ${opt.save}` : ''}`);
+    if (baseline) console.log(`compared with ${opt.compare}${baseline.url !== url ? ` (baseline was taken on ${baseline.url})` : ''}; ${known} console message(s) also in the baseline and ${once} new one(s) seen in only one load, not reported`);
+  }
+  if (linkReport) console.log(`links: ${linkReport.checked} checked${linkReport.found > linkReport.checked ? ` of ${linkReport.found}` : ''}, ${linkReport.broken} broken`);
+  if (perf || linkReport) console.log('');
   const shown = new Map();
   for (const f of findings) {
     const n = (shown.get(f.check) ?? 0) + 1;
