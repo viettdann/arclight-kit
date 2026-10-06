@@ -43,3 +43,5 @@ Data safety, then accessibility, then preserving the user's input and place, the
 ## Project overrides
 
 If `DESIGN.md` or existing components already define a behavior (toast position, blur-to-save, confirmation policy), follow the project. Flag it only when it breaks data safety or accessibility.
+
+Preserve existing control sizes and density tokens. Touch input alone does not justify resizing shared buttons or rows. Assess the actual hit area and spacing before reporting a target problem; extend a hit area locally when needed without changing the visual size or layout.

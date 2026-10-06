@@ -123,6 +123,7 @@ Project `AGENTS.md` instructions, plugins, MCP servers, and hooks remain active.
 ```bash
 python3 scripts/validate_plugins.py
 node --test scripts/cdp_auth_test.mjs
+node --test scripts/ui_targets_test.mjs
 python3 -m unittest discover -s scripts -p '*_test.py'
 python3 plugins/arc-kit/scripts/comment_lint_test.py
 python3 plugins/arc-kit/scripts/arc_compact_test.py

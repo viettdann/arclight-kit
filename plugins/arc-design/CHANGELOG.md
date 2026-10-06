@@ -6,6 +6,7 @@ All notable changes to `arc-design` are documented here. The format follows [Kee
 
 ### Changed
 
+- Preserve existing button sizes and density on touch; remove mandatory 44px targets and automatic phone-width target warnings. Confirm actual hit areas before changing controls.
 - Adopt main through `ac70815` (upstream arc-design 1.6.0): motion, color, icon, canvas, typography, worst-case data, screenshot critique, and blind-critic references; scanner and rendering checks.
 - Keep Codex entrypoints within 8,000 UTF-8 bytes; place expanded workflow rules in their existing references.
 - Use portable bundled paths and respect runtime delegation limits; preserve protocol-error credential redaction in browser authentication.

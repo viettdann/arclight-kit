@@ -43,7 +43,7 @@ const samples = opt.save || opt.compare ? 3 : opt.perf ? 1 : 0;
 const MESSAGE_CHECKS = ['js-error', 'console'];
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
   clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
-  'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3,
+  'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3,
   'text-over-media-contrast': 1, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'input-zoom': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
   'wide-tracking': 3, 'edge-flush-text': 3, 'nested-card': 3, 'icon-tile': 3, 'heading-rhythm': 3 };
 
@@ -243,7 +243,6 @@ function audit({ mobile, phone }) {
     }
     return el.getAttribute('title')?.trim() || '';
   };
-  const touch = [];
   for (const el of document.querySelectorAll(INTERACTIVE)) {
     if (!visible(el)) continue;
     const r = box(el);
@@ -258,14 +257,6 @@ function audit({ mobile, phone }) {
     if (el.labels?.length && ['checkbox', 'radio'].includes(el.type)) continue;
     const small = Math.min(r.width, r.height);
     if (small < 24) add('target', el, `${Math.round(r.width)}×${Math.round(r.height)}px, under the 24px minimum`);
-    else if (mobile && small < 44) touch.push({ el, small, size: `${Math.round(r.width)}×${Math.round(r.height)}px` });
-  }
-  // The script can't tell primary controls from secondary ones, so one line lists the smallest and the shot decides which are primary.
-  if (touch.length) {
-    touch.sort((a, b) => a.small - b.small);
-    const rest = touch.slice(1, 3).map((t) => `${sel(t.el)} ${t.size}`).join(', ');
-    add('target-touch', touch[0].el, `${touch.length} control(s) under 44px on a phone width, smallest ${touch[0].size}`
-      + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px', true);
   }
 
   // Cursor is inherited, so only the element that sets it counts; a pointer or listener on a wrapper of real controls is fine.

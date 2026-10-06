@@ -19,8 +19,9 @@
 
 ## Pointer and touch
 
-- Under `@media (pointer: coarse)`, primary controls have a 44×44px target; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this). Pad the hit area and keep the glyph at 16–20px.
-- Hover styles live under `@media (hover: hover)`; enlarge controls under `@media (pointer: coarse)`. Never branch on user agent.
+- Keep the project's button sizes, density tokens, and row heights. Hit area and visual size are separate: do not impose a blanket 44×44px minimum, global button padding, or larger shared size tokens for touch. A dense tool's 28–36px controls can stay that size.
+- Check targets against the 24×24px baseline, accounting for spacing exceptions, inline links, associated labels, and any existing hit-area extension. If touch testing or an explicit product requirement calls for a larger hit area, extend it locally without changing the visible control or layout; avoid overlap with neighbouring targets and clipping by ancestors. Keep glyphs at the project's icon size.
+- Hover styles live under `@media (hover: hover)`. Use `@media (pointer: coarse)` for touch-specific adaptations only when needed; a narrow viewport alone is not evidence of touch input. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
 ## Unavailable actions: explain, don't disable

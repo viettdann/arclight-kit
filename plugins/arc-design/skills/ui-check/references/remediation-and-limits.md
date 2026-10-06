@@ -18,7 +18,7 @@ Resolve all relative paths in this reference from the parent skill directory con
 | `focus` | `outline: none` without a replacement | A `:focus-visible` ring from the `focus-ring` token (`tokens.md`), drawn per `baseline.md` |
 | `name`, `placeholder-label` | icon button without a label, field labelled by its placeholder | `aria-label` on icon buttons, a visible `<label>` above fields (ui-interaction `forms.md`) |
 | `input-zoom` | a dense type token (`text-sm`, 14px) applied to fields at every width; only iOS Safari zooms, so it goes unseen in desktop Chrome | 16px on touch: `text-base sm:text-sm`, or 16px under `@media (pointer: coarse)` (ui-interaction `forms.md`). Never `maximum-scale=1`, which blocks pinch zoom too |
-| `target`, `target-touch` | small icon buttons, default browser controls, tight links | Pad the hit area to 24px (44px for primary controls on phones) without changing the visual size (`baseline.md`) |
+| `target` | small icon buttons, default browser controls, tight links | Confirm the actual hit area and spacing exceptions first; extend the hit area locally to 24px when needed, preserving visual size, density tokens, and layout (`baseline.md`). Do not resize shared buttons based on viewport width |
 | `broken-image`, `distorted`, `alt` | wrong path, `object-fit` missing, no alt | Fix the path, `object-fit: cover` in a fixed-ratio frame (`cards.md`), `alt` text or `alt=""` for decoration |
 | `js-error`, `console`, `request-asset`, `request` | a runtime error or a missing file | Report it with the message; fix only when the cause is in the UI code being checked |
 | `heading`, `viewport`, `favicon` | structure | One `h1`, no skipped levels, `<meta name="viewport" content="width=device-width, initial-scale=1">` |
@@ -33,6 +33,7 @@ Reference paths: `typography.md`, `tokens.md`, `materials.md`, and `cards.md` ar
 ## Limits
 
 - Checking at 430px or narrower adds `input-zoom`, which models iOS Safari only; the run does not emulate iOS.
+- Target checks measure the element's bounding box, not hit-area extensions from pseudo-elements or wrappers, and do not evaluate spacing exceptions. Confirm these before treating a sub-24px finding as a failure. There is no automatic 44px threshold: viewport width does not establish touch input or a need to resize controls.
 
 - It checks the first state of each page; menus, modals, and later steps need `--eval` or a URL that opens them.
 - Contrast over images, gradients, and glass is measured from two screenshots of at most 20 elements (with and without the text); the rest are listed as unmeasured, and with known colors, `contrast.mjs` takes a stacked background (`"<text>|<tint> over <backdrop>"`).
@@ -45,5 +46,5 @@ Reference paths: `typography.md`, `tokens.md`, `materials.md`, and `cards.md` ar
 
 - **P1:** breaks use or access: overflow, contrast failure (also over media), no visible focus, a control without a name, a clickable element without keyboard access, a broken image or asset, a JS exception.
 - **P2:** degrades it: clipped or overlapping text, a clipped popover, text hidden after scroll, body text under 12px, a field under 16px on a phone (iOS zooms on focus), targets under 24px, a distorted image, a placeholder used as the label, no page language, blocked zoom, a lazy LCP image, layout shift over 0.1 during load, console errors, failed requests, broken links, a perf regression against the baseline.
-- **P3:** minor: primary-control touch targets under 44px on phones, missing alt, heading structure, missing viewport meta or favicon, contrast not measurable, the typography and layout heuristics (leading, line length, caps, tracking, edge, nested card, icon tile, heading rhythm), the LCP element (`--perf`, information only).
-- **`[review]`:** a heuristic (clipped, overlap, positioned-text contrast, text-over-media contrast, the typography and layout heuristics, failed fetch calls, touch targets, layout shift, a clickable element found only by its pointer cursor). Confirm it in the screenshot first; for touch targets, report only the primary controls among those listed.
+- **P3:** minor: missing alt, heading structure, missing viewport meta or favicon, contrast not measurable, the typography and layout heuristics (leading, line length, caps, tracking, edge, nested card, icon tile, heading rhythm), the LCP element (`--perf`, information only).
+- **`[review]`:** a heuristic (clipped, overlap, positioned-text contrast, text-over-media contrast, the typography and layout heuristics, failed fetch calls, layout shift, a clickable element found only by its pointer cursor). Confirm it in the screenshot first.
