@@ -3,7 +3,9 @@
 ## Structure
 
 - A visible label sits above every field, helper text below it. A placeholder is an example value, never the label.
-- Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Turn `spellcheck` off for codes, emails, and usernames.
+- Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Emails, usernames, and codes also get `autocapitalize="none"`, `autocorrect="off"`, and `spellcheck="false"`, or the phone keyboard capitalizes the first letter and "corrects" the value into a different one.
+- `enterkeyhint` names what the keyboard's Enter key does (`search`, `send`, `go`, `next` on a field followed by another, `done` on the last), so the label on the phone keyboard matches the action it triggers.
+- Inputs, selects, and textareas render at 16px or larger on touch: iOS Safari zooms the page into any focused field under 16px and leaves it zoomed. Keep the dense size for fine pointers only: 16px under `@media (pointer: coarse)`, or `text-base sm:text-sm`, which approximates touch by width and misses a large tablet. Never fix it with `maximum-scale=1` in the viewport meta, which also blocks the pinch zoom low-vision users need.
 - Group fields by meaning (Personal, Shipping, Payment). The gap inside a group is clearly smaller than the gap between groups, so no divider lines are needed.
 - Long forms that split naturally become steps grouped by meaning, not by field count. Show progress, validate within each step, and persist entered data so Back and refresh lose nothing.
 - Never ask for the same information twice in one flow (WCAG 3.3.7): prefill it from an earlier step or offer a choice ("Billing address same as shipping"), unless re-entry is the point (confirming a new password) or the old value is no longer valid.
@@ -47,6 +49,7 @@
 ## Checks
 
 - [ ] Every input has a visible label, the correct `type`, and `autocomplete`.
+- [ ] On touch every field is at least 16px with zoom left enabled; email, username, and code fields don't autocapitalize or autocorrect.
 - [ ] The network-failure and server-error branches keep all values and show distinct messages with a retry.
 - [ ] Errors appear on blur, not while typing, and clear live once fixed.
 - [ ] Submit is never disabled for validity, and a double submit is impossible.

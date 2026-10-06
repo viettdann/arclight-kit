@@ -87,6 +87,83 @@ class CollectDiffTest(unittest.TestCase):
         diff = self.diff_of(self.run_script("."))
         self.assertIn("+unpushed", diff)
 
+    def test_dirty_tree_includes_unpushed_commits(self):
+        self.init_repo()
+        remote = os.path.join(self.root, "remote.git")
+        self.git("init", "-q", "--bare", remote, cwd=self.root)
+        self.git("remote", "add", "origin", remote)
+        self.git("push", "-qu", "origin", "HEAD")
+        self.write("a.txt", "unpushed\n")
+        self.git("commit", "-qam", "local")
+        self.write("other.txt", "dirty\n")
+        diff = self.diff_of(self.run_script("."))
+        self.assertIn("+unpushed", diff)
+        self.assertIn("+dirty", diff)
+        self.assertNotIn("-unpushed", diff)
+
+    def test_dirty_tree_up_to_date_with_upstream_diffs_head(self):
+        self.init_repo()
+        remote = os.path.join(self.root, "remote.git")
+        self.git("init", "-q", "--bare", remote, cwd=self.root)
+        self.git("remote", "add", "origin", remote)
+        self.git("push", "-qu", "origin", "HEAD")
+        self.write("a.txt", "dirty\n")
+        diff = self.diff_of(self.run_script("a.txt"))
+        self.assertIn("-one", diff)
+        self.assertIn("+dirty", diff)
+
+    def test_mid_merge_warns(self):
+        self.init_repo()
+        self.git("checkout", "-qb", "side")
+        self.write("a.txt", "side\n")
+        self.git("commit", "-qam", "side")
+        self.git("checkout", "-q", "-")
+        self.write("a.txt", "main\n")
+        self.git("commit", "-qam", "main")
+        subprocess.run(["git", "merge", "side"], cwd=self.repo, env=self.env, capture_output=True)
+        result = self.run_script("a.txt")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("warning: a merge is in progress", result.stderr)
+        self.assertNotIn("warning", result.stdout)
+
+    def diverge(self):
+        self.init_repo()
+        self.git("checkout", "-qb", "side")
+        self.write("a.txt", "side\n")
+        self.git("commit", "-qam", "side")
+        self.git("checkout", "-q", "-")
+        self.write("a.txt", "main\n")
+        self.git("commit", "-qam", "main")
+
+    def assertWarns(self, op):
+        result = self.run_script("a.txt")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"warning: {op} is in progress", result.stderr)
+
+    def test_mid_rebase_warns(self):
+        self.diverge()
+        subprocess.run(["git", "rebase", "--merge", "side"], cwd=self.repo, env=self.env, capture_output=True)
+        self.assertTrue(os.path.isdir(os.path.join(self.repo, ".git", "rebase-merge")))
+        self.assertWarns("a rebase")
+
+    def test_mid_cherry_pick_warns(self):
+        self.diverge()
+        subprocess.run(["git", "cherry-pick", "side"], cwd=self.repo, env=self.env, capture_output=True)
+        self.assertWarns("a cherry-pick")
+
+    def test_mid_am_warns_as_am(self):
+        self.diverge()
+        patch = os.path.join(self.root, "side.patch")
+        with open(patch, "w", encoding="utf-8") as f:
+            subprocess.run(["git", "format-patch", "-1", "side", "--stdout"], cwd=self.repo, env=self.env, stdout=f, check=True)
+        subprocess.run(["git", "am", "-3", patch], cwd=self.repo, env=self.env, capture_output=True)
+        self.assertWarns("an am")
+
+    def test_clean_state_has_no_warning(self):
+        self.init_repo()
+        self.write("a.txt", "two\n")
+        self.assertNotIn("warning", self.run_script("a.txt").stderr)
+
     def test_repo_without_commits(self):
         self.git("init", "-q")
         self.write("staged.txt", "s\n")

@@ -2,6 +2,18 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] - 2026-10-06
+
+Ideas drawn from jakubkrehel/skills (MIT), rewritten.
+
+### Added
+
+- `verifier`: `references/review-ui.md` for diffs that touch UI files: removed accessibility signals, changes incomplete against their intent, finding status (introduced, regression, pre-existing), and the blast radius of a shared component.
+
+### Fixed
+
+- `collect-diff.sh`: with a dirty tree and no `--base`, commits ahead of upstream are now included; an in-progress rebase, merge, cherry-pick, or revert prints a warning.
+
 ## [1.8.1] - 2026-10-06
 
 ### Fixed

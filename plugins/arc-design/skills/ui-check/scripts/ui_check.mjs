@@ -44,7 +44,7 @@ const MESSAGE_CHECKS = ['js-error', 'console'];
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
   clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
   'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, 'target-touch': 3, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3,
-  'text-over-media-contrast': 1, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
+  'text-over-media-contrast': 1, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'input-zoom': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
   'wide-tracking': 3, 'edge-flush-text': 3, 'nested-card': 3, 'icon-tile': 3, 'heading-rhythm': 3 };
 
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
@@ -87,7 +87,7 @@ function cssPath(el) {
 }
 
 // Runs inside the page. Returns findings as { check, selector, text, detail, review }.
-function audit({ mobile }) {
+function audit({ mobile, phone }) {
   const out = [];
   const vw = document.documentElement.clientWidth;
   const sel = window.__cssPath;
@@ -273,6 +273,8 @@ function audit({ mobile }) {
   for (const el of all) {
     const onclick = typeof el.onclick === 'function', clicker = !!window.__uiClickers?.has(el), ownPointer = getComputedStyle(el).cursor === 'pointer';
     if (!onclick && !clicker && !ownPointer) continue;
+    // React sets a no-op onclick on its root container (iOS click delegation), which is not a handler of the page.
+    if (el._reactRootContainer || Object.keys(el).some((k) => k.startsWith('__reactContainer$'))) continue;
     if (el.matches(NATIVE) || el.hasAttribute('role') || el.hasAttribute('tabindex') || !visible(el) || el.parentElement.closest(`${INTERACTIVE}, ${NATIVE}`)) continue;
     const wraps = !!el.querySelector(`${INTERACTIVE}, ${NATIVE}`);
     const pointer = !wraps && ownPointer && getComputedStyle(el.parentElement).cursor !== 'pointer';
@@ -332,6 +334,17 @@ function audit({ mobile }) {
     }
     const long = rows.map((w) => (w.r - w.l) / ch).filter((n) => n > 80);
     if (long.length >= 2) some('line-length', el, `${long.length} lines over 80 characters, longest ~${Math.round(Math.max(...long))}ch`);
+  }
+
+  // iOS Safari zooms the page into a focused field under 16px and leaves it zoomed; other browsers don't, so only phone widths count.
+  if (phone) {
+    const FIELD = 'input:not([type]), input[type=text], input[type=search], input[type=email], input[type=url], input[type=tel], input[type=password],'
+      + ' input[type=number], textarea, select, [contenteditable]:not([contenteditable=false])';
+    for (const el of document.querySelectorAll(FIELD)) {
+      if (el.disabled || !visible(el)) continue;
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (size < 16) some('input-zoom', el, `${size}px field; iOS Safari zooms the page on focus under 16px → 16px on touch: \`text-base sm:text-sm\` or a (pointer: coarse) query`, false);
+    }
   }
 
   // Cards: a shadow, or a radius with a border or a background of its own.
@@ -633,7 +646,7 @@ for (const width of widths) for (const scheme of schemes) {
   for (const f of await evaluate(`(${vitals})(${JSON.stringify({ perf: opt.perf })})`)) record(f, where);
   if (opt.stress) await evaluate(`(${stress})(${JSON.stringify({ rtl: opt.stress === 'rtl' })})`);
   await evaluate(`(${settle})()`);
-  for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700 })})`)) record(f, where);
+  for (const f of await evaluate(`(${audit})(${JSON.stringify({ mobile: width < 700, phone: width <= 430 })})`)) record(f, where);
   // Each screenshot pair costs a round trip, so only the first 20 texts over media are measured.
   const media = await evaluate('window.__uiMedia.length');
   let unmeasured = 0;

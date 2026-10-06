@@ -76,6 +76,50 @@ def overshoot_easing(line):
     return False
 
 
+# Only a scale-0 that animates is an entrance; a bare one hides an element for good.
+ZERO_SCALE_TW = re.compile(r"(?<![\w-])(?:[\w\[\]=&-]+:)+scale-0(?![\w.-])")
+BARE_SCALE_TW = [re.compile(r"(?<![\w:-])scale-0(?![\w.-])"), re.compile(r"(?<![\w-])(?:transition|animate-|duration-)")]
+# `scale: 0 1` grows one axis (an underline), so only an all-zero value counts.
+ZERO_SCALE = re.compile(r"(?<![\w-])scale\(\s*0(?:\.0+)?\s*(?:,\s*0(?:\.0+)?\s*)?\)|(?<![\w-])scale:\s*['\"]?0(?:\s+0)?(?![\w.%])(?!\s+[\w.-])")
+
+
+def zero_scale(line):
+    if "scale" not in line:
+        return False
+    if ZERO_SCALE.search(line):
+        return True
+    return any(ZERO_SCALE_TW.search(s) or all(rx.search(s) for rx in BARE_SCALE_TW) for s in QUOTED.findall(line))
+
+
+SPACING_TW = re.compile(r"(?<![\w-])-?(?:p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-\[(\d+(?:\.\d+)?)px\]")
+# The value ends at a quote, comma, or tag edge too, so a one-line JSX style object or HTML attribute doesn't run into the next declaration.
+SPACING_CSS = re.compile(r"(?<![\w-])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?:\s*['\"`]?((?:[^;{}'\"`,<>()]|\([^()]*\))+)")
+PX = re.compile(r"(?<![\w.])-?(\d+(?:\.\d+)?)px\b")
+
+
+def off_grid(v):
+    v = float(v)
+    return v not in (1, 2) and v % 4 != 0
+
+
+def off_scale_spacing(line):
+    if any(off_grid(v) for v in SPACING_TW.findall(line)):
+        return True
+    return any(off_grid(v) for m in SPACING_CSS.finditer(line) for v in PX.findall(m[1]))
+
+
+SMALL = r"(?:0\.5|1|1\.5|2|2\.5|3)"
+# A skeleton bar is also round and pulsing; only a dot small on both axes is a status dot.
+DOT_SIZE = (r"(?<![\w-])size-" + SMALL + r"(?![\w.-])|^(?=.*(?<![\w-])h-" + SMALL + r"(?![\w.-]))(?=.*(?<![\w-])w-" + SMALL + r"(?![\w.-]))")
+PULSE_DOT = same_string(r"(?<![\w-])animate-pulse(?![\w-])", r"(?<![\w-])rounded-full(?![\w-])", DOT_SIZE)
+
+
+def pulsing_dot(line):
+    if re.search(r"\banimate-ping\b|animation:\s*ping\b", line):
+        return True
+    return "animate-pulse" in line and PULSE_DOT(line)
+
+
 WIDE_SHADOW_TW = r"(?<![\w-])shadow-(?:xl|2xl)(?![\w-])|(?<![\w-])shadow-\[(?:-?[\d.]+(?:px)?_){2}(?:2[4-9]|[3-9]\d|\d{3})px"
 HAIRLINE_SHADOW_TW = same_string(r"(?<![\w:-])border(?![\w-])", WIDE_SHADOW_TW)
 WIDE_SHADOW_CSS = re.compile(r"box-?[sS]hadow:\s*['\"]?(?:inset\s+)?(?:-?[\d.]+(?:px|rem)?\s+){2}(?:2[4-9]|[3-9]\d|\d{3})px")
@@ -89,12 +133,13 @@ RULES = [
     ("1-color", "pure black surface (near-black + layers?)", re.compile(r"^(?!.*(?<![\w-])(?:bg-)?opacity-\d).*?(?<![\w/-])bg-black(?![\w/-])|(?:background(?:-color)?:\s*|backgroundColor:\s*['\"]|bg-\[)(?:#000(?:000)?\b|black\b|rgb\(\s*0[\s,]+0[\s,]+0\s*\))")),
     ("2-decoration", "tinted tile/pill (decorative icon box or delta pill?)", re.compile(r"\bbg-" + COLORS + r"-\d{2,3}/(?:[5-9]|1\d|20)\b|\bbg-" + COLORS + r"-(?:50|100)\b(?=[^\"'`]*\btext-" + COLORS + r"-[4-8]00\b)")),
     ("3-hierarchy", "arbitrary font size (on the scale?)", re.compile(r"\btext-\[(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em)\]|\bfontSize:\s*['\"]?\.?\d")),
+    ("3-hierarchy", "off the spacing scale (4px grid: p-3, gap-4, or a spacing token?)", Check(off_scale_spacing)),
     ("3-hierarchy", "weight above 600", re.compile(r"\bfont-(?:bold|extrabold|black)\b|font-weight:\s*(?:[7-9]00|bold(?:er)?)\b|\bfontWeight:\s*['\"]?(?:[7-9]00|bold)")),
     ("3-hierarchy", "weight other than 400/600 (500 or thin weights)", re.compile(r"\bfont-(?:thin|extralight|light|medium)\b|font-weight:\s*(?:[1-3]00|500)\b|\bfontWeight:\s*['\"]?(?:[1-3]00|500)\b")),
     ("3-hierarchy", "display tracking tighter than -0.04em", re.compile(r"(?<![\w-])tracking-tighter\b|(?<![\w-])tracking-\[" + NEG_EM + r"\]|letter-?[sS]pacing:\s*['\"]?" + NEG_EM)),
     ("3-hierarchy", "justified text (uneven word gaps; left-align?)", re.compile(r"text-align:\s*justify\b|(?<![\w-])text-justify(?![\w-])|textAlign:\s*['\"]justify")),
     ("2-decoration", "colored side border (accent bar on a card or block?)", Check(colored_side_border)),
-    ("2-decoration", "pulsing dot (signal needs silence)", re.compile(r"\banimate-ping\b|animation:\s*ping\b")),
+    ("2-decoration", "pulsing dot (pulse only for real live state)", Check(pulsing_dot)),
     ("2-decoration", "blinking cursor (decorative typing effect)", re.compile(r"(?<![\w-])animate-(?:blink|caret|cursor)\b|(?<![\w-])animate-pulse\b[^<>]*>\s*(?:\||▍|▌|█|_|&#124;|\{['\"`][|▍▌█_]['\"`]\})\s*<|animation(?:-name)?:\s*['\"]?(?:blink|caret|cursor)[\w-]*")),
     ("2-decoration", "zebra stripes (hairline + hover instead?)", re.compile(r"\b(?:even|odd):bg-|(?:\btr|\brow\w*|&)[^{,\s]*:nth-(?:child|of-type)\(\s*(?:even|odd|2n(?:\s*\+\s*1)?)\s*\)")),
     ("4-surface", "large radius (>=16px)", re.compile(r"\brounded(?:-[trblse]{1,2})?-(?:[2-4]xl|\[(?:1[6-9]|[2-9]\d)px\])(?![\w-])|border-radius:\s*(?:(?:1[6-9]|[2-9]\d)px|(?:1(?:\.\d+)?|[2-9](?:\.\d+)?)rem)")),
@@ -111,7 +156,7 @@ RULES = [
     ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*[A-Za-z]")),
     ("6-marketing", "scroll cue", re.compile(r"\bscroll\s+(?:down|to\s+(?:explore|discover|learn|see|continue|begin|start|view))\b|↓\s*scroll|>\s*scroll\s*<", re.I)),
     ("6-marketing", "saving as a percent (write it in money)", re.compile(r"\bsave\s+(?:up\s+to\s+)?\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?\s?%\s+off\b|>\s*[-−]\s?\d{1,2}\s?%\s*<", re.I)),
-    ("7-code", "100vh (h-dvh for a fixed app shell, min-h-dvh for a full-height section)", re.compile(r"(?<![\w-])(?:min-|max-)?h-(?:screen\b|\[100vh\])|(?<![\w-])(?:min-|max-)?height:\s*100vh")),
+    ("7-code", "100vh (h-dvh for a fixed app shell, min-h-svh for a full-height section)", re.compile(r"(?<![\w-])(?:min-|max-)?h-(?:screen\b|\[100vh\])|(?<![\w-])(?:min-|max-)?height:\s*100vh")),
     ("7-code", "scroll event listener", re.compile(r"addEventListener\(\s*['\"]scroll|\bonscroll\s*=")),
     ("7-code", "random color (hash a stable id instead?)", re.compile(r"(?:colou?r|\bbg\b|\bhue\b|palette|hsl|['\"`]#)[^;]*Math\.random\(\)|Math\.random\(\)[^;]*(?:colou?r|\bbg\b|\bhue\b|palette)", re.I)),
     ("7-code", "hand-rolled compact number (Intl.NumberFormat notation: 'compact'?)", re.compile(r"/\s*1(?:e[369]|_?000(?:_?000){0,2})\s*\)?\s*\.toFixed\(\d?\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMBkmb](?![A-Za-z])|\.toFixed\(\d\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMB](?![A-Za-z])")),
@@ -134,6 +179,8 @@ RULES = [
     ("7-code", "context menu blocked page-wide (only on its own objects?)", re.compile(r"(?:document|window|document\.body)\.(?:addEventListener\(\s*['\"]contextmenu['\"]|oncontextmenu\s*=)|\boncontextmenu=['\"]\s*return false")),
     ("7-code", "transition: all (list the properties)", re.compile(r"(?<![\w-])transition-all(?![\w-])|transition(?:-property)?:\s*['\"]?all\b|transitionProperty:\s*['\"]all\b")),
     ("7-code", "transition on a layout property (transform, or grid-template-rows for a collapse?)", re.compile(r"(?:transition(?:-property)?:|transitionProperty:)\s*['\"]?[^;'\"}]*?(?<![\w-])(?:max-|min-)?(?:width|height|top|left|right|bottom)\b|(?<![\w-])transition-\[[^\]]*?(?<![\w-])(?:max-|min-)?(?:width|height|top|left|right|bottom)\b")),
+    ("7-code", "entrance from zero scale (enter from ~0.95 with opacity 0, see ui-interaction/references/motion.md)", Check(zero_scale)),
+    ("7-code", "ease-in on a UI transition (delays the response: ease-out, --ease-exit for exits)", re.compile(r"(?<![\w-])(?:[\w\[\]=&-]+:)*ease-in(?![\w-])(?=[^\"'`]*[\"'`])|transition(?:-timing-function)?:[^;{}]*?(?<![\w-])ease-in(?![\w-])|transitionTimingFunction:\s*['\"]ease-in['\"]")),
     ("7-code", "bounce or overshoot easing (cubic-bezier y outside 0-1)", Check(overshoot_easing)),
     ("7-code", "outline removed with no focus-visible style in the file", re.compile(r"(?<![\w:-])outline-none(?![\w-])|(?<![\w-])outline:\s*['\"]?(?:none|0)(?![\w.-])")),
     ("7-code", "hidden reveal start state without a JS guard (blank if the script fails)", re.compile(r"(?<![\w-])opacity:\s*['\"]?0(?![\w.%])|(?<![\w:-])opacity-0(?![\w-])")),
@@ -237,6 +284,10 @@ def centered_share(text):
     return centered, total
 
 
+# react-icons bundles unrelated sets (fa, md, hi), so each subpath counts as its own library.
+ICON_IMPORT = re.compile(r"""(?:\bfrom|\bimport|\brequire\()\s*\(?\s*['"](lucide-react|react-icons/\w+|@heroicons/react|@radix-ui/react-icons|@tabler/icons-react|@phosphor-icons/react|react-feather|@fortawesome|@mui/icons-material|iconoir-react)(?:/[^'"]*)?['"]""")
+
+
 DELTA = re.compile(r"(?<![\w(,.\-])(?<!,\s)[+\-−]\s?\d+(?:\.\d+)?%(?!\s*[,)])")
 NUMERIC_HINT = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b")
 
@@ -318,11 +369,16 @@ def scan(paths):
                                                 "tell": f"{len(badges)} highlight badges (one tier only?)",
                                                 "snippet": "lines " + ", ".join(map(str, badges[:8]))})
                     break
+        icon_libs = {}
+        # The file-level icon hit is reported ahead of this file's per-line hits, so output order stays stable.
+        icon_at = len(hits.get("2-decoration", ()))
         dashes = []
         for i, line in enumerate(lines, 1):
             if len(line) > MAX_LINE:
                 skipped += 1
                 continue
+            for lib in ICON_IMPORT.findall(line):
+                icon_libs.setdefault(lib, i)
             snippet = line.strip()[:140]
             for principle, label, rx in RULES:
                 if rx.search(line):
@@ -340,6 +396,10 @@ def scan(paths):
                     delta_locs[key].append(f"{path}:{i}")
             if markup and NUMERIC_HINT.search(line):
                 numeric_files.add(path)
+        if len(icon_libs) >= 2:
+            hits["2-decoration"].insert(icon_at, {"file": path, "line": min(icon_libs.values()),
+                                                  "tell": f"{len(icon_libs)} icon libraries in one file (one library per surface, see design/references/icons.md)",
+                                                  "snippet": ", ".join(sorted(icon_libs))})
         if len(dashes) >= DASH_MIN and len(text) <= DASH_MAX_CHARS * len(dashes):
             hits["6-marketing"].append({"file": path, "line": dashes[0], "tell": f"{len(dashes)} em/en dashes in copy, one per {len(text) // len(dashes)} chars (separators?)",
                                         "snippet": "lines " + ", ".join(map(str, sorted(set(dashes))[:8]))})

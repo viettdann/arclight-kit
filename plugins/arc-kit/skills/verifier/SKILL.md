@@ -34,7 +34,7 @@ The in-scope paths are the files the user named or this session edited in this c
 
 When this session committed any of its work, find its base: read `git log -10 --format='%h %ar %s'`, identify the oldest commit belonging to this session, and ask the user to confirm that boundary rather than guessing how many commits are yours; commits from an earlier session look identical from here.
 
-Then run `sh "${CLAUDE_SKILL_DIR}/scripts/collect-diff.sh" [--base <oldest>~1] <paths>`. It writes the uncommitted changes (or, with no `--base` and nothing uncommitted, the commits not yet pushed), every untracked file, and outside git the whole files, to one temp file, and prints its path (`<diff>` below). Phase 1 reviews from it; when Phase 0 edits code, rerun the script and use the new path. Delete each `<diff>` after the summary. Exit 2 means nothing in scope changed: stop and ask the user for a review scope rather than reviewing nothing.
+Then run `sh "${CLAUDE_SKILL_DIR}/scripts/collect-diff.sh" [--base <oldest>~1] <paths>`. It writes the uncommitted changes plus, with no `--base`, the commits not yet pushed to the upstream, every untracked file, and outside git the whole files, to one temp file, and prints its path (`<diff>` below). A `warning:` line on stderr means a rebase, merge, cherry-pick, or revert is in progress, so the diff mixes that operation with this session's work: tell the user and ask whether to review now or after it finishes. Phase 1 reviews from it; when Phase 0 edits code, rerun the script and use the new path. Delete each `<diff>` after the summary. Exit 2 means nothing in scope changed: stop and ask the user for a review scope rather than reviewing nothing.
 
 Merge the Step 2 lists, deduplicate, then mark each task against the diff:
 
@@ -73,7 +73,7 @@ Under option 1, finish tasks that are single-file and clearly defined, and corre
 
 ## Phase 1: Five Review Agents in Parallel
 
-**Small diffs.** Under 5 files and under 50 lines, read the five checklists and run the reviews inline instead of spawning agents, under the same output contract and do-not-flag list. Agent 5 still runs as a fresh agent when the diff touches authentication, authorization, payments, secrets, or a migration that deletes data, since size says nothing about risk.
+**Small diffs.** Under 5 files and under 50 lines, read the five checklists (and the UI checklist when it applies) and run the reviews inline instead of spawning agents, under the same output contract and do-not-flag list. Agent 5 still runs as a fresh agent when the diff touches authentication, authorization, payments, secrets, or a migration that deletes data, since size says nothing about risk.
 
 Otherwise launch the five reviewers concurrently with the Agent tool, all in one message. Never pass this session's account of why the code works, and never use `subagent_type: "fork"`: both carry the reasoning under review.
 
@@ -84,6 +84,8 @@ Otherwise launch the five reviewers concurrently with the Agent tool, all in one
 | 3. Efficiency | `${CLAUDE_SKILL_DIR}/references/review-efficiency.md` |
 | 4. Comments and docs | `${CLAUDE_SKILL_DIR}/references/review-comments-docs.md` |
 | 5. Correctness, security, and tests | `${CLAUDE_SKILL_DIR}/references/review-correctness.md` |
+
+When the diff touches UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, or Tailwind classes), Agent 5 also gets `${CLAUDE_SKILL_DIR}/references/review-ui.md`.
 
 **Reviewer prompt.** Each agent's prompt carries:
 
@@ -122,7 +124,7 @@ Wait for every spawned reviewer. An agent that errored, timed out, or returned n
 6. **Apply every other fix directly**, within these limits:
    - A fix adds no comment unless it states a non-obvious invariant in one line.
    - A simplification never removes input validation at a trust boundary, error handling that prevents data loss, or a security check; drop that part of the finding.
-   - Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill or agent file the user did not ask to review, or when its fix contradicts an explicit plan requirement or a Phase 0 answer from the user, and record the reason in the summary.
+   - Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill or agent file the user did not ask to review, or when its fix contradicts an explicit plan requirement or a Phase 0 answer from the user, or when its `issue` starts with `Pre-existing` (`references/review-ui.md`), and record the reason in the summary.
    - A stale reference in a file under `docs/` is reported in the summary, not edited.
 7. **Run the checks.** After the last fix, run the project's documented lint, type-check, and the tests covering the touched files; run a full or slow suite through the `arc-kit:test-runner` agent when it is available. Record each command's own exit code before any pipe, `tail`, or parser (`cmd > log 2>&1; echo $?`). Exit 127 (command not found) is a failure, not a skip; a run whose output couldn't be captured is an error, never a pass. Fix what the fixes broke; report any other failure with its output.
 

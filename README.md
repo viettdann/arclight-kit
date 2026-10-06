@@ -14,7 +14,7 @@ Claude Code marketplace with three plugins:
 | It exists and you want a new look (new style or direction), keeping content, URLs, and behavior | `arc-design:redesign` |
 | It exists and looks generated; keep the layout, remove the AI tells | `arc-design:restyle` |
 | A page runs; measure what breaks when it renders: overflow, clipped or overlapping text, contrast per theme, focus, names, targets, images, JS errors | `arc-design:ui-check` |
-| Behavior and states: forms, tables, overlays, feedback, destructive actions, settings | `arc-design:ui-interaction` (used alongside the others) |
+| Behavior and states: forms, tables, overlays, feedback, destructive actions, settings, motion | `arc-design:ui-interaction` (used alongside the others) |
 | A control does nothing or the wrong thing; a shared store action changed: trace each handler's state writes against what its label promises | `arc-design:state-check` |
 | Session start in a project without your own CLAUDE.md: load the daily defaults (chat language, scope of a go-ahead, shared-worktree git, docs, comments, commits, reuse and minimal code, migrations, UI). Lowest priority: the project's CLAUDE.md and the running skill win; reloaded after compaction | `/arc-kit:arc` (user-invoked only) |
 | Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |

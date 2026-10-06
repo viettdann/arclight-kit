@@ -8,6 +8,14 @@
 - On mobile use a segmented control for up to 4–5 options; beyond that, a scrolling row or a select/sheet.
 - When tabs are views, the active tab is in the URL.
 
+## Composite widgets
+
+A toolbar, tablist, listbox, menu, radio group, tree, or grid is one Tab stop: Tab enters it and leaves it, arrows move inside it. Otherwise a 30-item toolbar costs 30 Tab presses to get past.
+
+- Roving tabindex: the active item has `tabindex="0"`, every other item `tabindex="-1"`, and moving the focus moves the `0`. Tabbing back in lands on the last active item, not the first. (`aria-activedescendant` is the alternative when focus must stay on an input, as in a combobox.)
+- Keys: Left/Right in a horizontal widget, Up/Down in a vertical one, all four in a grid; Home/End to the first and last item (Ctrl+Home/End in a grid); type-ahead in lists, menus, and trees jumps to the next item starting with the typed letters. Arrows stop at the ends in toolbars and grids and wrap in menus and tablists; pick one per widget type and keep it.
+- Arrows only move focus. Selection follows focus in tabs and single-select radios; in a listbox, grid, or tree with multi-select, Space or Enter selects so arrowing past an item doesn't change it.
+
 ## Accordion
 
 - The header is a `<button>` with `aria-expanded` and `aria-controls`, or use `<details>`/`<summary>`.
@@ -27,6 +35,7 @@
 The browser restores scroll on Back for real page loads; a client-side router has to do it itself.
 
 - A new navigation (link, push) starts at the top and moves focus to the new page's heading. Back and Forward restore the exact position the entry was left at.
+- Every route change sets `document.title` to the new page ("Invoices · Acme") and moves focus to its `<h1>` (`tabindex="-1"`, no visible ring needed for this programmatic focus), or to `<main>` when there is no heading. A client-side route swaps content silently: without both, a screen reader stays on the old link and announces nothing, and the tab and history entries all carry the same title.
 - Prefer the router's built-in restoration (React Router `<ScrollRestoration>`, Vue Router `scrollBehavior`, the Next.js and SvelteKit defaults). Hand-rolled: `history.scrollRestoration = "manual"`, save the position on leave (the router's before-navigate hook, plus `pagehide`), and restore on return. Never on a scroll listener (`baseline.md`).
 - Key saved positions by history entry (`history.state` key or `location.key`), not by path: the same URL can sit in history twice at different positions.
 - Restore after the content has height: keep the list's data cached so it renders immediately on Back, or restore once it has rendered. Restoring before the data arrives lands at zero.
@@ -41,6 +50,7 @@ The browser restores scroll on Back for real page loads; a client-side router ha
 
 ## Checks
 
-- [ ] Back restores the exact scroll position (window or inner pane); new routes start at the top.
+- [ ] Back restores the exact scroll position (window or inner pane); new routes start at the top, update `document.title`, and focus the new `<h1>`.
+- [ ] Each composite widget is one Tab stop with arrows, Home/End, and type-ahead where it lists items.
 - [ ] Jump links and focused controls land below the sticky header.
 - [ ] Trunk test: with only the navigation visible, a user can tell the site, the current page, the main sections, where they are among them, and how to search.

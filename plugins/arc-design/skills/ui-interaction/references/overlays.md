@@ -15,6 +15,7 @@ Never stack modals. Never put primary navigation in a blocking overlay. Reach fo
 ## Modal
 
 - Beyond the baseline focus rules: scrim behind, body scroll locked, titled via `aria-labelledby`.
+- Native `<dialog>` opened with `showModal()` makes the rest of the page inert on its own. A custom modal (a `div` with `role="dialog"` and `aria-modal="true"`, a modal drawer or sheet) sets `inert` on the page content outside it while open and removes it on close: a focus trap alone stops Tab, but a screen reader's virtual cursor and a pointer can still reach the page behind. Render the overlay outside the element that gets `inert`, or it disables itself.
 - Initial focus goes to the first field, or to the least destructive button in a confirmation.
 - A scrim click closes only if there is no unsaved input.
 
@@ -46,6 +47,6 @@ Never stack modals. Never put primary navigation in a blocking overlay. Reach fo
 
 ## Checks
 
-- [ ] Every overlay closes with Escape and returns focus.
+- [ ] Every overlay closes with Escape and returns focus; a custom modal makes the background `inert` while open.
 - [ ] Menus, popovers, and tooltips never clip at viewport edges.
 - [ ] A context menu opens at the pointer and mirrors at the edges, takes over only its own objects, opens from the keyboard, and has a visible "…" and a long press with the same actions.

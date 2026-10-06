@@ -8,8 +8,8 @@ Immersive, paced pages where imagery, scale, and scroll tell a story. Reads as d
 
 - **Canvas:** deep or bright, picked from the brand and its imagery. Dark is common here but the design rule still holds: dark only when the brief asks for it or names a dark reference, built per `dark-mode.md`. In dark tech, one luminous accent works as the single light source (`materials.md`, Gradient and glow); that element is exempt from the marketing profile's glow tell, and nothing else glows.
 - **Type:** display at viewport scale, `clamp(3.5rem, 10vw, 11rem)`, tracking -0.03 to -0.05em, line-height 0.9–1.0 (0.9 only for uppercase or lines without descenders, `typography.md`). Display may use one extra weight (300 or 700, from a variable font); body stays 400/600 at 17–18px. A display line still fits in 2–3 lines at 390px, and the marketing profile's hero rules hold: the CTA is visible in the first viewport.
-- **Imagery:** full-bleed photo or video carries the mood, one subject per section. Video is muted, `playsinline`, with a poster that loads first, and pauses under `prefers-reduced-motion: reduce`.
-- **Pacing:** a section is one beat. Alternate dense and quiet beats; a full-height section (`min-height: 100dvh`) only where its content fills it.
+- **Imagery:** full-bleed photo or video carries the mood, one subject per section. Video is muted, `playsinline`, with a poster that loads first, and pauses under `prefers-reduced-motion: reduce`. A shader, particle field, or WebGL scene follows `canvas-effects.md`: one per page, behind a poster, gated and paused offscreen.
+- **Pacing:** a section is one beat. Alternate dense and quiet beats; a full-height section (`min-height: 100svh`) only where its content fills it. `svh`, not `dvh`, for the reason in the marketing profile.
 - **Texture and glass:** optional film grain, and glass for floating navigation and controls over imagery, both per `materials.md`.
 - **Motion:** each section gets at most one choreographed movement; the rest of the page is still. Entrances 400–800ms with `--ease-enter`. The movement must serve the story (reveal, transform, sequence); the marketing profile's one-sentence reason still applies.
 
@@ -19,11 +19,20 @@ Immersive, paced pages where imagery, scale, and scroll tell a story. Reads as d
 - **Native scroll.** No scroll hijacking that snaps between sections or changes wheel distance. A smooth-scroll library (Lenis) only when the brief asks for it, off under reduced motion.
 - **Pinned sections and horizontal journeys:** one or two per page, never two in a row, each pinned for at most about two viewports. Keyboard and anchor links still reach everything; phones and reduced motion get a plain stacked layout.
 - **Parallax** moves imagery and decoration only, never text.
-- **Split text:** split by word or by grapheme (`Intl.Segmenter`), so diacritics and emoji stay whole. The split spans are `aria-hidden="true"` and the full string sits beside them in a visually hidden span, so screen readers read the sentence, not letters.
+- **Split text:** split by word or by grapheme (`Intl.Segmenter`), so diacritics and emoji stay whole. The split spans are `aria-hidden="true"` and the full string sits beside them in a visually hidden span, so screen readers read the sentence, not letters. Split by walking the text nodes (`TreeWalker`) and wrapping each one in place, not by rewriting `innerHTML` from `textContent`, so links and `<em>` inside the line survive; keep the original nodes and restore them on teardown.
 - **Cursor effects** (custom cursor, magnetic buttons) only under `@media (hover: hover) and (pointer: fine)`. The custom cursor tracks the real hotspot, and the native cursor returns over text, inputs, and selection.
 - **Cost:** animate only `transform` and `opacity` (`${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`). Set `will-change` just before a heavy animation and remove it after; never leave it on many elements in the stylesheet.
 - **Tools:** CSS scroll-driven animations (`animation-timeline: view()`) where support allows, otherwise the project's existing library (Motion, GSAP ScrollTrigger). Don't add a library for one reveal.
 - **Reduced motion** (`prefers-reduced-motion: reduce`): no pinning, parallax, scroll-linked movement, or smooth scrolling; content appears in place, opacity fades allowed.
+
+## Scroll-story robustness
+
+A scroll story breaks on everything except a slow forward scroll unless its state is a function of the scroll position.
+
+- **Derive, never accumulate.** Each frame, compute the scene state (chapter, progress within it) from `scrollY` against measured section offsets. Never keep a `currentChapter` that wheel or scroll deltas step forward: it drifts on scrollbar drags, `Home`/`End`, anchor jumps, and back navigation.
+- **Same state at every entry.** A reload at depth, a deep link, and a back navigation land on exactly the frame a reader scrolling there would see. Test by recording the visible state at a few depths scrolling forward, scrolling back, and reloading there; all three must match.
+- **Re-render without a scroll event.** Render on `pageshow` (a bfcache restore fires no `scroll`), on `load`, and after `document.fonts.ready` (a font swap moves every section offset). Measure offsets again on width changes, not on height-only resizes from the mobile toolbar.
+- **Hidden chapters are out of reach.** A chapter the scroll has hidden gets `visibility: hidden` plus `inert`. Opacity 0 alone leaves its links focusable and its text read by screen readers, so a keyboard user tabs into a chapter nobody can see.
 
 ## Signature moves (examples)
 
