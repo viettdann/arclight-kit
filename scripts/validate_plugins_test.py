@@ -52,6 +52,12 @@ class PackageValidationTest(unittest.TestCase):
             f.write("\nRead `../missing/SKILL.md`.\n")
         self.assert_error("invalid bundled reference")
 
+    def test_broken_reference_in_supporting_document(self):
+        path = self.root / "plugins/arc-design/skills/design/references/workflow.md"
+        with path.open("a") as f:
+            f.write("\nRead `references/missing.md`.\n")
+        self.assert_error("references/workflow.md: invalid bundled reference references/missing.md")
+
     def test_legacy_tool_instruction(self):
         with (self.root / "plugins/arc-design/skills/design/SKILL.md").open("a") as f:
             f.write("\nCall AskUserQuestion.\n")

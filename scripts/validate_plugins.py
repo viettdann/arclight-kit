@@ -168,8 +168,11 @@ def validate(root=ROOT):
                 text = doc.read_text(encoding="utf-8")
                 if LEGACY.search(text):
                     errors.append(f"{doc.relative_to(root)}: legacy runtime instruction")
-                for relative in set(BUNDLED_PATH.findall(text)) if doc.name == "SKILL.md" else ():
-                    target = (doc.parent / relative).resolve()
+                parts = doc.relative_to(base).parts
+                skill_doc = len(parts) >= 3 and parts[0] == "skills"
+                reference_root = base / parts[0] / parts[1] if skill_doc else doc.parent
+                for relative in set(BUNDLED_PATH.findall(text)) if skill_doc else ():
+                    target = (reference_root / relative).resolve()
                     if not target.is_relative_to(base.resolve()) or not target.is_file():
                         errors.append(f"{doc.relative_to(root)}: invalid bundled reference {relative}")
         except (OSError, ValueError, KeyError, TypeError) as exc:

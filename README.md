@@ -71,6 +71,8 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 
 Only load references needed by the task. Bundled script paths resolve from the installed skill's directory, while target project paths resolve from the project's working directory.
 
+Keep each `SKILL.md` within 8,000 UTF-8 bytes, including frontmatter. Codex truncates larger skill prompts at this [runtime limit](https://github.com/openai/codex/blob/main/codex-rs/ext/skills/src/render.rs). Put detailed workflows and examples in `references/` and state when to read them in the entrypoint. Paths inside those references resolve from the skill directory unless stated otherwise. Skill lint enforces the entrypoint budget.
+
 ## Runtime requirements
 
 - Python 3.11+ for `fresh-air` and repository validation; Python 3 for the other Python helpers.

@@ -7,7 +7,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGINS = os.path.join(ROOT, "plugins")
 DESCRIPTION_MAX = 930
 CATALOG_MAX = 13000
-SKILL_BYTES_MAX = 24000
+SKILL_BYTES_MAX = 8000
 PATH_REF = re.compile(r"(?<![\w./-])((?:references|scripts|assets|examples)/[\w./-]*\w\.\w+)")
 ROOT_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]*\w)")
 SKILL_DIR_REF = re.compile(r"\$\{CLAUDE_SKILL_DIR\}/([\w./-]*\w)")
@@ -71,8 +71,9 @@ class SkillLintTest(unittest.TestCase):
 
     def test_skill_body_budget(self):
         for plugin, name, path in components():
-            size = os.path.getsize(path)
-            self.assertLessEqual(size, SKILL_BYTES_MAX, f"skill-lint: {path} is {size} bytes")
+            with self.subTest(skill=f"{plugin}:{name}"):
+                size = os.path.getsize(path)
+                self.assertLessEqual(size, SKILL_BYTES_MAX, f"skill-lint: {path} is {size} bytes; move details into references/")
 
     def test_referenced_paths_exist(self):
         for path in markdown_files():
