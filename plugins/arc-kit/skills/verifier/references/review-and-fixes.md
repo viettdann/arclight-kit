@@ -14,7 +14,9 @@ Cover the five review areas below, each with its checklist:
 | 4. Comments and docs | `references/review-comments-docs.md` |
 | 5. Correctness, security, and tests | `references/review-correctness.md` |
 
-**Small diffs.** Under 5 files and under 50 lines, read the five checklists and review inline. When delegation is allowed, retain a fresh security reviewer for authentication, authorization, payments, secrets, or migrations that delete data; otherwise report that isolation was unavailable.
+When the diff touches UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, or Tailwind classes), reviewer 5 also reads `references/review-ui.md`, including when reviewing inline.
+
+**Small diffs.** Under 5 files and under 50 lines, read the five checklists (and the UI checklist when it applies) and review inline. When delegation is allowed, retain a fresh security reviewer for authentication, authorization, payments, secrets, or migrations that delete data; otherwise report that isolation was unavailable.
 
 **Larger diffs.** When the user or applicable instructions authorize delegation and the runtime provides it, give each area to its own worker, on the inherited session model, within the runtime's concurrency limits, batching when the limit is lower than five. Otherwise review inline, one checklist at a time. A diff touching authentication, authorization, payments, secrets, or a migration that deletes data sends reviewer 5 to a fresh worker whenever delegation is available, since size says nothing about risk. Never pass a worker this session's account of why the code works, and never give it a copy of this conversation: both carry the reasoning under review. Do not assume a specific agent tool name, model, or fork mechanism.
 
@@ -54,7 +56,7 @@ Wait for every delegated reviewer. A worker that errored, timed out, or returned
 5. **Apply fixes within the authorized task.** For a review-only request, report suggested fixes and leave files unchanged. For implementation or cleanup, fix confirmed findings without another permission gate, within these limits:
    - A fix adds no comment unless it states a non-obvious invariant in one line.
    - A simplification never removes input validation at a trust boundary, error handling that prevents data loss, or a security check; drop that part of the finding.
-   - Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill file the user did not ask to review, or when its fix contradicts an explicit plan requirement or a Phase 0 answer from the user, and record the reason in the summary.
+   - Skip a finding only when the flagged code is outside this diff (stale references are the exception: the diff made them wrong), when it sits in a skill file the user did not ask to review, or when its fix contradicts an explicit plan requirement or a Phase 0 answer from the user, or when its `issue` starts with `Pre-existing` (`references/review-ui.md`), and record the reason in the summary.
    - Never accept a finding that weakens a contract or changes intended behavior mechanically; preserve unrelated edits.
    - Fixes that delete files or revert most of the diff go to the user as a question instead, since they undo the work under review.
 6. **Run proportionate checks.** After the last fix, run the project's required lint, type-check, and the tests covering the touched files; run a full or slow suite under the test runner brief (`../executor/references/test-runner.md`). For documentation or metadata edits, validate syntax, links, and consistency instead of inventing tests. Do not install or run e2e tooling unless requested. Record each check's actual exit code before piping or parsing output. Missing commands and uncaptured output are failures, never passes. Fix what the fixes broke; distinguish pre-existing failures from regressions and report them with their output.

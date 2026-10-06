@@ -36,11 +36,12 @@ Read and follow steps 0–7 in `references/workflow.md` before designing: parse 
 
 When the user asks for options, variants, or directions, explore before building the real surface:
 
-1. Write N named one-line concepts (three unless the user gives a number). With a `DESIGN.md`, vary only layout and composition; without one, vary type, palette, and layout.
-2. Reject any pair whose one-line headlines could be swapped without anyone noticing: they are one concept. Replace it.
-3. Confirm the concepts with the user before building.
-4. Build each as a static HTML file in a fresh temp dir (`mktemp -d`), from the brief's real content and the tokens of step 5, and shoot each at 1280 and 390 with the screenshot script (step 7). Present the shots by concept name with their paths.
-5. Build the chosen concept through the workflow; it becomes the direction recorded in `DESIGN.md`.
+1. Name the axis the variants differ on (density, hierarchy, layout, type, palette), one per run unless the user asks for a broad exploration; with a `DESIGN.md`, the axis is layout or composition. A variant set that differs on everything can't tell the user which choice they preferred.
+2. Write N named one-line concepts (three unless the user gives a number), each at a different position on that axis.
+3. Reject any pair whose one-line headlines could be swapped without anyone noticing: they are one concept. Replace it.
+4. Confirm the concepts with the user before building.
+5. Build each as a static HTML file in a fresh temp dir (`mktemp -d`), from the brief's real content and the tokens of workflow step 5, and shoot each at 1280 and 390 with the screenshot script (step 7). Present the shots by concept name with their paths, plus a table with one row per concept: what it is right for, and what it costs. Don't mark a favourite; the user picks.
+6. Build the chosen concept through the workflow; it becomes the direction recorded in `DESIGN.md`. Delete the temp dir afterwards; the variants are never a source for later work.
 
 ## Rules for every profile and style
 

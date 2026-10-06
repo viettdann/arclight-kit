@@ -25,6 +25,8 @@ All three pass 4.5:1 on every surface they sit on; check them with the design sk
 - Two weights: 400 to read (body, cells, descriptions), 600 to scan (headings, key values, the label that anchors a row).
 - Weight marks single elements. A bold paragraph, a bold table, or bold on every label leaves nothing to find.
 - No 500, and nothing above 600 unless the chosen style lists it.
+- A style that uses light weights (100–300) keeps them to display sizes of about 28px and up: below that the thin strokes break up on screen and fall under contrast even when the color passes.
+- Set weight with `font-weight`, never `font-variation-settings: "wght" 600`: the variation setting does nothing on a static fallback font, so the heading silently renders at 400 when the variable file fails to load.
 
 ## Line-height and tracking
 
@@ -45,12 +47,20 @@ A heading belongs to the text below it: the space above a heading is larger than
 ## Loading fonts
 
 - Load only the families and weights the scale uses, `font-display: swap`, and preload the one file the first viewport needs.
+- Load every weight and style the page actually renders, italic included: a missing one makes the browser smear or slant the nearest file into a faux bold or italic with wrong spacing. `font-synthesis: none` during review turns each missing file into a visible plain-weight fallback instead.
 - Match the fallback's metrics (`size-adjust`, `ascent-override`, or the framework's font loader such as `next/font`) so the swap doesn't reflow the page; ui-check reports that reflow as layout shift.
 
 ## Measure
 
 - Prose runs 45–75 characters per line (`max-width: 65ch`, `max-w-prose`).
 - Cap the text element, not the container: the page keeps its full width, and tables, cards, and grids still fill it.
+- Headings get `text-wrap: balance`, so a two-line title splits into even lines instead of one full line and a dangling word; Chromium balances only up to about 6 lines, so it does nothing on long text. Body text gets `text-wrap: pretty`, which avoids a single word alone on the last line of a paragraph. Neither goes on a container of user content or a live-editing field, where the extra layout pass costs on every change.
+
+## Characters and case
+
+- Store text in its natural case and apply uppercase or small caps with `text-transform`: a string typed in capitals is read letter by letter by some screen readers, copies as capitals, and forces translators to keep the case.
+- Use the real ellipsis `…` (U+2026), not three periods, which can break across lines and space unevenly.
+- A number and its unit, or a short word that must stay with the next one, are joined by a non-breaking space (`10&nbsp;km`, `5&nbsp;MB`, `Mar&nbsp;3`; U+00A0 in strings), so a line never ends on "10" with "km" starting the next.
 
 ## Long text
 
@@ -61,6 +71,7 @@ Real content is longer than the sample: a 40-character name, an email on a long 
 - Cut the middle when both ends carry meaning: an email (name and domain), a file name (its extension), a path, an id compared by its last characters. Split it into two spans in a `flex min-w-0` row, the start `truncate` and the end `shrink-0`: `dan.le.quarterly…@company.com`, `report-2026-q3-fi….pdf`. The DOM still holds the whole string.
 - A string with no spaces (URL, hash, token, a long user name) has no break opportunity and forces its container wider, often into a sideways page scroll. Containers of user content get `overflow-wrap: anywhere` (Tailwind v4.1 `wrap-anywhere`, otherwise `[overflow-wrap:anywhere]`): unlike `break-word`, it also lowers the minimum width, so it holds inside flex, grid, and tables. Never `word-break: break-all`, which splits ordinary words too.
 - Where a URL or path is the content itself (a settings value, a log line), add `<wbr>` after each `/` so it breaks between segments before `anywhere` has to split one.
+- A multi-line preview (a card description, a comment excerpt) is cut with `display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden` (Tailwind `line-clamp-3`; the unprefixed `line-clamp` isn't shipped in every engine yet), never by character count, which cuts mid-word and ignores the real width. The full text stays reachable through the detail view or an expand control.
 
 ## Numbers
 
@@ -79,7 +90,9 @@ Real content is longer than the sample: a 40-character name, an email on a long 
 - [ ] Two weights, 400 and 600, unless the style lists another.
 - [ ] Rank inside a row comes from ink, and all three inks pass 4.5:1.
 - [ ] Line-height drops as size rises; tracking only from ~25px up and on uppercase labels.
-- [ ] Prose is capped at 45–75ch.
+- [ ] Prose is capped at 45–75ch; headings use `text-wrap: balance` and body text `text-wrap: pretty`.
+- [ ] Weight comes from `font-weight`, every rendered weight and style has its file (no faux bold or italic with `font-synthesis: none`), and weights under 400 appear only at about 28px and up.
+- [ ] Case comes from `text-transform`, ellipses are `…`, and numbers stay on the line with their units.
 - [ ] Space above each heading is larger than below it.
 - [ ] Only used weights load, and the fallback is metric-matched.
 - [ ] Every text slot holds a long value and an unbroken string: it truncates in CSS (middle when both ends matter, the full value reachable) or wraps, and nothing pushes past its container.

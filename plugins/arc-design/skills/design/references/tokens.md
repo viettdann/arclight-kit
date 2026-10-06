@@ -27,13 +27,19 @@ Easing curves (CSS keywords like `ease-out` are too weak to read as deliberate).
 
 ```css
 --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
---ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+--ease-exit: cubic-bezier(0.33, 1, 0.68, 1);
 --ease-move: cubic-bezier(0.65, 0, 0.35, 1);
 ```
 
+- Exits ease out too, on a softer curve than the entrance, and run at 60–70% of the entrance duration (a 200ms open closes in 120–140ms). Never ease-in: an ease-in exit spends its first frames barely moving, so the UI seems slow to respond to the dismiss.
+- `--ease-move` is for an element travelling between two resting positions on screen (reorder, layout change), where starting and stopping gently both read as natural.
+- Which duration each element takes (press, tooltip, menu, modal) is in `../ui-interaction/references/motion.md`.
+
 ## Building color scales
 
-- Build scales in OKLCH: keep the hue fixed, step lightness evenly, lower chroma toward both ends.
+Ramp spacing, which step takes which role, the brand step, status hues, token names, wide gamut, increased contrast, and auditing an existing palette: `color.md`.
+
+- Build scales in OKLCH: keep the hue fixed, step lightness finer at the light end than mid-ramp (`color.md`, Ramps), lower chroma toward both ends.
 - Tint neutrals slightly toward the brand hue (chroma around 0.005–0.015) instead of pure grey.
 - Choose the accent step so `on-accent` text passes 4.5:1, then verify with the design skill's `scripts/contrast.mjs`; don't assume a `-500` step passes.
 - Status colors used as text on dark backgrounds need a lighter step than the one used for fills.

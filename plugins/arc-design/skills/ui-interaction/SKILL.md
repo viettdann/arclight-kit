@@ -1,6 +1,6 @@
 ---
 name: ui-interaction
-description: "Behavior and state rules for interactive UI: forms and validation, inline edit, submit, loading, errors, success and confirmation screens, empty states, tables (including narrow widths), selection and bulk actions, pagination, search, filters, modals, menus and context menus, tabs, navigation and scroll restoration, toasts, badges, copy to clipboard, destructive actions, undo, autosave, settings pages, drag and drop, resizable panes, pull to refresh, keyboard and focus. Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign), or for debugging an existing control that does nothing or the wrong thing (see state-check)."
+description: "Behavior and state rules for interactive UI: forms and validation, inline edit, submit, loading, errors, success and confirmation screens, empty states, tables (including narrow widths), selection and bulk actions, pagination, search, filters, modals, menus and context menus, tabs, navigation and scroll restoration, toasts, badges, copy to clipboard, destructive actions, undo, autosave, settings pages, drag and drop, resizable panes, pull to refresh, keyboard and focus, animations and transitions (whether to animate, durations, enter and exit). Use when building an interactive component or screen, or adding or changing its behavior (React, Vue, Svelte, plain HTML/CSS). Not for visual styling, color, or tokens (see design, restyle, redesign), or for debugging an existing control that does nothing or the wrong thing (see state-check)."
 ---
 
 # UI Interaction Rules
@@ -21,6 +21,7 @@ Generated UI tends to render only the happy path: every column in the table, a d
 | Tabs, accordions, navigation, scroll restoration, sticky headers and jump links | `references/navigation.md` |
 | Drag and drop, resizable panes and split handles, swipe, pull to refresh | `references/gestures.md` |
 | Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy, AI-generated output (streaming, drafts, prompt box) | `references/feedback.md` |
+| Animations and transitions: whether to animate, durations, popover origins, enter and exit, tooltip groups, motion performance | `references/motion.md` |
 | Delete, irreversible actions, undo | `references/destructive.md` |
 | Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |
 

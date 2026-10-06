@@ -19,6 +19,6 @@ Before parallel edits, confirm each assignment has disjoint files, no dependency
 - Return completed tasks, changed paths, actual checks and results (lint and tests for your own files, and with TDD on, each test and the failure seen before implementing), and unresolved issues.
 - Include "Decided for you" in the report: each judgment call resolved without asking and the alternative not taken, or "none".
 
-A worker cannot see this skill: its assignment carries these rules, the section 3 implement-and-validate steps, the TDD mode text with whether it is on, and the report fields verbatim.
+A worker cannot see this skill: its assignment carries these rules, the section 3 implement-and-validate steps, the TDD mode text with whether it is on, the "Decisions and delegated limits" rules from `SKILL.md` verbatim (for workers, asking means stopping and reporting to the coordinator), and the report fields verbatim.
 
 The coordinator owns cross-task integration and final verification. Serialize shared fixes and resolve routine conflicts from the intended behavior; ask the user only when the conflict requires a product or scope decision.

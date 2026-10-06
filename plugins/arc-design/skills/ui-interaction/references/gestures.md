@@ -15,6 +15,18 @@ Every pointer gesture (drag, resize, swipe, pull) ends cleanly when the platform
 - Desktop device emulation proves the layout, not the gesture: say whether a touch gesture was tried on a real touch device.
 - Every drop can be undone for a few seconds.
 
+## Throw and settle
+
+For anything the pointer moves and then releases to a resting place: sheets, drawers, carousels, swipe rows, draggable panels.
+
+- **Grab offset:** store the distance between the pointer and the element's origin on `pointerdown` and place the element at `pointer - offset`, so it doesn't jump to center itself under the finger.
+- **Direction lock:** decide horizontal or vertical only after about 10px of movement, then lock it for the rest of the gesture; deciding on the first pixel turns a slightly diagonal scroll into a drag. Track X and Y separately, with one spring per axis: a single spring on the 2D distance desyncs when the axes carry different velocities.
+- **Rubber band:** past an edge, the element follows by `out = (offset * dim * c) / (dim + c * |offset|)`, where `offset` is the distance past the bound, `dim` the element's size on that axis, and `c ≈ 0.55`. It slows the further it goes and never passes `dim`; a hard stop reads as frozen. Pull to refresh's resistance can use the same curve.
+- **Project the throw:** pick the target from where the motion would stop, not from where the finger let go: `projected = position + (velocity * rate) / (1 - rate)` with `velocity` in px/ms (px/s ÷ 1000) and `rate = 0.998` (0.99 for a shorter glide). At 0.998 the factor is about 500, so a 1px/ms release lands about 500px further on. Snap to the snap point nearest `projected`. Measure velocity over the last ~100ms of moves, not the whole gesture.
+- **Flick to dismiss:** a sheet or drawer closes when the release velocity toward dismissal exceeds a threshold (on the order of 0.1px/ms, tuned per surface), whatever the distance dragged; slower releases fall back to the distance threshold. Read the direction from the velocity's sign at release, not from the position.
+- **Hand off velocity:** start the settling spring with the release velocity (Motion takes px/s directly; APIs with relative velocity want `velocity / (target - current)`), so there is no seam between the drag and the animation.
+- **Spring feel:** critically damped (damping ratio 1.0, no overshoot) by default; about 0.8, a small overshoot, only when the release carried momentum (a flick or a throw). In Motion, roughly `bounce: 0` and `bounce: 0.2`. Under `prefers-reduced-motion`, no overshoot.
+
 ## Resize handles
 
 A split-pane handle is a control, not a border.
@@ -50,5 +62,6 @@ A pull is a promise: past the line it refreshes, before the line it doesn't, and
 ## Checks
 
 - [ ] Every pointer gesture handles `pointercancel`, lost capture, and blur by restoring its start state, and sets `touch-action`.
+- [ ] Thrown elements keep the grab offset, lock direction after about 10px, rubber-band at edges, snap to the point nearest the projected end, and settle with the release velocity; a flick dismisses a sheet regardless of distance.
 - [ ] Resize handles clamp, snap shut instead of leaving a sliver, survive iframes and reloads, and work from the keyboard.
 - [ ] Pull to refresh resists, fires only when released past the threshold, hands the indicator off to the spinner, and has a non-gesture alternative.

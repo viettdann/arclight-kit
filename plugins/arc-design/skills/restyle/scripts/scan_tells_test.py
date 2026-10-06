@@ -165,6 +165,55 @@ class ScanTellsTest(unittest.TestCase):
         self.assertNoTell("a.html", "<p>Fast — simple — honest.</p>\n" * 4 + f"<p>{'word ' * 1000}</p>\n", "em/en dashes")
         self.assertNoTell("a.html", "<p>Mon–Fri</p><td>—</td>\n" * 10, "em/en dashes")
 
+    def test_svh_hint(self):
+        self.assertTell("a.tsx", '<section className="min-h-screen">x</section>\n', "min-h-svh for a full-height section")
+
+    def test_zero_scale_entrance(self):
+        self.assertTell("a.css", "@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }\n", "entrance from zero scale")
+        self.assertTell("a.tsx", "<motion.div initial={{ opacity: 0, scale: 0 }} animate={{ scale: 1 }} />\n", "entrance from zero scale")
+        self.assertTell("a.tsx", '<div className="transition-transform data-[state=closed]:scale-0" />\n', "entrance from zero scale")
+        self.assertTell("a.tsx", '<div className="scale-0 transition duration-150 group-hover:scale-100" />\n', "entrance from zero scale")
+        self.assertNoTell("a.tsx", '<div className="scale-0">x</div>\n', "entrance from zero scale")
+        self.assertNoTell("a.css", ".pop { transform: scale(0.95); opacity: 0; }\n", "entrance from zero scale")
+        self.assertNoTell("a.css", ".bar { transform: scaleX(0); }\n", "entrance from zero scale")
+        self.assertNoTell("a.tsx", '<div className="scale-x-0 transition-transform" />\n', "entrance from zero scale")
+        self.assertTell("a.css", ".pop { scale: 0 0; transition: scale 150ms; }\n", "entrance from zero scale")
+        self.assertNoTell("a.css", ".u::after { scale: 0 1; }\n", "entrance from zero scale")
+
+    def test_ease_in(self):
+        self.assertTell("a.css", ".a { transition: opacity 150ms ease-in; }\n", "ease-in on a UI transition")
+        self.assertTell("a.css", ".a { transition-timing-function: ease-in; }\n", "ease-in on a UI transition")
+        self.assertTell("a.tsx", '<div className="transition-opacity duration-150 ease-in" />\n', "ease-in on a UI transition")
+        self.assertNoTell("a.css", ".a { transition: opacity 150ms ease-in-out; }\n", "ease-in on a UI transition")
+        self.assertNoTell("a.tsx", '<div className="transition-opacity ease-in-out" />\n', "ease-in on a UI transition")
+        self.assertNoTell("a.css", ".a { transition: opacity 150ms var(--ease-in); }\n", "ease-in on a UI transition")
+
+    def test_off_scale_spacing(self):
+        self.assertTell("a.tsx", '<div className="p-[13px]">x</div>\n', "off the spacing scale")
+        self.assertTell("a.tsx", '<div className="md:-mt-[6px] gap-4">x</div>\n', "off the spacing scale")
+        self.assertTell("a.css", ".a { padding: 8px 13px; }\n", "off the spacing scale")
+        self.assertTell("a.css", ".a { margin-inline-start: 10px; }\n", "off the spacing scale")
+        self.assertNoTell("a.tsx", '<div className="p-[12px] gap-[2px] m-[1px] px-[1.5rem] py-[var(--x)]">x</div>\n', "off the spacing scale")
+        self.assertNoTell("a.css", ".a { padding: 8px 16px; margin: -1px 0 2px; gap: 0; }\n", "off the spacing scale")
+        self.assertNoTell("a.css", ".a { border-width: 3px; top: 13px; }\n", "off the spacing scale")
+        self.assertTell("a.tsx", "<div style={{ padding: '13px' }}>x</div>\n", "off the spacing scale")
+        self.assertNoTell("a.tsx", "<div style={{ padding: '8px', fontSize: '13px' }}>x</div>\n", "off the spacing scale")
+        self.assertNoTell("a.html", '<div style="padding: 8px" data-w="13px">x</div>\n', "off the spacing scale")
+
+    def test_mixed_icon_libraries(self):
+        mixed = "import { X } from 'lucide-react';\nimport { FaGithub } from 'react-icons/fa';\n"
+        self.assertTell("a.tsx", mixed, "icon libraries in one file")
+        self.assertTell("a.tsx", "import { FaX } from 'react-icons/fa';\nimport { MdY } from 'react-icons/md';\n", "icon libraries in one file")
+        self.assertNoTell("a.tsx", "import { X } from 'lucide-react';\nimport { Check } from 'lucide-react';\n", "icon libraries")
+        self.assertNoTell("a.tsx", "import { A } from '@heroicons/react/24/outline';\nimport { B } from '@heroicons/react/20/solid';\n", "icon libraries")
+
+    def test_pulsing_dot(self):
+        self.assertTell("a.tsx", '<span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />\n', "pulsing dot")
+        self.assertTell("a.tsx", '<span className="size-1.5 animate-pulse rounded-full" />\n', "pulsing dot")
+        self.assertTell("a.tsx", '<span className="absolute animate-ping rounded-full" />\n', "pulsing dot")
+        self.assertNoTell("a.tsx", '<div className="h-2 w-32 animate-pulse rounded-full bg-zinc-200" />\n', "pulsing dot")
+        self.assertNoTell("a.tsx", '<span className="h-2 w-2 rounded-full bg-green-500" />\n', "pulsing dot")
+
 
 if __name__ == "__main__":
     unittest.main()

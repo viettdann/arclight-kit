@@ -12,6 +12,34 @@ All notable changes to `arc-design` are documented here. The format follows [Kee
 
 Brings the Codex package up to the Claude line's 1.3.0.
 
+## [1.6.0] - 2026-10-06
+
+Ideas drawn from emilkowalski/skills, jakubkrehel/skills, MengTo/Skills, Superfuture/design-review (MIT), rewritten.
+
+### Added
+
+- `ui-interaction`: `motion.md` (frequency gate, purpose, trigger origin, no `scale(0)`, press feedback, durations by element, tooltip warm-up, transitions over keyframes, `@starting-style`, `will-change` side effects); throw-and-settle formulas in `gestures.md` (momentum projection, rubber band, velocity handoff, flick dismissal); Label in Name, ARIA state mapping, no `aria-hidden` over focusable content, state precedence with focus rings that survive effect wrappers, breakpoints in `em`/`rem`, `pointer-events: none` on decorative layers, empty live regions, alt by purpose, pause for moving content, controls-only `user-select`, `interactive-widget`; `inert` behind custom modals; `document.title` and focus on route change; roving tabindex; `enterkeyhint`, `autocapitalize`, and 16px inputs on touch.
+- `design`: `color.md` (ramp spacing, role per step, brand step, status hue distance, token naming, wide gamut, `prefers-contrast`, palette audit), `icons.md` (one library, `em` sizing, stroke by text weight, state pairs, RTL mirroring), `canvas-effects.md` (layer contract, capability gate, DPR cap, `dt` clamp, pause offscreen, context loss, teardown); `text-wrap`, faux bold, `font-variation-settings` fallback, case, `…` and `&nbsp;`, `line-clamp`, light weights only at display sizes in `typography.md`; scroll-story robustness and text splitting that keeps inline markup in `cinematic.md`; canvas backdrops in `premium.md`; theme switch without transitions in `dark-mode.md`; single-axis variants with a tradeoff table.
+- `ui-check`: `input-zoom` (editable fields under 16px at phone width) and `references/worst-case.md` for worst-case data at the data boundary.
+- `scan_tells.py`: zero-scale entrances, `ease-in` transitions, off-scale spacing, mixed icon libraries, and small `animate-pulse` dots.
+- `restyle`: critique from a screenshot alone, with estimated values, and one fix named first.
+- `redesign`: an optional blind critic scoring screenshots against a 0–2 rubric (`references/critic.md`), also used by restyle on request.
+
+### Changed
+
+- `--ease-exit` is now an ease-out curve, `cubic-bezier(0.33, 1, 0.68, 1)`: an ease-in exit barely moves at first, so a dismiss feels slow to respond.
+- Heroes and full-height sections use `100svh`; `100dvh` only for a fixed app shell.
+
+### Fixed
+
+- `ui-check`: React's root container is no longer reported as a clickable element without keyboard access (React puts a no-op `onclick` on it).
+
+## [1.5.1] - 2026-10-06
+
+### Security
+
+- `cdp.mjs` (`screenshot`, `ui-check`): `--cookie` and `--header` errors no longer echo the credential; a rejected cookie is named, a malformed one or a malformed header is identified by position.
+
 ## [1.5.0] - 2026-10-05
 
 Ideas drawn from pbakaus/impeccable (Apache-2.0), rewritten.

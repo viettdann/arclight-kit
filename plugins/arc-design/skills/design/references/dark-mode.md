@@ -31,16 +31,17 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - Photos are dimmed so they don't take the attention: `filter: brightness(0.8)` in the dark theme.
 - Illustrations, diagrams, and logos get a dark variant, never `filter: invert()`. If the theme is set by a class or `data-theme`, swap them by that selector; `<picture media="(prefers-color-scheme: dark)">` follows only the OS setting.
 
-## Theme on load and native UI
+## Theme on load, switching, and native UI
 
 - A stored theme (`localStorage`, a cookie) applied in `useEffect` or after hydration flashes the wrong theme on every load. Set the class or `data-theme` from a small blocking inline script in `<head>`, before first paint; with React SSR, add `suppressHydrationWarning` to `<html>`. A theme the server renders from a cookie needs no script.
+- Switching themes at runtime fires every color transition on the page at once, so buttons, borders, and backgrounds fade over at different speeds. Suppress them for the switch: append a `<style>` with `*, *::before, *::after { transition: none !important; }`, flip the class, force a reflow (`getComputedStyle(document.body).opacity` or `document.body.offsetHeight`), and remove the style in the next `requestAnimationFrame`. Without the forced reflow the browser applies the flip and the removal together, and the transitions still run. next-themes does this with `disableTransitionOnChange`.
 - `color-scheme: light` and `color-scheme: dark` on the root of each theme, so scrollbars, form controls, and the default canvas follow it.
 - `<meta name="theme-color">` matching the page background, one per scheme (`media="(prefers-color-scheme: dark)"`); when a class sets the theme, update the meta with it.
 - Native `<select>` gets explicit `background-color` and `color`; Windows otherwise draws its dropdown in system colors that can clash with or vanish against the dark theme.
 
 ## Checks
 
-- [ ] The stored theme is applied before first paint; no flash on reload.
+- [ ] The stored theme is applied before first paint; no flash on reload; switching themes suppresses transitions for that frame.
 - [ ] `color-scheme` set per theme; `theme-color` matches the page; native selects readable in dark.
 - [ ] No `#000` surface and no opaque `#FFF` text; surfaces step up in lightness by what they sit on.
 - [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.

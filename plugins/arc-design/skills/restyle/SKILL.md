@@ -1,6 +1,6 @@
 ---
 name: restyle
-description: De-AI a generic, template-looking UI. Audits the code for "AI tells" (gradients, decorative icon tiles, identical card grids, big radius + drop shadow everywhere, pure-black dark themes, greetings/emoji, fake identical deltas, unaligned numbers) and rewrites it into a restrained, information-first design with one meaningful accent, clear hierarchy, borders instead of shadows, and honest copy. Use whenever the user wants to restyle, clean up or polish the look, "make it look less AI", "look more professional/like Linear/Stripe", de-template, or critique the visual design of an existing dashboard, admin panel, settings page, landing section, or any app UI, even without the word "restyle". Layout and structure stay; for a new visual language use redesign, for a screen that doesn't exist yet use design, for measured rendering defects (overflow, contrast, focus) use ui-check.
+description: De-AI a generic, template-looking UI. Audits the code for "AI tells" (gradients, decorative icon tiles, identical card grids, big radius + drop shadow everywhere, pure-black dark themes, greetings/emoji, fake identical deltas, unaligned numbers) and rewrites it into a restrained, information-first design with one meaningful accent, clear hierarchy, borders instead of shadows, and honest copy. Use whenever the user wants to restyle, clean up or polish the look, "make it look less AI", "look more professional/like Linear/Stripe", de-template, or critique the visual design (code, render, or a screenshot) of an existing dashboard, admin panel, settings page, landing section, or any app UI, even without the word "restyle". Layout and structure stay; for a new visual language use redesign, for a screen that doesn't exist yet use design, for measured rendering defects (overflow, contrast, focus) use ui-check.
 ---
 
 # Restyle: remove the AI tells
@@ -27,4 +27,4 @@ Apply the five principles in `references/principles.md`: meaningful color, usefu
 
 ## References
 - `references/tailwind.md`: class-level before/after mappings, a token setup snippet, the primary+secondary metric layout, and an inline SVG sparkline. Read it when applying fixes in Tailwind code.
-- `../design/references/`: `profile-marketing.md` (marketing surfaces), `materials.md` (surfaces, shadow, glass), `dark-mode.md` (dark themes), `typography.md`, `radius.md`, `cards.md` (when the principles above say so).
+- `../design/references/`: `profile-marketing.md` (marketing surfaces), `materials.md` (surfaces, shadow, glass), `dark-mode.md` (dark themes), `typography.md`, `radius.md`, `cards.md`, `icons.md` (when the principles above say so), and `color.md` (its palette audit, before merging or replacing colors).

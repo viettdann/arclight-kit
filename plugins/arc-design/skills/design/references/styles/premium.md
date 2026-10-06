@@ -21,6 +21,7 @@ Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident mot
 - **Depth:** the diffused shadow from `materials.md` (Shadow) on lifted objects only. Depth marks what is important, so most surfaces stay flat.
 - **Space:** section padding 96–160px on desktop; one idea per section.
 - **Motion:** slow and weighted: entrances 400–700ms with `--ease-enter` set to `cubic-bezier(0.32, 0.72, 0, 1)`, a single 16px fade-up per block, run once; press feedback `scale(0.98)`. Every animation still needs a reason (see the marketing profile).
+- **Shader, particle, or 3D backdrop:** rare here, since light and space carry the feel. When the brief asks for one (a slow shader behind the hero, a rotating product model), it follows `canvas-effects.md`: one per page, behind a poster, paused offscreen, text checked against its brightest frame.
 
 ## Signature moves (examples)
 

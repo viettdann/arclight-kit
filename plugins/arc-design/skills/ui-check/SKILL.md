@@ -28,6 +28,10 @@ A page can pass every rule in its code and still break when it renders: a table 
    One cause is one line, even when it shows at several widths or on several elements. End with one line naming what wasn't checked (no dark run, a page behind login without `--cookie` or `--header`, states not opened, no `--links`). No taste notes ("could use more whitespace"), no praise, no list of passed checks.
 5. **Fix only when asked** (the `fix` argument, or the user asks after the report), then re-run the same command and report what is fixed and what remains. Fix the defects, nothing else: no restyle or redesign on the way.
 
+## Worst-case data
+
+`--stress` rewrites text already in the DOM; it cannot add rows, empty a list, or put `NaN` in a total. Before shipping a list, table, or card component, or when real data might break a passing stress check, feed worst-case data at the data boundary and check each state: `references/worst-case.md`.
+
 ## Fixing at the cause
 
 For confirmed findings, use the cause-based remediation guidance in `references/remediation-and-limits.md`. Report first; fix only when asked.

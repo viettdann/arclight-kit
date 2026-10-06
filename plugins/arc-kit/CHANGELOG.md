@@ -10,6 +10,24 @@ All notable changes to `arc-kit` are documented here. The format follows [Keep a
 
 ## [2.1.0] - 2026-10-04
 
+## [1.9.0] - 2026-10-06
+
+Ideas drawn from jakubkrehel/skills (MIT), rewritten.
+
+### Added
+
+- `verifier`: `references/review-ui.md` for diffs that touch UI files: removed accessibility signals, changes incomplete against their intent, finding status (introduced, regression, pre-existing), and the blast radius of a shared component.
+
+### Fixed
+
+- `collect-diff.sh`: with a dirty tree and no `--base`, commits ahead of upstream are now included; an in-progress rebase, merge, cherry-pick, or revert prints a warning.
+
+## [1.8.1] - 2026-10-06
+
+### Fixed
+
+- `executor`: the sub-agent brief now carries the Decision Framework's "Judgment call resolved without asking" and "Irreversible action" rules, so workers know what goes under "Decided for you" and that asking means stopping and reporting.
+
 ## [1.8.0] - 2026-10-05
 
 ### Added

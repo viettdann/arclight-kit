@@ -32,7 +32,7 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 ## Layout rules
 
 - **Hero fits the first viewport** at 1280×800: headline at most 2 lines, subhead about 20 words, CTA visible without scrolling. If it doesn't fit, lower the type scale or cut copy; a 4-line headline is a font-size error. At most four text elements: optional eyebrow, headline, subhead, CTAs. Trust strips, pricing teasers, and "works with…" taglines go in the section below.
-- Full-height sections use `min-height: 100dvh`, not `100vh`/`h-screen` (mobile address bars make `vh` jump).
+- Heroes and full-height sections use `min-height: 100svh` (`min-h-svh`), not `100vh`/`h-screen`: `svh` doesn't change as the mobile toolbar collapses, so the layout doesn't jump mid-scroll. `100dvh` is only for a fixed app shell that must track the visible viewport.
 - Navigation stays on one line at desktop, 64–72px tall. On narrow screens the links can drop away only when there are two or fewer; with three or more, a menu button opens them (closes on Esc, on a link, and on outside click) so mobile visitors can still reach every section.
 - **Vary the section layouts.** Each layout family (3-up cards, image+text split, full-width quote, bento) appears once; more than two image+text splits in a row reads as a template.
 - **Grids have exactly as many cells as content.** Five items → five cells (2+3, hero+4); never a blank tile to complete the grid.
