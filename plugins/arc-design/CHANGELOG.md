@@ -2,6 +2,13 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.1] - 2026-10-06
+
+### Fixed
+
+- `ui-interaction`: the 44px touch target is a hit area, not the control's size. `baseline.md` drops "enlarge controls", says how to pad (negative-inset `::before`, existing spacing) while keeping height, padding, and layout, and forbids a global `min-height`/`min-width: 44px` or bigger size tokens to clear a warning; `overlays.md` limits 44px to primary triggers; `profile-tool.md` keeps 28–36px controls on touch.
+- `ui-check`: phone widths now emulate touch, so `pointer: coarse` styles apply, and `target-touch` checks `pointer: coarse` instead of the width and counts a hit area extended by a positioned `::before`/`::after`.
+
 ## [1.6.0] - 2026-10-06
 
 Ideas drawn from emilkowalski/skills, jakubkrehel/skills, MengTo/Skills, Superfuture/design-review (MIT), rewritten.

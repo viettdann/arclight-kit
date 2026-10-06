@@ -19,8 +19,10 @@
 
 ## Pointer and touch
 
-- Under `@media (pointer: coarse)`, primary controls have a 44×44px target; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this). Pad the hit area and keep the glyph at 16–20px.
-- Hover styles live under `@media (hover: hover)`; enlarge controls under `@media (pointer: coarse)`. Never branch on user agent.
+- Under `@media (pointer: coarse)`, primary controls have a 44×44px hit area; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this).
+- The hit area is not the visual size. Reach 44px with an absolutely positioned `::before` at a negative inset (the control `position: relative`) or with spacing the layout already has, and keep the control's height, padding, glyph (16–20px), and the surrounding layout unchanged. Neighbouring hit areas don't overlap; where they would, the gap between the controls counts toward the target.
+- Never meet the target with a global `min-height`/`min-width: 44px`, a bigger size token, or taller rows just to clear a ui-check warning. A control that should look bigger on touch is a design decision made in the tokens, not a fix.
+- Hover styles live under `@media (hover: hover)`; touch-only hit areas and spacing live under `@media (pointer: coarse)`. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
 ## Unavailable actions: explain, don't disable

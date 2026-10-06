@@ -21,7 +21,7 @@ Never stack modals. Never put primary navigation in a blocking overlay. Reach fo
 
 ## Menus and dropdowns
 
-- The trigger looks interactive: a caret, a hover state, a target of at least 24px (44px under `pointer: coarse`).
+- The trigger looks interactive: a caret, a hover state, a hit area of at least 24px, and 44px under `pointer: coarse` when it is a primary control, padded without changing its size (`baseline.md`, Pointer and touch).
 - Collision aware: flips or shifts to stay inside the viewport (Floating UI or CSS anchor positioning).
 - Arrows move, Enter selects, Escape closes one level, letters jump to matching items, Home/End work.
 - Items are grouped by intent with separators; the destructive item is last and set apart.

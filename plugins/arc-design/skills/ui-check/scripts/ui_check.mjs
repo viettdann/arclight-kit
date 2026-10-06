@@ -243,6 +243,23 @@ function audit({ mobile, phone }) {
     }
     return el.getAttribute('title')?.trim() || '';
   };
+  // A ::before or ::after positioned over the control is the usual way to enlarge a target without changing its look, so it counts.
+  const hitArea = (el, r) => {
+    let { left, top, right, bottom } = r;
+    const s = getComputedStyle(el);
+    if (s.position === 'static') return r;
+    const ox = r.left + parseFloat(s.borderLeftWidth), oy = r.top + parseFloat(s.borderTopWidth);
+    for (const p of ['::before', '::after']) {
+      const ps = getComputedStyle(el, p);
+      if (ps.content === 'none' || ps.display === 'none' || ps.position !== 'absolute' || ps.pointerEvents === 'none') continue;
+      const [l, t, w, h] = [ps.left, ps.top, ps.width, ps.height].map(parseFloat);
+      if ([l, t, w, h].some(Number.isNaN)) continue;
+      left = Math.min(left, ox + l); top = Math.min(top, oy + t);
+      right = Math.max(right, ox + l + w); bottom = Math.max(bottom, oy + t + h);
+    }
+    return { width: right - left, height: bottom - top };
+  };
+  const coarse = matchMedia('(pointer: coarse)').matches;
   const touch = [];
   for (const el of document.querySelectorAll(INTERACTIVE)) {
     if (!visible(el)) continue;
@@ -256,16 +273,18 @@ function audit({ mobile, phone }) {
     // A link inside running text is exempt from target size (WCAG 2.5.8 inline exception), and a labelled checkbox's target includes its label.
     if (el.tagName === 'A' && getComputedStyle(el).display === 'inline' && [...el.parentElement.childNodes].some((c) => c !== el && c.textContent.trim())) continue;
     if (el.labels?.length && ['checkbox', 'radio'].includes(el.type)) continue;
-    const small = Math.min(r.width, r.height);
-    if (small < 24) add('target', el, `${Math.round(r.width)}×${Math.round(r.height)}px, under the 24px minimum`);
-    else if (mobile && small < 44) touch.push({ el, small, size: `${Math.round(r.width)}×${Math.round(r.height)}px` });
+    const hit = hitArea(el, r);
+    const small = Math.min(hit.width, hit.height);
+    const size = `${Math.round(hit.width)}×${Math.round(hit.height)}px`;
+    if (small < 24) add('target', el, `${size}, under the 24px minimum`);
+    else if (coarse && small < 44) touch.push({ el, small, size });
   }
   // The script can't tell primary controls from secondary ones, so one line lists the smallest and the shot decides which are primary.
   if (touch.length) {
     touch.sort((a, b) => a.small - b.small);
     const rest = touch.slice(1, 3).map((t) => `${sel(t.el)} ${t.size}`).join(', ');
-    add('target-touch', touch[0].el, `${touch.length} control(s) under 44px on a phone width, smallest ${touch[0].size}`
-      + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px', true);
+    add('target-touch', touch[0].el, `${touch.length} control(s) with a hit area under 44px under pointer: coarse, smallest ${touch[0].size}`
+      + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px, padded without changing their size', true);
   }
 
   // Cursor is inherited, so only the element that sets it counts; a pointer or listener on a wrapper of real controls is fine.

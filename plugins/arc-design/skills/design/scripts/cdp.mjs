@@ -207,9 +207,10 @@ export const waitFor = async ({ evaluate }, css) => {
 export const MEDIA = { 'reduced-motion': ['prefers-reduced-motion', 'reduce'], 'contrast-more': ['prefers-contrast', 'more'],
   'reduced-transparency': ['prefers-reduced-transparency', 'reduce'], 'forced-colors': ['forced-colors', 'active'] };
 
-// Width under 700 emulates a phone. The scheme is always set: headless Chrome otherwise follows the OS theme.
+// Width under 700 emulates a touch phone (`pointer: coarse`). The scheme is always set: headless Chrome otherwise follows the OS theme.
 export const emulate = async ({ send }, { width, height, scheme, media = [] }) => {
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 700 });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: width < 700, maxTouchPoints: 5 });
   const features = media.map((m) => ({ name: MEDIA[m][0], value: MEDIA[m][1] }));
   features.push({ name: 'prefers-color-scheme', value: scheme });
   await send('Emulation.setEmulatedMedia', { features });

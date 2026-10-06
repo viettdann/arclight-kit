@@ -4,7 +4,7 @@ For interfaces people work in for hours. Density and speed read as competence; d
 
 ## Density and type
 
-- Base text 13–14px (13px only with strong contrast), row height 32–40px (48px for the comfortable density), control height 28–36px. Tables expose density as a token.
+- Base text 13–14px (13px only with strong contrast), row height 32–40px (48px for the comfortable density), control height 28–36px, kept on touch: the 44px touch target is a padded hit area, not a taller control (ui-interaction `baseline.md`). Tables expose density as a token.
 - Rows keep one fixed height: content stays on one line and truncates with an ellipsis, with the full text in a tooltip or the detail view. A row never grows because its title is long.
 - One family plus a monospace for ids, code, and numbers when useful. Scale ratio 1.2–1.25 in fixed rem steps, never fluid `clamp()` headings; weights, line-heights, and tracking follow `typography.md`.
 
