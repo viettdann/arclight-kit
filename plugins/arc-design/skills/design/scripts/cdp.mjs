@@ -157,16 +157,18 @@ export const launch = async (timeoutMs) => {
 // `--cookie name=value` (repeatable or comma list), `--header "Name: value"` (repeatable), both for the target's origin only. Call before `load`.
 export const applyAuth = async ({ send, on }, url, cookies = [], headers = []) => {
   const list = cookies.flatMap((c) => c.split(/,(?=\s*[^\s=,;]+=)/)).map((c) => c.trim()).filter(Boolean);
-  for (const c of list) {
+  // Error messages name the cookie or header but never echo its value: these are credentials and the output lands in logs and transcripts.
+  for (const [n, c] of list.entries()) {
     const i = c.indexOf('=');
-    if (i < 1) await fail(`--cookie takes name=value, got ${c}`);
-    const { success } = await send('Network.setCookie', { name: c.slice(0, i).trim(), value: c.slice(i + 1).trim(), url, path: '/' });
-    if (success === false) await fail(`Chrome rejected --cookie ${c} for ${url}`);
+    if (i < 1) await fail(`--cookie #${n + 1} takes name=value (value not shown)`);
+    const name = c.slice(0, i).trim();
+    const { success } = await send('Network.setCookie', { name, value: c.slice(i + 1).trim(), url, path: '/' });
+    if (success === false) await fail(`Chrome rejected --cookie ${name} for ${url} (value not shown)`);
   }
   const extra = [];
-  for (const h of headers) {
+  for (const [n, h] of headers.entries()) {
     const m = /^\s*([!#$%&'*+.^_`|~0-9A-Za-z-]+)\s*:\s*([^\r\n]*)$/.exec(h);
-    if (!m) await fail(`--header takes "Name: value" on one line, got ${JSON.stringify(h)}`);
+    if (!m) await fail(`--header #${n + 1} takes "Name: value" on one line (value not shown)`);
     if (/^(host|content-length|connection|transfer-encoding|upgrade|keep-alive|te|trailer)$/i.test(m[1])) await fail(`--header cannot set ${m[1]}`);
     extra.push({ name: m[1], value: m[2].trim() });
   }

@@ -2,6 +2,12 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.1] - 2026-10-06
+
+### Fixed
+
+- `executor`: the sub-agent brief now carries the Decision Framework's "Judgment call resolved without asking" and "Irreversible action" rules, so workers know what goes under "Decided for you" and that asking means stopping and reporting.
+
 ## [1.8.0] - 2026-10-05
 
 ### Added

@@ -157,7 +157,7 @@ Spawn every group that passed the Phase 2 Step 4 check in one message with multi
 - One sub-agent per task group (from Phase 2), not per individual task
 - Tasks within a group run sequentially (shared files)
 - Groups run in parallel (no file overlap between groups)
-- A sub-agent cannot see this skill. Its prompt carries the plan file path (if any), its group's tasks and file list, relevant blocker findings, and, verbatim: the Shared Worktree rules, Phase 3 steps 1-3, the TDD mode section with whether it is on, and the Agent Report template
+- A sub-agent cannot see this skill. Its prompt carries the plan file path (if any), its group's tasks and file list, relevant blocker findings, and, verbatim: the Shared Worktree rules, Phase 3 steps 1-3, the TDD mode section with whether it is on, the Decision Framework's "Judgment call resolved without asking" and "Irreversible action" rules (for a sub-agent, asking means stopping and reporting it), and the Agent Report template
 
 **User changes direction mid-execution:**
 
