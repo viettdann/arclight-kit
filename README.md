@@ -69,6 +69,8 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | `cinematic` | Immersive, scroll-paced, image-led |
 | `playful` | Saturated palette, chunky type, spring motion |
 
+The current Codex releases are arc-design 2.3.0, arc-kit 2.3.0, and mgi-kit 1.2.0, synchronized with `main` through `ac70815`. Design references cover color ramps, icons, canvas effects, and interaction motion; UI checks include phone input zoom and worst-case data. The verifier also reviews UI regressions and shared-component consumers.
+
 Only load references needed by the task. Bundled script paths resolve from the installed skill's directory, while target project paths resolve from the project's working directory.
 
 Keep each `SKILL.md` within 8,000 UTF-8 bytes, including frontmatter. Codex truncates larger skill prompts at this [runtime limit](https://github.com/openai/codex/blob/main/codex-rs/ext/skills/src/render.rs). Put detailed workflows and examples in `references/` and state when to read them in the entrypoint. Paths inside those references resolve from the skill directory unless stated otherwise. Skill lint enforces the entrypoint budget.

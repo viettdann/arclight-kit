@@ -2,6 +2,14 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-10-06
+
+### Changed
+
+- Adopt main through `ac70815` (upstream arc-design 1.6.0): motion, color, icon, canvas, typography, worst-case data, screenshot critique, and blind-critic references; scanner and rendering checks.
+- Keep Codex entrypoints within 8,000 UTF-8 bytes; place expanded workflow rules in their existing references.
+- Use portable bundled paths and respect runtime delegation limits; preserve protocol-error credential redaction in browser authentication.
+
 ## [2.2.0] - 2026-10-05
 
 ### Changed

@@ -27,9 +27,11 @@ Paths in the last column are under `plugins/` unless otherwise stated. Historica
 
 ## Sync with the Claude line
 
-The 2.2.0 releases (arc-design, arc-kit) and 1.2.0 (mgi-kit) integrate `main` through `f2bb39d` (Claude arc-kit 1.8.0, arc-design 1.5.0, mgi-kit 0.3.0). Merge commit `8acdccd` records both histories; the following adaptation commit ports runtime differences. The previous sync used a linear imported history through `8e91238`, with Codex adaptations on top, rather than a two-parent merge.
+The 2.3.0 releases (arc-design, arc-kit) integrate `main` through `ac70815` (upstream arc-kit 1.9.0, arc-design 1.6.0); mgi-kit remains at 1.2.0. Merge commit `1f0ec60` records both histories and resolves upstream workflow changes into the existing Codex references. The prior sync through `f2bb39d` is recorded by merge `8acdccd`, followed by the 2.2.0 adaptations. Earlier syncs used a linear imported history rather than a two-parent merge.
 
 Future syncs fetch `origin` and merge `origin/main` into `codex`; use fast-forward when possible and an ordinary merge when histories diverge. Do not squash or cherry-pick the upstream batch. `git merge-base codex origin/main` identifies the shared upstream point, and `git log codex..origin/main` lists pending commits. Keep subsequent Codex adaptations separate when practical.
+
+The 2026-10-06 sync adds motion, color, icon, canvas, screenshot critique, blind-critic, worst-case data, and UI review references. Bundled paths resolve from the parent skill directory; independent critics follow runtime delegation authorization and report self-review when isolation is unavailable. Expanded workflows stay in references so every entrypoint fits Codex’s 8,000-byte prompt limit. Browser authentication retains the Codex protocol-error redaction while adopting upstream positional diagnostics. Executor assignments carry the decision rules verbatim. Git-operation warnings use the established task scope and require clarification only when the review boundary remains ambiguous.
 
 Authorization persists across discovery and execution. New workflow guidance retains evidence validation, fresh-context design review when delegation is allowed, and explicit reporting of decisions made without asking. Claude-only tools, approval resets, and platform paths are not carried over.
 
@@ -56,6 +58,8 @@ The comment hook receives completed `apply_patch` calls, maps added lines to fin
 - Keep source and runtime configuration portable: no dependency on a particular user's Codex cache, agent model, or installed connector.
 
 ## Verification
+
+The 2026-10-06 sync passed 164 tests across package and skill lint, browser authentication, comment lint, arc reload, destructive guard, diff collection, fresh-air, and the tell scanner. Package validation, Python, JavaScript, and shell syntax checks, and `git diff --check` also passed. Live browser rendering and host installation were not exercised.
 
 The 2026-10-05 sync passed 145 tests across package and skill lint, comment lint, arc reload, destructive guard, diff collection, fresh-air, and the tell scanner. Package validation, Python compilation, JavaScript syntax checks, and `git diff --check` also passed. Browser behavior and live host installation were not exercised.
 

@@ -2,6 +2,13 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-10-06
+
+### Changed
+
+- Adopt main through `ac70815` (upstream arc-kit 1.9.0): UI review checklist, combined dirty-tree and unpushed diff collection, and warnings for in-progress Git operations.
+- Carry decision and irreversible-action rules in executor worker assignments; retain Codex authorization and inline fallback behavior.
+
 ## [2.2.0] - 2026-10-05
 
 ### Changed
