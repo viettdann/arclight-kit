@@ -1,7 +1,7 @@
 {
   "name": "arc-kit",
-  "version": "1.9.0",
-  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner agent, and the comment-lint, arc-compact, and destructive-guard hooks.",
+  "version": "1.10.0",
+  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, arc-compact, destructive-guard, and agent-git-guard hooks.",
   "author": {
     "name": "viettdann"
   },

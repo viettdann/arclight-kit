@@ -1,5 +1,5 @@
 {
-  "description": "Destructive guard (opt-in): denies or asks before destructive Bash commands such as recursive rm of root paths, git discards, SQL drops, and infra teardown. Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by Edit/Write. Arc reload: re-injects the arc rules after compaction when /arc-kit:arc ran this session",
+  "description": "Destructive guard (opt-in): denies or asks before destructive Bash commands such as recursive rm of root paths, git discards, SQL drops, and infra teardown. Agent git guard: limits the worker and reviewer subagents to read-only git and keeps them out of .git and git config files. Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by Edit/Write. Arc reload: re-injects the arc rules after compaction when /arc-kit:arc ran this session",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,6 +8,21 @@
           {
             "type": "command",
             "command": "set -f; set -- $CLAUDE_PLUGIN_OPTION_DESTRUCTIVE_GUARD_ENABLED; case \"$*\" in [Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss]|[Oo][Nn]) exec python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/destructive-guard.py\";; esac",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "input=$(cat); case \"$input\" in *'\"arc-kit:worker\"'*|*'\"arc-kit:reviewer\"'*) printf '%s' \"$input\" | python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/agent-git-guard.py\" || { echo 'agent-git-guard: the guard could not run, so this command is denied' >&2; exit 2; };; esac",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); case \"$input\" in *'\"arc-kit:worker\"'*|*'\"arc-kit:reviewer\"'*) printf '%s' \"$input\" | python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/agent-git-guard.py\" || { echo 'agent-git-guard: the guard could not run, so this command is denied' >&2; exit 2; };; esac",
             "timeout": 10
           }
         ]

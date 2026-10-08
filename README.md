@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner` agent, and the comment-lint, arc-compact, and destructive-guard hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, arc-compact, destructive-guard, and agent-git-guard hooks.
 - `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades).
 
 ## Which skill
@@ -20,6 +20,7 @@ Claude Code marketplace with three plugins:
 | Non-trivial feature or design decision before any code | `arc-kit:brainstorming` |
 | A plan exists; stress-test it before executing | `arc-kit:plan-auditor` |
 | A plan exists (file or chat); implement it step by step with sub-agents and verification; `tdd` turns on test-first | `arc-kit:executor` |
+| A plan exists (file or chat) and cheaper models should build it under Opus review: Opus routes each task group to a Haiku, Sonnet, or Opus worker by difficulty, reviews every diff, escalates a group after two failed attempts at a tier, then runs the verifier; `haiku`, `sonnet`, or `opus` sets the starting tier | `arc-kit:supervise` |
 | Something errors, crashes, returns the wrong result, or regressed: reproduce, narrow with ranked hypotheses, fix the cause, keep a regression test | `arc-kit:debug` |
 | Compare libraries, tools, or approaches, or check a current version, limit, price, CVE, or support date, with a source behind every figure | `arc-kit:research` |
 | Write or check prose people read (README, docs, design docs, release notes, messages): remove autopilot patterns, keep the writer's voice | `arc-kit:writing` |
@@ -54,11 +55,13 @@ claude plugin install mgi-kit@arclight-kit
 
 Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint and destructive-guard hooks and `fresh-air`.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
 
 ## Agents
 
 `arc-kit` ships `test-runner`: it runs a test command or the suite and returns only the counts and each failure with its location, message, likely cause, and whether a rerun passes, so long test output stays out of the main context. It reports and never fixes. `executor` (Phase 4) and `refactor` (baseline and verify) hand slow or full runs to it.
+
+`supervise` dispatches to two more agents. `worker` implements one task packet: it edits only the files it owns, fixes errors in code its change touched, reports every other failure with whether its change caused it, undoes its work by hand or from a backup the supervisor took, and returns a fixed report or stops as blocked instead of guessing; the supervisor sets its model (Haiku max, Sonnet high, Opus medium or high) per call. `reviewer` (Opus, medium, no Edit or Write tool) checks one group's diff against its backup and acceptance criteria and returns `accept`, `fix` with `file:line` findings, or `rewrite`. Both run only read-only git, enforced by the `agent-git-guard` hook.
 
 ## Hooks
 
@@ -74,11 +77,13 @@ Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-k
 
 `arc-kit` also registers `destructive-guard` (`PreToolUse` on `Bash`), off by default. It splits compound commands, including `$( )`, backticks, `bash -c` (and `-lc`), and wrappers such as `sudo`, `timeout`, and `xargs`, and treats heredoc bodies as data. It blocks recursive `rm` or `find -delete` of `/`, `~`, `$HOME`, or `..`, `${IFS}` tricks, and base64 piped into a shell. It asks first for other recursive `rm` and `find -delete`, `rsync --delete`, git discards (`reset --hard`, `checkout .`, `restore`, `clean -f`, `stash drop`, `branch -D`), SQL `DROP`/`TRUNCATE`/`DELETE` without `WHERE` sent to a SQL client, `docker system|image|container|network|builder prune`, `docker volume rm|prune`, `docker rm -f`, `docker compose down -v`, `kubectl delete`, `terraform destroy`, `chmod -R 777`, `dd of=/dev/`, and `mkfs`. `git push` is never checked. Deleting build artifacts by relative path and temp paths goes through without a prompt. Turn it on with `destructive_guard_enabled`; when off, the hook exits before starting Python. Tests: `python3 plugins/arc-kit/scripts/destructive_guard_test.py`.
 
+`arc-kit` also registers `agent-git-guard` (`PreToolUse` on `Bash` and the edit tools), always on. Inside the `arc-kit:worker` and `arc-kit:reviewer` subagents it allows only read-only git (`status`, `diff`, `log`, `show`, `blame`, `grep`, `ls-files`, `ls-tree`, `cat-file`, `rev-parse`, `rev-list`, `merge-base`, `describe`, `shortlog`, `show-ref`, `for-each-ref`, `name-rev`, and the listing forms of `branch`, `remote`, `reflog`, and `config`) and denies every other git command, `stash` in every form included. It also denies `-c` and `--config-env`, `GIT_*` and `PAGER` assignments and `HOME` or `XDG_CONFIG_HOME` in front of git, `--output` and `--ext-diff` (abbreviations included), `git grep -O`, a command name built from a substitution, aliases for git, `git-*` helpers such as `git-stash`, and git launched by `find -exec`, `xargs`, `watch`, `parallel`, `env -S`, and similar launchers, including a command line passed to them as one argument. On `Bash` and on `Edit`, `Write`, `MultiEdit`, and `NotebookEdit` it keeps both agents out of `.git/`, `~/.gitconfig`, and `~/.config/git/`, since writing those rewires what read-only git runs. The denial tells the agent to report the command to the supervisor and stop. It walks commands with `destructive-guard`'s parser and walker, so `cd x && git stash`, `bash -c`, `eval`, `$( )`, and wrappers are caught the same way in both hooks; git run from a script file or another interpreter (`python -c`) is not. Your own commands and other agents' are never checked: a `sh` filter on the agent type exits before starting Python. For the two agents it fails closed: if the guard can't run, the command is blocked. Tests: `python3 plugins/arc-kit/scripts/agent_git_guard_test.py`.
+
 `arc-kit` also registers `arc-compact` (`SessionStart` on `compact`): when `/arc-kit:arc` was typed earlier in the session, it re-injects the `arc` rules after compaction; otherwise it prints nothing. It needs `sh`, `sed`, and `grep`.
 
 ## Checks
 
-`python3 scripts/skill_lint_test.py` checks every skill and agent: frontmatter, description and body budgets, referenced paths, qualified skill names, README and `plugin.json` listings, and that each `plugin.json` version matches its changelog. `python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py` and `python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py` cover their scripts.
+`python3 scripts/skill_lint_test.py` checks every skill and agent: frontmatter, description and body budgets, referenced paths, qualified skill names, README and `plugin.json` listings, and that each `plugin.json` version matches its changelog. `python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py` and `python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py`, and `python3 plugins/arc-kit/skills/supervise/scripts/snapshot_test.py` cover their scripts.
 
 ## Changes
 

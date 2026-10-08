@@ -2,6 +2,23 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] - 2026-10-08
+
+### Added
+
+- `supervise`: Opus loads a plan (file or chat), consolidates it into tasks with derived acceptance criteria, groups them by file overlap with shared helpers and types built first, and routes each group to a Haiku (max), Sonnet (high), or Opus (medium) worker by difficulty. Every diff is measured against a backup of the group's files taken before dispatch and reviewed: up to about 150 lines inline against `reviewer`'s checks, larger ones by `reviewer`. A failed report, a failing gate, or a `fix` or `rewrite` verdict is a failed attempt; two at a tier move the group up one tier, and `rewrite` goes to Opus at high, the ceiling. `haiku`, `sonnet`, or `opus` sets the starting tier, "only" a tier pins it, and a ceiling or floor said in words is honored. A snapshot of HEAD, the stash list, and hashes of uncommitted files outside the run is compared after every report: a moved HEAD, a changed stash list, or a touched foreign file pauses the run for the user, and a stray edit stops its group. Snapshot, backups, the check, and per-group diffs run through `scripts/snapshot.py` (`take`, `backup`, `check`, `diff`), so they behave the same under bash, zsh, and macOS, with paths through symlinks, spaces, non-ASCII names, staged renames, binary files, and files without a final newline; tested by `snapshot_test.py`. Ends with build, full suite, plan cross-check, and `verifier`, and reports each group's tier path.
+- `worker` agent (Read, Edit, Write, Grep, Glob, Bash): implements one task packet within its owned files, fixes errors in code its change touched, reports other failures with whether its change caused them, undoes work by hand or from the backup, never with git, and returns a fixed report or stops as blocked.
+- `reviewer` agent (Opus, medium, no Edit or Write): returns `accept`, `fix` with `file:line` findings, or `rewrite` for one group's diff against its backup.
+- `agent-git-guard` hook (`PreToolUse` on `Bash` and the edit tools, always on): inside `worker` and `reviewer`, allows only read-only git and denies the rest, `stash` included, plus config overrides through flags, `GIT_*` variables, or `HOME`/`XDG_CONFIG_HOME` in front of git, writing or program-launching options, aliases and `git-*` helpers, git started by launchers such as `find -exec`, `xargs`, `watch`, and `env -S`, and any access to `.git/` or git config files; the denial tells the agent to report to the supervisor. Fails closed for those agents and never starts Python for others. Reuses `destructive-guard`'s command walker. Tested by `agent_git_guard_test.py`.
+
+### Changed
+
+- `destructive-guard`: `check_command` and `check_argv` take the per-command check, the whole-command check, and the unparseable-command hint as arguments, so `agent-git-guard` reuses the walk through shells, `eval`, substitutions, wrappers, and obfuscation instead of copying it. An unparseable command's reason now names the keyword it mentions.
+
+### Fixed
+
+- `destructive-guard`: `env -S 'cmd'` and `env --split-string='cmd'` are checked as command lines; before, `strip_wrappers` dropped the value as an option argument, so `env -S 'rm -rf /'` passed.
+
 ## [1.9.0] - 2026-10-06
 
 Ideas drawn from jakubkrehel/skills (MIT), rewritten.

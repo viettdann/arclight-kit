@@ -133,7 +133,7 @@ class DestructiveGuardTest(unittest.TestCase):
             "deny",
             "timeout -k 5 60 rm -rf /", "timeout -s KILL 5 rm -rf /", "timeout --signal=KILL 5 rm -rf /", "timeout --signal KILL 5 rm -rf /",
             "exec -a foo rm -rf /", "ionice -c 3 rm -rf /", "stdbuf -o L rm -rf /", "xargs -d x rm -rf /", "sudo -s rm -rf /",
-            "busybox rm -rf /", "sudo -Eu root rm -rf /", "nice -n 5 timeout 10 rm -rf /", "env -i PATH=/bin rm -rf /",
+            "busybox rm -rf /", "sudo -Eu root rm -rf /", "nice -n 5 timeout 10 rm -rf /", "env -i PATH=/bin rm -rf /", "env -S 'rm -rf /'", "env --split-string='rm -rf /'",
             "sudo --unknown-flag val rm -rf /", "sudo -u git rm -rf /", "sudo -Eu git rm -rf /", "exec -a git rm -rf /",
         )
         self.expect("allow", "timeout 5 ls", "sudo apt install git", "xargs -n1 echo")
