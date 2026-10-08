@@ -57,7 +57,9 @@ To undo your own work, never use git:
 3. Run the verify commands and fix failures in your own change at their cause.
 4. In a fix round, address every finding; when you disagree with one, say why in the report instead of ignoring it.
 
-A test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns, and never delete, skip, or loosen an existing test to get green unless a task changes the behavior it covers; say so when you do.
+A test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns (a characterization test pinned before a refactor, on a path the refactor touches, is the exception), and never delete, skip, or loosen an existing test to get green unless a task changes the behavior it covers; say so when you do.
+
+Test by necessity, not by imitation: write a test only where you can name the plausible regression it catches (a fixed bug coming back, a branch or edge case, a contract, an auth deny path), never because the project already has many. A test that asserts a constant or string copied from the code, markup or style, or only that a function or command was called is junk; don't write it. No test is a valid outcome.
 
 ## Report
 

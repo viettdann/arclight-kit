@@ -171,9 +171,11 @@ Spawn every group that passed the Phase 2 Step 4 check in one message with multi
 Off by default. On when the arguments contain `tdd`, the user asks for TDD, or the plan says to use it.
 
 - **On:** for each task that adds or changes behavior, write the test first, run it, and see it fail on the missing behavior, not on a typo, a bad import, or broken setup. Then implement until it passes. Refactor, config, and docs tasks skip the failing run.
-- **Off:** implement first, then add or update tests for new behavior and a regression test for each bug fix, when test infrastructure exists. If none exists, note it; don't create it unless the user asks.
+- **Off:** implement first, then add a regression test for each bug fix and a test for each new behavior where you can name the plausible regression it catches, when test infrastructure exists. If none exists, note it; don't create it unless the user asks.
 
-In either mode a test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns, and never delete, skip, or loosen an existing test to get green. Change an existing test only when the plan changes the behavior it covers, and say so in the report. A lint rule, hook, CI step, or architecture check the plan adds is proven the same way: it passes on the code, fails on a deliberate violation, and passes again once the violation is reverted.
+In either mode a test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns (a characterization test pinned before a refactor, on a path the refactor touches, is the exception), and never delete, skip, or loosen an existing test to get green. Change an existing test only when the plan changes the behavior it covers, and say so in the report. A lint rule, hook, CI step, or architecture check the plan adds is proven the same way: it passes on the code, fails on a deliberate violation, and passes again once the violation is reverted.
+
+Test by necessity, not by imitation: the project's existing tests (how many there are, their style, what they cover) are never a reason to add one. A test that asserts a constant or string copied from the code, markup or style, only that a function or command was called, framework behavior, or what the type checker already proves is junk; don't write it. When several tests in a batch fail that bar, ask whether the change needs a test at all; no test is a valid outcome.
 
 **Per-agent result reporting:**
 

@@ -15,7 +15,7 @@ Workers are interns, you are the senior. They edit only what you hand them, run 
 
 | Tier | Agent call | Use for |
 |---|---|---|
-| Haiku | `arc-kit:worker`, `model: haiku`, `effort: max` | Mechanical work with a tight spec in one or two files: rename, add a field through existing layers, a test that follows an existing pattern, config, docs, a pattern already shown elsewhere in the repo |
+| Haiku | `arc-kit:worker`, `model: haiku`, `effort: max` | Mechanical work with a tight spec in one or two files: rename, add a field through existing layers, a test for a named regression, written in the file's existing style, config, docs, a pattern already shown elsewhere in the repo |
 | Sonnet | `arc-kit:worker`, `model: sonnet`, `effort: high` | The default: implementing a plan task, a change across several files in one module, a bug with a repro, terminal-heavy work |
 | Opus | `arc-kit:worker`, `model: opus`, `effort: medium` | Changes across modules or layers, a task the plan leaves open, security, auth, concurrency, money, data migrations, anything where a subtle mistake passes tests |
 | Opus high | `arc-kit:worker`, `model: opus`, `effort: high` | Escalations and rewrites only (Escalation, below) |

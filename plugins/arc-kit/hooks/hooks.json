@@ -1,5 +1,5 @@
 {
-  "description": "Destructive guard (opt-in): denies or asks before destructive Bash commands such as recursive rm of root paths, git discards, SQL drops, and infra teardown. Agent git guard: limits the worker and reviewer subagents to read-only git and keeps them out of .git and git config files. Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by Edit/Write. Arc reload: re-injects the arc rules after compaction when /arc-kit:arc ran this session",
+  "description": "Destructive guard (opt-in): denies or asks before destructive Bash commands such as recursive rm of root paths, git discards, SQL drops, and infra teardown. Agent git guard: limits the worker and reviewer subagents to read-only git and keeps them out of .git and git config files. Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by Edit/Write. Test guard: lists test cases added by Edit/Write to a test file and asks the agent to delete the ones that catch no plausible regression. Arc reload: re-injects the arc rules after compaction when /arc-kit:arc ran this session",
   "hooks": {
     "PreToolUse": [
       {
@@ -35,6 +35,11 @@
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/comment-lint.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/test-guard.py\"",
             "timeout": 10
           }
         ]

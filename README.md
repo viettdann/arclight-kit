@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, arc-compact, destructive-guard, and agent-git-guard hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
 - `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades).
 
 ## Which skill
@@ -55,7 +55,7 @@ claude plugin install mgi-kit@arclight-kit
 
 Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, test-guard, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
 
 ## Agents
 
@@ -71,9 +71,12 @@ Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, 
 | --- | --- | --- |
 | `comment_lint_enabled` | `true` | Turn the hook off without disabling the plugin. |
 | `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
+| `test_guard_enabled` | `true` | Turn the test guard off without disabling the plugin. |
 | `destructive_guard_enabled` | `false` | Turn on the destructive-command guard. |
 
 Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-kit/scripts/comment_lint_test.py`.
+
+`arc-kit` also registers `test-guard` (`PostToolUse` on `Edit|Write`), on by default. When an edit adds test cases to a code file named as a test (`a_test.py`, `test_a.py`, `a.test.ts`, `a.spec.js`, `ParserTests.cs`, `ParserTest.java`), it lists each new case (`def test_*`, `it(`/`test(`, `func Test*`, `[Fact]`/`[Test]`, `@Test`, `#[test]`, PHP `#[Test]`, Swift `func test*`, RSpec `it`) and exits 2 so Claude deletes the junk ones (a constant or string copied from the code, markup or style, only that a call happened, framework behavior) and names the regression each kept test catches; no test is a valid outcome, and the project's existing tests are not a reason to add one. A case counts as new only when its name occurs more often than before the edit (for `Write`, the file Claude Code reports as replaced, else `HEAD`), so editing, renaming, or moving an existing case doesn't trigger it, and each case is asked about once per session. Rust unit tests inside `src/*.rs` and multi-line `test.each` tables are not detected. Tests: `python3 plugins/arc-kit/scripts/test_guard_test.py`.
 
 `arc-kit` also registers `destructive-guard` (`PreToolUse` on `Bash`), off by default. It splits compound commands, including `$( )`, backticks, `bash -c` (and `-lc`), and wrappers such as `sudo`, `timeout`, and `xargs`, and treats heredoc bodies as data. It blocks recursive `rm` or `find -delete` of `/`, `~`, `$HOME`, or `..`, `${IFS}` tricks, and base64 piped into a shell. It asks first for other recursive `rm` and `find -delete`, `rsync --delete`, git discards (`reset --hard`, `checkout .`, `restore`, `clean -f`, `stash drop`, `branch -D`), SQL `DROP`/`TRUNCATE`/`DELETE` without `WHERE` sent to a SQL client, `docker system|image|container|network|builder prune`, `docker volume rm|prune`, `docker rm -f`, `docker compose down -v`, `kubectl delete`, `terraform destroy`, `chmod -R 777`, `dd of=/dev/`, and `mkfs`. `git push` is never checked. Deleting build artifacts by relative path and temp paths goes through without a prompt. Turn it on with `destructive_guard_enabled`; when off, the hook exits before starting Python. Tests: `python3 plugins/arc-kit/scripts/destructive_guard_test.py`.
 

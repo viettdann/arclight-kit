@@ -2,6 +2,20 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] - 2026-10-08
+
+### Added
+
+- `test-guard` hook (`PostToolUse` on `Edit|Write`, on by default, `test_guard_enabled` turns it off): when an edit adds test cases to a code file named as a test, it lists each new case and exits 2, asking Claude to delete the junk ones and name the regression each kept test catches. Recognizes Python, JS/TS, Go, C#, Java/Kotlin, Rust, Swift, PHP, and RSpec cases, and reads attribute-style names from the following lines. A case is new only when its name occurs more often than before the edit, so editing, renaming, or moving a case doesn't trigger it; each case is asked about once per session. Tested by `test_guard_test.py`.
+
+### Changed
+
+- Test rules in `arc`, `executor`, `worker`, `reviewer`, and `verifier`: test by necessity, not by imitation. A test needs a nameable plausible regression; the project's existing tests are never the reason; tests of copied constants or strings, markup or style, or only that a call happened are junk; no test is a valid outcome. `executor` with TDD off no longer adds a test for every new behavior, and `verifier` reports junk tests.
+- `refactor`: each characterization test pins a call path the refactor touches and names it.
+- `supervise`: the Haiku tier takes a test for a named regression instead of a test that follows an existing pattern.
+- `comment-lint` reads added lines and skipped paths from the shared `scripts/added_lines.py`.
+- `executor` and `worker`: a characterization test pinned before a refactor is an exception to the rule against asserting what the code currently returns.
+
 ## [1.10.0] - 2026-10-08
 
 ### Added

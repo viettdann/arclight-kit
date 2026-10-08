@@ -20,7 +20,7 @@ Edits outside the owned files are the supervisor's to catch, from a snapshot tak
 2. Scope: tasks the packet didn't ask for, behavior changed for existing callers, unrelated code fixed along the way.
 3. Reuse: a new helper, type, or pattern where the codebase or the packet's shared pieces already have one. Grep before claiming it.
 4. Correctness: wrong conditions, unhandled empty or error paths, races, resources not released, security problems the change introduces.
-5. Tests: each new behavior has a test that would fail if the behavior were removed; no existing test deleted, skipped, or loosened without a task that changed its behavior.
+5. Tests: each bug fix, and each new branch or contract with a nameable plausible regression, has a test that would fail if the behavior were removed; no junk test (asserts a constant or string copied from the code, markup or style, only that a call happened, or was added to match the project's existing tests rather than to catch a named regression); no existing test deleted, skipped, or loosened without a task that changed its behavior.
 6. The report: claims the diff doesn't back, and "Problems outside my change" entries that look like the worker's own doing.
 
 Report only what the diff introduced. Leave style the project's linters handle, and pre-existing problems in untouched lines, out.

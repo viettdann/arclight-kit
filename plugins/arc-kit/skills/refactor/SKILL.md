@@ -28,7 +28,7 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 ## 3. Pin behavior
 
 - Run the tests that cover the scope and record the baseline. Report pre-existing failures; don't fix them. A slow or large suite goes through the `arc-kit:test-runner` agent, here and in step 5, with this baseline passed in.
-- If coverage is thin, write characterization tests first (unit or integration, never e2e): call the code with representative and edge inputs and assert what it returns today, including output that looks wrong. A characterization test that asserts the "correct" value instead of the current one hides a behavior change.
+- If coverage is thin, write characterization tests first (unit or integration, never e2e): call the code with representative and edge inputs and assert what it returns today, including output that looks wrong. A characterization test that asserts the "correct" value instead of the current one hides a behavior change. Pin only call paths the refactor will touch, and name that path for each test.
 - If behavior can't be pinned (no harness, I/O that can't be faked), say so and limit the work to mechanical, tool-driven moves (LSP rename, extract) unless the user accepts the risk.
 
 ## 4. Move in small steps

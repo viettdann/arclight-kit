@@ -1,7 +1,7 @@
 {
   "name": "arc-kit",
-  "version": "1.10.0",
-  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, arc-compact, destructive-guard, and agent-git-guard hooks.",
+  "version": "1.11.0",
+  "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.",
   "author": {
     "name": "viettdann"
   },
@@ -19,6 +19,12 @@
       "default": 150,
       "min": 80,
       "max": 300
+    },
+    "test_guard_enabled": {
+      "type": "boolean",
+      "title": "Test guard",
+      "description": "Ask the agent to justify or delete each test case it adds to a test file",
+      "default": true
     },
     "destructive_guard_enabled": {
       "type": "boolean",

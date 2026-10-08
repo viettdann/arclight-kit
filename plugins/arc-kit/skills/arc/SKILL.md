@@ -34,6 +34,8 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 
 **E2E tests belong to the user.** Never write, run, install, or wire an e2e tool into the repo unless explicitly asked.
 
+**Test by necessity, not by imitation.** Write a test only where you can name the plausible regression it catches (a fixed bug coming back, a branch or edge case, a contract, an auth deny path, or a refactor changing output a characterization test pins). The project's existing tests are never the reason. Tests of a constant or string copied from the code, of markup or style, or that only check a call happened are junk. No test is a valid outcome.
+
 ## Git
 
 **`docs/` belongs to the user.** Design notes, plans, drafts. Never stage anything under `docs/`, and never commit, reset, or revert a change there, unless the user asks for that exact operation. The user commits it. Production source of truth lives in code.
