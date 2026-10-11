@@ -39,5 +39,6 @@ Never round up. Don't credit what the images don't show. Five lines per surface 
 - A target ("get it to 8") applies to every surface, not the average.
 - Before acting on a fault, find it in the full-resolution shot yourself; a critic misreads small details at a glance, and a fault you can't see isn't one.
 - For two critics on the same evidence, the lower score stands.
+- A fault whose fix can't be stated as one change is reported, not chased.
 - Never change the rubric or the target mid-loop to reach the goal. After two rounds without progress on a surface, change the approach rather than nudging values.
 - Report the final scores per surface and any fault you chose not to fix, with the reason.

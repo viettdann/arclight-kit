@@ -2,6 +2,19 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] - 2026-10-10
+
+### Changed
+
+- `plan-auditor`: a goal or success criterion that is an activity (`improve`, `investigate`, `clean up`, `make faster`) or names no check that could fail is FLAG, reported above the first item with a rewrite naming the outcome, the proving command or observation, and the threshold.
+- `worker`: requested code is written in full, with no placeholder comments, stub bodies, skeletons, or unrequested `TODO`; a task it can't finish is reported `blocked` or `failed`, never `done`. `reviewer` counts a criterion a stub stands in for as not met.
+
+### Removed
+
+- `verifier`: the RTL direction bullet in `review-ui.md`.
+
+Ideas drawn from openai/skills (define-goal) and Leonxlnx/taste-skill (full-output-enforcement, the source of the worker rule), rewritten.
+
 ## [1.11.0] - 2026-10-08
 
 ### Added

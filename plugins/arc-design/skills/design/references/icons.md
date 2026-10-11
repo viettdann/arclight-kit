@@ -2,7 +2,7 @@
 
 An icon is a word set in a different alphabet: it sits in a line of text and has to match that text's size, color, and weight, or it reads as pasted in from another product. These rules hold for every profile and style; a style may choose the library, not break the rules.
 
-Contents: library · size · color · stroke · variants · accessible names · optical alignment · RTL · state swap · checks.
+Contents: library · size · color · stroke · variants · accessible names · optical alignment · state swap · checks.
 
 ## One library per surface
 
@@ -57,20 +57,6 @@ Geometric centering is wrong for some shapes; the eye centers mass, not the boun
 - A chevron or arrow after text (`Next →`, a disclosure chevron) sits off its box center by design; nudge it down or across about 1px so it lines up with the x-height, not the cap height.
 - `align-items: center` centers the icon on the line box, which can sit a pixel off against all-caps labels or tabular numbers. Check at 2x zoom and nudge with `translate`, never with padding or margin that changes the hit area or the row height.
 
-## RTL
-
-Under `dir="rtl"`, mirror icons whose meaning follows reading direction and leave the rest alone.
-
-| Mirror | Don't mirror |
-| --- | --- |
-| Back and forward arrows, navigation chevrons, breadcrumb separators | Clocks and anything showing clockwise time |
-| Reply, undo, redo, send, external-link arrows | Checkmarks |
-| Text alignment, list, and indent glyphs | Media play, pause, fast-forward (they follow tape direction, not text) |
-| Progress and slider direction | Brand logos and real-world objects (cup, pencil, camera) |
-
-- One mechanism per element: `[dir="rtl"] .icon-directional { scale: -1 1; }` or `rtl:-scale-x-100`. A flip in the component plus a flip in the page cancel back to unmirrored.
-- Composite icons are judged by part: a badge or a slash keeps its position while the base arrow flips.
-
 ## State swap
 
 - An icon that changes on an infrequent state change (copy → copied, play → pause, bookmark → bookmarked) crossfades with a slight scale and blur rather than popping, per `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/motion.md`. Both icons share one grid cell so the button doesn't change width.
@@ -86,5 +72,4 @@ Under `dir="rtl"`, mirror icons whose meaning follows reading direction and leav
 - [ ] Outline by default, filled only as the active state, with ARIA state alongside.
 - [ ] Every icon-only button has an accessible action name; its SVG is `aria-hidden`.
 - [ ] Play triangles and trailing chevrons checked at 2x zoom and nudged where off-center.
-- [ ] Under `dir="rtl"`, directional icons mirror once; clocks, checkmarks, media controls, and logos don't.
 - [ ] State swaps crossfade only where infrequent; tab and nav icons change instantly.

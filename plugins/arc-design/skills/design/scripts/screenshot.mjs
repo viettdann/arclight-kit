@@ -21,7 +21,7 @@
 // Prints one line per width: file, page size, and "overflow" when the page is wider than the viewport.
 // Exit 0 ok, 1 shots written but some width overflows horizontally, 2 no shot (usage, no Chrome, Node < 22, navigation or HTTP error, eval error, timeout).
 import { writeFileSync } from 'node:fs';
-import { MEDIA, applyAuth, emulate, fail, launch, load, parseArgs, resolveTarget, sleep, waitFor } from './cdp.mjs';
+import { MEDIA, applyAuth, box as boxOf, emulate, fail, launch, load, parseArgs, q, realClick, resolveTarget, sleep, waitFor } from './cdp.mjs';
 
 const USAGE = 'Usage: node screenshot.mjs <url|file> <out.png> [--width 1280,390] [--height 900] [--full] [--scheme light,dark] [--media list]'
   + ' [--wait-for css] [--eval "js"] [--click css]... [--ax-diff] [--focus css] [--hover css] [--selector css] [--wait 500] [--root dir]'
@@ -47,16 +47,7 @@ const { send, evaluate } = cdp;
 await send('Page.enable');
 await applyAuth(cdp, url, opt.cookie, opt.header);
 
-// Selectors go into page JS as JSON strings, so quotes in them can't break the expression.
-const q = (css) => `document.querySelector(${JSON.stringify(css)})`;
-// scroll: bring it into view first (focus, hover); the capture box doesn't scroll, so a hover above it stays under the pointer.
-const box = async (css, what, scroll = true) => {
-  const r = await evaluate(`(() => { const el = ${q(css)}; if (!el) return null; ${scroll ? "el.scrollIntoView({ block: 'center', inline: 'center' });" : ''}
-    const b = el.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, sx: scrollX, sy: scrollY }; })()`);
-  if (!r) await fail(`${what}: no element matches ${css}`);
-  if (!(r.w > 0 && r.h > 0)) await fail(`${what}: ${css} has no size (hidden?)`);
-  return r;
-};
+const box = (css, what, scroll) => boxOf(cdp, css, what, scroll);
 
 const AX_NOISE = new Set(['generic', 'none', 'presentation', 'InlineTextBox', 'LineBreak', 'RootWebArea', 'WebArea', 'paragraph', 'group', 'Section', 'LayoutTable']);
 const AX_STATE = ['expanded', 'checked', 'selected', 'pressed', 'disabled', 'invalid', 'modal', 'busy'];
@@ -121,13 +112,8 @@ for (const width of widths) for (const scheme of schemes) {
   let before;
   if (opt['ax-diff']) { await sleep(wait); before = await axTree(); }
   for (const css of opt.click) {
-    const b = await box(css, '--click');
-    const x = b.x + b.w / 2, y = b.y + b.h / 2;
-    // A click that lands on another element (an overlay, a pointer-events: none gap) is the finding, so it is reported, not forced.
-    const hit = await evaluate(`(() => { const el = document.elementFromPoint(${x}, ${y}), t = ${q(css)}; return !el || t.contains(el) ? '' : el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + [...el.classList].slice(0, 2).map((c) => '.' + c).join(''); })()`);
+    const hit = await realClick(cdp, css);
     if (hit) console.log(`click ${css}: the pointer lands on ${hit}, which covers it`);
-    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
-    for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
     await sleep(100);
   }
   if (opt['ax-diff']) {

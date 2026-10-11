@@ -2,9 +2,17 @@
 
 For pages that have seconds to explain something and win a decision. Concrete beats decorative: a generated page decorates because it has nothing specific to show.
 
-Consumer-app screens (onboarding, home, progress) use Design read, Copy, Generic tells, Visual, and Avoid; Page structure, Layout rules, Pricing, Imagery, and the hero Checks apply to marketing pages only.
+Consumer-app screens (onboarding, home, progress) use Design read, Copy, Generic tells, Visual, and Avoid; Brief, Page structure, Layout rules, Pricing, Imagery, and the hero Checks apply to marketing pages only.
 
-Contents: Design read · Page structure · Layout rules · Pricing · Imagery · Copy · Generic tells · Visual (type, radius, elevation, motion) · Avoid · Checks
+Contents: Brief · Design read · Page structure · Layout rules · Pricing · Imagery · Copy · Generic tells · Visual (type, radius, elevation, motion) · Avoid · Checks
+
+## Brief
+
+A landing page sells one thing to one audience against the reasons they'd say no. Without those, the page fills with generic claims.
+
+- Gather before markup: the one primary action, the offer, the audience (ideal customer) and the pain that brings them, their top three objections, where the traffic comes from (ad, search, email, referral), and the proof on hand (quotes, numbers, logos, case studies).
+- When the brief lacks the primary action or the audience, ask once, and fold every other missing item into the same message. Whatever is still unanswered becomes a visible placeholder (`[top objection]`) or an assumption listed in the summary.
+- This applies to new marketing pages only. restyle and redesign keep the existing content and don't ask.
 
 ## Design read
 
@@ -19,15 +27,19 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 
 ## Page structure
 
+- Pick the layout kind by intent: classic (the product reads in one screenshot), long-form (the reader needs educating past skepticism), minimal (high-intent traffic or a short offer), or comparison (people searching "X vs Y").
+- With ad traffic, the hero repeats the ad's promise in its words, so the visitor knows they landed in the right place.
 - Hero: the headline names the outcome, the subhead names the audience and how; one primary CTA, and any secondary action is a text link; a real product visual instead of abstract art.
 - When the category has a first action people come to do (search flights by route and date, pick an open appointment slot, add to cart), the hero carries it in working form; a link to it further down doesn't count.
-- Order: hero → proof → problem → how it works → proof or pricing → final CTA repeating the hero CTA exactly.
-- Proof is attributable: a named person, their role, and a measurable result. Logos only if real and recognizable.
+- Order: hero → proof → problem → how it works → proof or pricing → objections → final CTA repeating the hero CTA exactly.
+- Proof is attributable: a named person, their role, and a measurable result. Logos only if real and recognizable. Proof sits next to the claim it supports, not in a testimonial block far from it.
+- The objections section answers the brief's real objections before the final CTA: an FAQ in plain question-and-answer text (6–12 questions for a high-friction offer such as a paid plan or a migration), plus risk reversal. Trial, cancellation, and refund terms appear only when the user supplied them; otherwise write a visible placeholder like `[refund terms]`.
 - Aggregate numbers anywhere on the page (customer counts, "median close time", "% auto-matched", "9 in 10") appear only when the user supplied them. An invented plausible stat reads as proof and ships by accident; while drafting, write a visible placeholder like `[median close time]` and list it in the notes.
 - Benefits are outcomes, at most three per section. Annotate real product UI instead of an icon grid.
 - Pricing follows the Pricing section below.
 - The most important message goes first and last; the middle is remembered least.
 - Flows end on a success screen with a next step, not a flat confirmation.
+- Indexing and share metadata follow `seo.md`.
 
 ## Layout rules
 
@@ -107,7 +119,7 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 
   A full-bleed band is square: sides flush with an edge take no radius (`radius.md`). No pills by default. A pill-shaped button, chip, or tag appears only when the chosen style lists it.
 - Elevation from layered shadows, used only where lift carries meaning; glass on floating layers over moving content (`materials.md`).
-- Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms `--ease-enter`. Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
+- Interactive card hover: translateY(-2px to -6px) with a stronger shadow over 150–250ms `--ease-enter`, under `@media (hover: hover) and (pointer: fine)`, not bare `hover:` (`${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`, Pointer and touch). Scale media inside an `overflow: hidden` frame (at most 1.05); never scale the card itself, it shifts neighbors.
 - Motion: entrances 200–300ms `--ease-enter`, exits faster with `--ease-exit`, staggers 40–60ms with a capped total. A slight spring is fine for confirmation moments, never for layout. Scroll reveals are subtle and run once, and content is never hidden by default: apply the hidden start state only after the script has run (`.js .reveal`), show everything at once under `prefers-reduced-motion` or without `IntersectionObserver`, so a script error, a blocked script, or a crawler still sees the page. Each animation needs a one-sentence reason (hierarchy, sequence, feedback, state change); "it looks alive" isn't one.
 - Gradients, glow, and texture follow `materials.md`: only on the design read's move, never under body text.
 
@@ -117,11 +129,14 @@ Hero carousels, autoplaying video with sound, parallax that moves text, more tha
 
 ## Checks
 
+- [ ] Brief gathered (primary action, offer, audience and pain, objections, traffic source, proof); every gap is a placeholder or a listed assumption.
 - [ ] Design read, with its one move, stated in the summary.
 - [ ] Hero fits 1280×800 with the CTA visible; nav on one line, with a menu on narrow screens when it has three or more links; no display type colliding with other text.
 - [ ] Revealed content is visible without JS and under reduced motion.
 - [ ] No layout family repeated; no empty grid cells.
 - [ ] No div-built fake screenshots; missing images are labeled slots listed in the summary.
 - [ ] Every visible string re-read; one label per CTA intent; no em dashes in copy.
+- [ ] An objections section (FAQ plus risk reversal) sits before the final CTA, with no invented terms.
 - [ ] Pricing has one highlighted tier, one badge, one filled button, diff-only feature lists, and the saving in money.
 - [ ] `scan_tells.py` leaves no `6-marketing` hit unexplained.
+- [ ] Metadata per `seo.md`: title, description, absolute canonical equal to `og:url`, absolute `og:image` with `summary_large_image`; `noindex` only on ad-only or time-bound landing pages.

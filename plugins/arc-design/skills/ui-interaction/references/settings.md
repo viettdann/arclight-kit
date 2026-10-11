@@ -8,13 +8,14 @@ Choose per section, by what a change costs:
 - **Identity waits for Save** (name, email, username, password, domain, billing details, security): edits are a draft. A save bar appears only while the draft differs from the saved values, pinned to the bottom of the viewport: "2 unsaved changes · Cancel · Save changes". Cancel restores the saved values; leaving with a draft asks first (`beforeunload` plus the router's blocker), and only then.
 - One model per section. A Save button beside toggles that already saved leaves the user unsure what the button still does, so no page-wide Save at the bottom of a settings form.
 - A change that needs proof applies only after the proof: a new email stays "Pending, verify new@example.com" until the link is clicked, and a password change asks for the current one.
+- A change that takes effect later says when, beside the control and before the change: after a reload, a restart, the next sign-in, the next billing cycle, or for new items only. After the change the row shows it pending with the action that applies it ("Applies after reload · Reload now"), so the user doesn't flip it again thinking it failed.
 
 ## Structure
 
 - Group by the job the user came to do, not by the table the values live in: Payments, Billing, Team, Notifications, not `users`, `org_settings`, `preferences`.
 - Large products give each job its own page in a settings nav, with its own URL (`/settings/billing`), so it can be linked and reloaded.
 - When personal and workspace settings both exist, split them and say whose settings a page changes ("acme · Workspace", "Your account").
-- Each row is a label, one line on what it changes, and the control. Common settings come first; advanced ones sit behind one "Advanced" disclosure at the end of their group, not on a separate page.
+- Each row is a label, one line on what it changes, and the control; when the row's reach differs from its page, that line says so ("This device only", "Everyone in acme", "New projects only"). Common settings come first; advanced ones sit behind one "Advanced" disclosure at the end of their group, not on a separate page.
 
 ## Search
 
@@ -38,7 +39,7 @@ Choose per section, by what a change costs:
 
 ## Checks
 
-- [ ] Preferences apply on change and revert on failure; identity fields use a save bar that appears only with a draft; no section mixes the two.
+- [ ] Preferences apply on change and revert on failure; identity fields use a save bar that appears only with a draft; no section mixes the two; a delayed effect says when it applies.
 - [ ] Groups follow user jobs, each job page has a URL, and advanced options are one click away.
 - [ ] Search reaches every setting, shows its path, and Enter lands on the focused control.
 - [ ] Changed rows are marked with text, not color alone, and each can be reset to its reference.

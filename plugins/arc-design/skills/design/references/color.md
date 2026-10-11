@@ -21,7 +21,7 @@ Generate the steps the roles call for. Radix numbers steps by role, so `9` is th
 | Role | Tailwind (light) | Radix | Semantic token |
 | --- | --- | --- | --- |
 | App background | white or `50` | `1` | `--color-bg` |
-| Subtle background (sidebar, striped row, well) | `50` (`100` if the app is `50`) | `2` | `--color-bg-subtle` |
+| Subtle background (sidebar, striped row, well, text field) | `50` (`100` if the app is `50`) | `2` | `--color-bg-subtle` |
 | Component background | `100` | `3` | `--color-bg-control` |
 | Component hover | `200` | `4` | `--color-bg-control-hover` |
 | Component active, selected | `200`–`300` | `5` | `--color-bg-control-active` |
@@ -107,6 +107,7 @@ A background between about OKLCH L 0.55 and 0.75 carries neither ink comfortably
 - Keep text surfaces near the ends: L above about 0.85 with dark text, below about 0.45 with light text.
 - A mid-lightness color can be a fill with one short label (checked) or a non-text mark; it is not a card, banner, or section background.
 - When a pair fails, move the lightness of one side and hold its hue; changing hue or chroma barely moves contrast and turns a fix into a palette change. Pushing L toward the ends may need lower chroma to stay in gamut.
+- On a colored surface (an accent band, a status callout, a tint fill), secondary text is a step of that surface's own hue, never the neutral `text-muted` or white at reduced opacity: grey on color reads as dirt, and translucent white reads as disabled. Measure it with `contrast.mjs` like any ink.
 
 ## Palette audit
 
@@ -131,4 +132,5 @@ APCA (Lc) is a useful lens on dark themes and thin text, but contrast here is ch
 - [ ] sRGB value first, P3 override inside `@media (color-gamut: p3)`.
 - [ ] `prefers-contrast: more` has a block for each theme, each pair at least 0.15 L wider and remeasured.
 - [ ] No text surface between about L 0.55 and 0.75.
+- [ ] Secondary text on a colored surface uses that surface's hue, not neutral grey or translucent white.
 - [ ] On restyle or redesign, the palette audit mapping was reported before any color changed.

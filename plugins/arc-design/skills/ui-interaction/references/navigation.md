@@ -7,6 +7,7 @@
 - Overflow scrolls horizontally with edge fades (plus chevrons on desktop), never wraps to a second row.
 - On mobile use a segmented control for up to 4–5 options; beyond that, a scrolling row or a select/sheet.
 - When tabs are views, the active tab is in the URL.
+- A tab stays when its panel is empty: it opens to an empty state that says why and what fills it ("No comments yet"), showing 0 if tabs show counts; hiding or disabling it shifts the other tabs and changes the set from one record to the next.
 
 ## Composite widgets
 
@@ -26,6 +27,7 @@ A toolbar, tablist, listbox, menu, radio group, tree, or grid is one Tab stop: T
 ## Navigation
 
 - Mobile: bottom tabs for 3–5 primary destinations. Desktop: a persistent sidebar for 5+ sections, a top bar for fewer.
+- Primary destinations (bottom tabs, sidebar) are never hidden or disabled because their content is empty or unavailable right now; the section opens and says why (nothing yet, no access, offline) and what unlocks it, because a bar that changes between visits loses the user's map. A destination this user's role can never reach is left out, and the bar stays visible on every primary destination; only a modal or sheet covers it.
 - A hamburger holds secondary items on mobile only, never desktop primary navigation.
 - Breadcrumbs only for hierarchies deeper than two levels.
 - The current location is marked with `aria-current="page"`.

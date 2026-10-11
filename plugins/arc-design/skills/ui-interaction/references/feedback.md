@@ -36,7 +36,7 @@ For output a model writes while the user waits (chat replies, summaries, drafts,
 | --- | --- |
 | One field | Inline under the field |
 | One section failed to load | Inline in that section, with retry; the rest of the page keeps working |
-| Connection lost | Persistent banner until restored |
+| Connection lost | Persistent banner, in a slot reserved from the first render or fixed over the content, until restored |
 | An action failed transiently | Toast with retry |
 | Blocking (no permission, fatal) | Full panel or page state with a way out |
 
@@ -62,6 +62,8 @@ By cause:
 
 Distinguish first run, no results, filtered out, error, no permission, and cleared by the user (see `data.md`). Each gets specific copy and one next action. No bare "No data".
 
+Onboarding starts from the first-run state and gets the user to one real result (first project created, first invoice sent), not a tour of every feature: one task per step, progress shown when there is more than one step, skip and resume where the product supports them, and optional setup labeled optional. Persistent guidance never lives only in an empty state, which disappears with the first item.
+
 ## Notifications
 
 - Match surface to severity: badge for a passive count, toast for low and transient, banner for an ongoing system state, modal only when the user must act.
@@ -83,6 +85,15 @@ Distinguish first run, no results, filtered out, error, no permission, and clear
 - Opening clears it. Opening the panel clears the count of unseen items; each item keeps its own unread state until read, with "Mark all read". Clear optimistically and sync across tabs. A badge that never clears trains people to ignore it.
 - The count changes in place and never blinks: outside the user's own actions it doesn't drop to zero and come back. Keep the last known value while refetching; with no value yet, show no badge rather than "0". No pulse.
 
+### Sound
+
+- Off by default in a dense tool (`${CLAUDE_PLUGIN_ROOT}/skills/design/references/profile-tool.md`); a consumer app may ship it on, with the mute control below.
+- Sound is for events that matter while the user may not be looking (incoming message or call, timer done, long upload finished) and for confirming a significant action (payment, send); never for hover, typing, scrolling, navigation, or routine clicks, which repeat hundreds of times a day.
+- Every sound has a visual twin carrying the same information, since muted devices, silent mode, and deaf users get only the visual.
+- A mute control (plus volume when there are several sounds) sits in settings, applies instantly, persists, and is read before the first sound plays.
+- Default volume is subtle (`audio.volume` ~0.3), and weight follows the event: a short soft tick for a small action, a fuller tone only for a finished payment or an alert, never a harsh buzzer for a user's mistake.
+- Preload each sound once and reuse the element; set `currentTime = 0` before `play()` so rapid repeats retrigger, and `.catch()` the `play()` promise, which rejects before the first user gesture under autoplay policy.
+
 ## Copy to clipboard
 
 - The check reports the write, not the click: `await navigator.clipboard.writeText(value)`, then flip the icon. The promise resolves within a frame, so no spinner and no delay; on rejection there is no check.
@@ -103,10 +114,16 @@ Distinguish first run, no results, filtered out, error, no permission, and clear
 
 - Buttons are verb plus object or outcome: "Save changes", "Create project", "Delete 3 files". Not "Submit", "OK", or "Yes".
 - Errors are human and specific with a next step: "That email already has an account. Log in instead?", not "Invalid input".
-- Labels name the outcome, not the gesture: "Show archived", not "Click to toggle".
+- Labels name the outcome, not the gesture: "Show archived", not "Click to toggle". A toggle or checkbox says what is true when it is on ("Send read receipts"); a negative label ("Don't send…", "Disable…", "Hide…") makes the off state a double negative.
+- Link text names where it goes or what it gets ("Download the Q3 report (PDF, 2 MB)"), because a screen reader's links list reads it alone; a "Read more" kept on every card gets an `aria-label` that starts with those words ("Read more about Q3 pricing").
 - Helper text answers the question the user would ask next (format, limits, who sees it), never repeats the label.
 - Say each thing once: an intro under a heading that restates the heading goes.
 - One term per concept across the product ("workspace" everywhere, never also "team" or "org"), and required or optional fields marked one way everywhere.
+- Tone follows the stakes: success, onboarding, and first-run empty states may be warm; routine actions and settings stay neutral and short; errors and destructive confirmations are calm and plain, with no jokes; data loss, security, and payment copy is serious and states the consequence outright. Warm means friendly wording of real information, never greetings, emoji, or exclamation marks (restyle principle 5), and a brand voice belongs only in the warm cases, because a joke over lost work reads as mockery.
+- One case per element type (buttons, headings, tabs, menu items, labels), applied to every instance; sentence case when the project has no policy. "Save Changes" beside "Discard changes" reads as two products. Uppercase styling comes from `text-transform` over a sentence-case string (`${CLAUDE_PLUGIN_ROOT}/skills/design/references/typography.md`).
+- Status strings come in parallel pairs: in progress is the -ing verb plus the object ("Saving changes…"), done is the object plus the past participle ("Changes saved"), failed says what didn't happen and the next step ("Changes not saved. Check your connection and try again."). A partial result counts both sides and offers the fix for the rest ("9 of 12 files imported · Retry 3 failed"), never a success toast that hides the failures.
+- Cut words that carry nothing: "successfully" (the past tense already says it), "Please" in routine instructions, "Oops" and "Something went wrong" (name what failed), and exclamation marks, which read as shouting in errors and forced cheer in routine success. The restyle scanner (`${CLAUDE_PLUGIN_ROOT}/skills/restyle/scripts/scan_tells.py`) flags them in strings.
+- Address the reader as "you", not "the user". Errors describe the problem and the fix, not the team ("Couldn't load invoices. Check your connection and try again.", not "We're having trouble…"): "we" in an error reads as deflection and says nothing about what to do. One perspective per flow, never "My account" beside "Your settings".
 
 ## Checks
 
@@ -117,3 +134,5 @@ Distinguish first run, no results, filtered out, error, no permission, and clear
 - [ ] Copy buttons show the check only after the write resolves, copy the raw value, reset after ~2s, and have a fallback that admits failure.
 - [ ] Generated output streams, names its real steps, stays an editable draft until applied, keeps partial text on failure, and confirms risky proposed actions.
 - [ ] Badges are capped, pinned to the corner, cleared on open, and never flash to zero on refetch; counts and status dots don't share a color or a row.
+- [ ] Status strings pair in progress with done, partial results count both sides, and no UI string says "successfully", "Oops", or ends in "!"; toggles name their on state; one case per element type.
+- [ ] Every sound has a visual equivalent, a persisted mute, a subtle default volume, and none fires on hover, typing, or navigation; a tool ships with sound off.

@@ -7,7 +7,6 @@ Review UI changes (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, 
    - semantics: the element became its native counterpart (`<button>`, `<nav>`, `<a href>`), so its `role` and `tabindex="0"` are now redundant
    - naming: the `aria-label` gave way to visible text that names the control, through `aria-labelledby` or a bound `<label>`
    - preferences: the `prefers-*` query moved to a shared stylesheet or became a `motion-safe:`/`motion-reduce:` variant
-   - direction: `left` or `margin-right` became `inset-inline-start` or `margin-inline-end`, an improvement for RTL
 
    What an unmatched removal costs: an accessible name, description, or live region gone; `alt` or a label association gone; a focus indicator or tab stop gone; motion that now ignores `prefers-reduced-motion`; `lang` or `dir` dropped; `text-wrap` or `tabular-nums` dropped where text wraps or numbers align in columns; logical properties swapped for physical ones; `inert` removed from content behind a modal. A deleted or shortened user-facing string has no pattern: read those hunks for a label, error, or empty state that lost its information.
 2. **Incomplete change against the stated intent**: compare the diff with the Phase 0 task list and look for the states that are absent, which a review of the existing code never surfaces:

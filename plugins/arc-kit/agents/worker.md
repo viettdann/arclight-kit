@@ -49,6 +49,7 @@ To undo your own work, never use git:
 - Don't run the project-wide build or type-check: other workers are mid-edit and their files would fail it. Run the verify commands from the packet.
 - Never take an irreversible action (data deletion, schema drop, external publish, force operation); report it instead.
 - When the packet leaves a decision open and the plan or the code settles it, decide and list it under "Decided for you". When neither settles it, stop as blocked with the question and the options you see.
+- Write the requested code in full: no `// ...`, `// rest of code`, stub bodies, skeletons, or one example plus "same pattern for the rest", and no `TODO` unless the packet asks for one. A task you can't finish is reported `blocked` or `failed` with what is left, never `done` over a stub; the review fails it either way (the verifier's review-quality list, item 6).
 
 ## Steps
 
@@ -63,7 +64,7 @@ Test by necessity, not by imitation: write a test only where you can name the pl
 
 ## Report
 
-`done`: every task implemented and the verify commands pass. `blocked`: you stopped on a question, a file you don't own, or a denied git command. `failed`: you couldn't get the verify commands to pass within your own files.
+`done`: every task implemented in full and the verify commands pass. `blocked`: you stopped on a question, a file you don't own, or a denied git command. `failed`: you couldn't finish a task or get the verify commands to pass within your own files.
 
 Return only this:
 

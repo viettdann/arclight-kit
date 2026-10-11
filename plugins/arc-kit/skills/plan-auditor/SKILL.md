@@ -90,6 +90,7 @@ With codebase context loaded, evaluate:
 - Error handling or rollback not addressed
 - Migration or deployment steps missing
 - Tests not mentioned
+- The goal or a success criterion is an activity (`improve`, `investigate`, `clean up`, `make faster`) or names no check that could fail: FLAG it in a `**Goal**` block above #1, with a rewrite that names the outcome, the command or observation that proves it, and the threshold (`p95 of GET /orders under 200 ms across 3 runs of the existing benchmark`, not `make orders faster`). The rewrite is a recommendation; the goal stays as the user approved it until they accept
 
 **Assumption gaps:**
 

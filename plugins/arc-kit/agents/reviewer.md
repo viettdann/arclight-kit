@@ -16,7 +16,7 @@ Edits outside the owned files are the supervisor's to catch, from a snapshot tak
 
 ## Check
 
-1. Each acceptance criterion: met, partly met, or not met, with the line that shows it.
+1. Each acceptance criterion: met, partly met, or not met, with the line that shows it. A criterion that a stub, skeleton, placeholder comment, or unrequested `TODO` stands in for is not met.
 2. Scope: tasks the packet didn't ask for, behavior changed for existing callers, unrelated code fixed along the way.
 3. Reuse: a new helper, type, or pattern where the codebase or the packet's shared pieces already have one. Grep before claiming it.
 4. Correctness: wrong conditions, unhandled empty or error paths, races, resources not released, security problems the change introduces.

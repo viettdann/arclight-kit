@@ -23,6 +23,8 @@ The default material: an opaque surface token with a 1px hairline where it meets
 - Light: the hairline is the text color at about 6–10% (`border` token). Dark: white at about 6–10% alpha (`rgb(255 255 255 / 0.08)`), not a fixed grey hex: the same token reads one step lighter on every layer, where a hex disappears on one surface and glares on another.
 - A hairline is decorative, around 1.2:1. A boundary that identifies a control (text input, select, checkbox) needs 3:1 against its surface, so inputs use `border-strong`, checked with `scripts/contrast.mjs` as `ui`.
 - Hover on a solid surface changes its value (one step), not its position or shadow, in the tool profile.
+- A text field's fill is the surface it sits on or one step below it (`bg-subtle`), never a step above: a lighter fill reads as a raised button, a darker one as a slot to type into. Its 3:1 boundary (above) still identifies it.
+- Photos and screenshots get a 1px outline inside the edge in black at about 10% (white at about 10% in dark themes): `outline: 1px solid rgb(0 0 0 / 0.1); outline-offset: -1px`. An image with a white or black edge then keeps its shape on a surface of the same value. Never use a tinted grey, which reads as a dirty edge. The outline follows the image's radius; avatars keep their ring (`avatars.md`).
 
 ## Lightness layers
 
@@ -96,4 +98,5 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - [ ] Gradients and glow only where the profile or style allows, never under body text.
 - [ ] Texture removed under `prefers-contrast: more` (and frozen under reduced motion if it moves); body text outside it or passing with it on.
 - [ ] Input boundaries pass 3:1; hairlines are alpha in dark themes.
+- [ ] Text fields sit at or below their surface's value; photos carry the 1px alpha outline.
 - [ ] Style materials appear only with their style, on one or two objects where the style says so.

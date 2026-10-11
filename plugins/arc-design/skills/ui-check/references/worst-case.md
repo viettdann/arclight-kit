@@ -41,7 +41,7 @@ Use values a real user could produce, at the schema's real limit. Domains in ema
 
 | Kind | Values to try |
 | --- | --- |
-| Names | One at the full column length with a hyphen and diacritics; a two-letter name (`Jo`); CJK with no spaces (`王秀英`); RTL Arabic or Hebrew; an emoji ZWJ sequence first (`👩🏽‍💻 Priya`), which `.charAt(0)` or `.slice` splits; a suffix (`III`, `Jr.`); no name at all, only an email |
+| Names | One at the full column length with a hyphen and diacritics; a two-letter name (`Jo`); CJK with no spaces (`王秀英`); an emoji ZWJ sequence first (`👩🏽‍💻 Priya`), which `.charAt(0)` or `.slice` splits; a suffix (`III`, `Jr.`); no name at all, only an email |
 | Emails, URLs, IDs | A 60-character email; a long URL with a path and query; a UUID or hash; a file name where the version and extension sit at the end. None has a space to wrap at |
 | Numbers | `0`; a negative; `0.1 + 0.2` unrounded; a huge count (`1284000`); `NaN`, `null`, `undefined`; a currency amount with many digits (`12345678.90`); a percentage past 100 |
 | Dates and times | `1970-01-01` (a zero timestamp); a far-future date; a time near midnight that lands on another day in the viewer's timezone; a time inside a DST change; "now" and a date years ago for relative-time thresholds |
@@ -52,7 +52,7 @@ Use values a real user could produce, at the schema's real limit. Domains in ema
 
 - Decide per field, not once for the component. A name can end-truncate; a value whose distinguishing part is at the end (file names, hashes, paths, IDs that share a prefix) truncates in the middle, keeping the start and the end.
 - Never truncate a number, an amount, or a date: a cut `$1,284,5…` reads as another value. Give the column room, or use a compact form (`1.3M`) only where precision doesn't matter.
-- The full value stays reachable: a `title` or tooltip, an expand, or the detail view. A truncated value nobody can read in full is lost data.
+- The full value stays reachable by keyboard and touch: an expand control, the detail view, or a tooltip on an element that takes focus. A `title` attribute alone doesn't count: it shows only on mouse hover after a delay, never on touch or focus, and screen readers read it inconsistently. A truncated value nobody can read in full is lost data.
 
 ## Symptoms
 

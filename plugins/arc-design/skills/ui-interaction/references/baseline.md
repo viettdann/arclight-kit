@@ -7,6 +7,7 @@
 - An `aria-label` contains the visible text (WCAG 2.5.3), best at the start: a button showing "Send" is named "Send" or "Send message", never "Submit form", or a voice-control user who says "click Send" gets nothing.
 - Each ARIA state has one job: `aria-pressed` for a toggle button (Bold, Mute), `aria-selected` for the chosen tab, option, or grid cell, `aria-current` for the current page, step, or date within a set, `aria-checked` for checkboxes, radios, and switches. Swapping them makes a screen reader announce a tab as "pressed" or a nav link as "selected", and the user can't tell what the control does.
 - Never put `aria-hidden="true"` on an element that is or contains something focusable: the keyboard still lands on it and the screen reader announces nothing. Hide the subtree with `inert` instead, or keep it exposed.
+- Every `id` is unique in the document, so give a component rendered more than once an id per instance (`useId()` in React and Vue, or a prefix prop), never a literal: `for`, `aria-labelledby`, and `aria-describedby` resolve to the first match, so the second copy's field reads the first one's label or error.
 
 ## Keyboard and focus
 
@@ -22,7 +23,7 @@
 - Under `@media (pointer: coarse)`, primary controls have a 44×44px hit area; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this).
 - The hit area is not the visual size. Reach 44px with an absolutely positioned `::before` at a negative inset (the control `position: relative`) or with spacing the layout already has, and keep the control's height, padding, glyph (16–20px), and the surrounding layout unchanged. Neighbouring hit areas don't overlap; where they would, the gap between the controls counts toward the target.
 - Never meet the target with a global `min-height`/`min-width: 44px`, a bigger size token, or taller rows just to clear a ui-check warning. A control that should look bigger on touch is a design decision made in the tokens, not a fix.
-- Hover styles live under `@media (hover: hover)`; touch-only hit areas and spacing live under `@media (pointer: coarse)`. Never branch on user agent.
+- Hover styles that move, scale, or reveal content live under `@media (hover: hover) and (pointer: fine)`: some touch devices report hover, and a tapped card stays lifted until the next tap. Color-only tints may use `(hover: hover)` alone, which is what Tailwind v4's `hover:` compiles to (v3 needs `future.hoverOnlyWhenSupported`). Touch-only hit areas and spacing live under `@media (pointer: coarse)`. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
 ## Unavailable actions: explain, don't disable
@@ -55,16 +56,21 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 ## Layout stability
 
 - Every `<img>`, `<video>`, and `<iframe>` reserves its box before it loads: `width` and `height` attributes, or `aspect-ratio` on the element or its wrapper. Content that arrives later (ads, embeds, banners) gets reserved space or appears below the viewport, never pushing visible content down.
+- After an action, nothing is inserted above what the user is looking at: a banner, validation summary, notification, consent bar, or fetched result goes into a slot that already has its size, an overlay or toast, or below the viewport. A shift more than 500ms after the input counts against CLS like a load shift (ui-check `layout-shift-input`).
 
 ## Mobile web and locale
 
 - `touch-action: manipulation` on controls, so fast repeated taps don't zoom. Set `-webkit-tap-highlight-color` deliberately (usually `transparent`, with the control's own pressed state).
 - Modals, drawers, sheets, and scrollable panels get `overscroll-behavior: contain`, so scrolling past their end doesn't scroll the page behind.
+- `-webkit-text-size-adjust: 100%` on `html`, so iOS doesn't inflate text in landscape. Never `none`, which also blocks text zoom in some browsers.
+- An app shell whose panes scroll on their own (not a scrolling document) sets `overscroll-behavior: none` on `html, body`, so pull-to-refresh and the page bounce don't fire behind a pane. A scrolling document keeps them.
 - `user-select: none` and `-webkit-touch-callout: none` go only on controls a long press shouldn't select (buttons, tabs, drag handles), never on `body` or content: there they stop users from copying text and break selection for assistive tools.
-- Full-bleed layouts and fixed bars: `viewport-fit=cover` in the viewport meta, with padding from `env(safe-area-inset-*)` so content clears the notch and the home indicator.
-- When the on-screen keyboard should shrink the layout rather than slide over it (a chat composer, a form with a fixed footer), add `interactive-widget=resizes-content` to the viewport meta (Chromium; iOS Safari ignores it), so `100dvh` and bottom-fixed bars sit above the keyboard instead of under it.
+- Full-bleed layouts and fixed bars: `viewport-fit=cover` in the viewport meta, with padding from `env(safe-area-inset-*)` so content clears the notch and the home indicator. A bar's height is its base plus the inset (`calc(3.5rem + env(safe-area-inset-top))`), never the inset alone. `0px` is a valid inset (phones without a notch, most landscape views, some standalone launches), never a signal to hide or delay the UI or to guess the device. Without `viewport-fit=cover` every inset reads `0px`, so desktop emulation can't show a missing inset.
+- A fixed bottom bar spans with `left: 0; right: 0` (`inset-x-0`), never `width: 100vw`, which includes a classic scrollbar and scrolls the page sideways. Its full-width button sits inside the 16px page margin, and the bar pads its bottom with `max(16px, env(safe-area-inset-bottom))`.
+- When the on-screen keyboard should shrink the layout rather than slide over it (a chat composer, a form with a fixed footer), add `interactive-widget=resizes-content` to the viewport meta, so `100dvh` and bottom-fixed bars sit above the keyboard in Chromium. WebKit doesn't implement it, so on iOS the keyboard covers the layout viewport: write `visualViewport.height` to a CSS variable on its `resize` and `scroll` events (skipped while `visualViewport.scale > 1`, so a pinch zoom doesn't move the layout), size the composer or footer from it, and focus fields with `focus({ preventScroll: true })`, then scroll them into view once the variable reflects the keyboard.
+- A product with a manifest or `apple-mobile-web-app-*` tags, or one users add to the Home Screen: icons, startup images, navigation without browser chrome, and install prompts are in `references/installed-app.md`.
 - `translate="no"` on brand names, code, identifiers, and usernames, so browser translation doesn't rewrite them.
-- Dates, times, numbers, and currency go through `Intl.DateTimeFormat` and `Intl.NumberFormat` with the user's locale, never hand-built strings. Take the language from the user's setting or `navigator.languages`, never from IP.
+- Dates, times, numbers, currency, and lists go through `Intl.DateTimeFormat`, `Intl.NumberFormat`, and `Intl.ListFormat` with the user's locale, never hand-built strings: a list joined with `", "` and `" and "` is wrong outside English (Vietnamese is "Ana, Ben và Cy", no serial comma). Take the language from the user's setting or `navigator.languages`, never from IP.
 - Text is translatable whole: plurals through `Intl.PluralRules` or the i18n library, never `item${n !== 1 ? 's' : ''}`; one message with placeholders, never a sentence glued from pieces (word order changes per language). Buttons and labels size to their text (`min-width` plus padding, never a fixed width): translations run about 40% longer.
 - Never `transition: all`: list the properties, or a theme switch and every layout change animate too.
 - Never block paste (`onPaste` with `preventDefault`), in password and confirmation fields included.
@@ -77,6 +83,7 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 
 - Honor `prefers-reduced-motion: reduce` for every animation and every transition that moves or scales (`transform`, `translate`, `scale`, position): replace the movement with an opacity change or nothing. Color and opacity transitions may stay.
 - Press/tap feedback appears within 100ms, regardless of the network.
+- A handler with heavy synchronous work paints its pending state first: set it, then `await scheduler.yield()` (fallback `new Promise((r) => setTimeout(r))`) before the work, and send analytics and logging through `requestIdleCallback`. Split long loops into chunks under ~50ms with a yield between them; send CPU-bound work (parsing, diffing, image processing) to a Worker; in React, wrap the expensive update in `startTransition`. Otherwise the click waits for the whole task and no feedback paints (ui-check `inp`).
 - Exits are faster than entrances, roughly 60–70% of the entrance duration.
 - Animate `transform` and `opacity`, not `top`/`left`/`width`/`height`.
 - Loops (spinners aside) pause when offscreen or when the tab is hidden. An animation interrupted midway (a second click, a reversed hover) continues from where it is, never jumps to the start; use View Transitions or FLIP when an element must visibly move between two layouts.
@@ -104,5 +111,6 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.
 - [ ] No fixed `height` on a container that holds text, breakpoints in `em`/`rem`; images, videos, and iframes reserve their size.
-- [ ] Overlays contain overscroll, fixed bars clear the safe areas, dates and numbers go through `Intl`, no `transition: all`, and paste works in every field.
+- [ ] Overlays contain overscroll, fixed bars clear the safe areas and keep their base height at a `0px` inset, fixed bottom bars use `inset-x-0`, not `100vw`, dates, numbers, and lists go through `Intl`, no `transition: all`, and paste works in every field.
 - [ ] No control is disabled without an obvious reason: unavailable actions explain themselves, busy buttons keep focus.
+- [ ] No handler runs heavy work before its pending state paints, and nothing an action produces is inserted above the visible content.
