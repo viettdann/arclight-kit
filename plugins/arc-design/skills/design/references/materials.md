@@ -88,6 +88,7 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - **Double bezel** (premium): an outer shell (subtle tinted background, hairline ring, 6–8px padding, shell radius from the premium radius table) holding an inner core (its own background, an inset top highlight, radius = outer − padding). One or two objects per page, never every card.
 - **Solid lip** (playful, bubbly): a 3–4px band of a darker shade of the fill under buttons and cards, drawn as a hard shadow (`0 4px 0 <darker step>`); press removes it and moves the element down by the same distance.
 - **Hard offset shadow** (playful, neo-brutal): an unblurred shadow in the ink color (`4px 4px 0 var(--ink)`) with a 2–3px ink border; press translates the element into its shadow.
+- **Lit edge** (technical): a 1px inset top highlight plus a tight contact shadow (`inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(<canvas> / 0.3)`) on the primary button only, so the one filled control reads as a physical key on a flat page. No border with it.
 - **Inversion** (brutalist): a solid block in the text color with the canvas color as text, for the one thing that matters on the screen. Depth in brutalist comes from rules and inversion only.
 
 ## Checks

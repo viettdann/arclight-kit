@@ -41,6 +41,7 @@ Claude Code marketplace with three plugins:
 | `brutalist` | Swiss print or terminal, visible grid, zero ornament; tool or marketing |
 | `cinematic` | Immersive, scroll-paced storytelling, viewport-scale type, full-bleed imagery, dark tech; marketing |
 | `playful` | Bubbly or neo-brutal, saturated multi-hue palette, chunky type, springs; marketing or consumer app |
+| `technical` | Dark layered canvas, one warm accent, small radii, flat surfaces, sourced measured numbers and real code as proof; marketing |
 
 No style named → the profile alone is the direction. Surface materials (solid and hairline, shadow, glass, scrim, gradient, texture) are shared by every style in `design/references/materials.md`; glass is a material for floating layers, not a style.
 

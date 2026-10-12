@@ -2,6 +2,13 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-10-12
+
+### Added
+
+- `design`: `technical` style (`references/styles/technical.md`) for evidence-first technical marketing pages: dark layered canvas by default, one non-neon accent, small radii with no pills, flat surfaces, mono only for measured values and code, stat tiles with a source line, real copyable code, at most one light band and one marquee, no count-up numbers. Neutrals take a hue opposite the accent, layer steps are one large then small OKLCH lightness steps, accent text below large size needs a lighter step, and a default palette (from CoralBricks) applies when no brand color is given. Listed in design and redesign arguments and the style table.
+- `design`: the lit edge style material (`materials.md`) for the technical style's primary button.
+
 ## [1.7.0] - 2026-10-10
 
 ### Added

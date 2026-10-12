@@ -114,7 +114,7 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 - Keep icons that help navigation or actions.
 - Never propose a new typeface unless the user asks for a type change.
 - Keep overlay shadows, and glass on floating layers that meets `materials.md`.
-- If `DESIGN.md` records a style (premium, cinematic, playful), the values its Decisions set (a multi-hue palette, display weights, hard offset shadows, glass) are intentional; remove only what its Avoid list or the tells outside it cover.
+- If `DESIGN.md` records a style (premium, cinematic, playful, technical), the values its Decisions set (a multi-hue palette, display weights, hard offset shadows, glass, a dark canvas, mono numbers) are intentional; remove only what its Avoid list or the tells outside it cover.
 - Don't add a centered max-width container to an app shell that filled the width before.
 - Don't flatten hierarchy that was already right, and don't restyle things outside the requested scope without saying so.
 
