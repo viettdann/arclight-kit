@@ -184,16 +184,19 @@ def main():
     sweep_locks()
     session = payload.get("session_id") or payload.get("transcript_path") or ""
     reported = False
-    for path, text, added in changed_files(payload):
+    for path, text, added, before in changed_files(payload):
         ext = path.suffix.lower()
         if not TEST_FILE.search(path.name) or ext not in CODE_EXTS:
             continue
         lines = text.splitlines()
+        detected = cases(text, ext)
+        extra = Counter(name for _, name in detected) - Counter(name for _, name in cases(before, ext))
         occurrences = Counter()
-        for i, name in cases(text, ext):
+        for i, name in detected:
             occurrences[name] += 1
             touched = i in added or bool(ATTRIBUTE_CASE.match(lines[i])) and any(j in added for j in range(i, i + LOOKAHEAD + 1))
-            if touched and first_seen(f"{session}|{path}|{name}|{occurrences[name]}"):
+            if touched and extra[name] > 0 and first_seen(f"{session}|{path}|{name}|{occurrences[name]}"):
+                extra[name] -= 1
                 if not reported:
                     print("test-guard: new test cases:", file=sys.stderr)
                 reported = True

@@ -41,7 +41,7 @@ Copy and track as you execute:
 
 ### Phase 0: Load the Plan
 
-Arguments: $ARGUMENTS
+Use arguments and constraints from the current user request; do not assume host variable substitution.
 
 A path in the arguments is the plan file; the word `tdd` turns TDD mode on. Without a path, take the first source that exists:
 
@@ -75,7 +75,7 @@ Fast, lightweight scan for issues that would block execution, not deep explorati
 
 #### Step 1: Build file-task matrix
 
-Map each task to the files it touches. When the plan doesn't name them, a quick Grep/Glob usually does; a task whose files still can't be named without exploring goes to the inline lane.
+Map each task to the files it touches. When the plan doesn't name them, a scoped rg search usually does; a task whose files still can't be named without exploring goes to the inline lane.
 
 ```
 Task 1 → [src/foo.ts, src/foo.test.ts]

@@ -10,7 +10,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-LEGACY = re.compile(r"CLAUDE_|AskUserQuestion|subagent_type|model:\s*[\"']?sonnet|disable-model-invocation|argument-hint:")
+LEGACY = re.compile(r"CLAUDE_|AskUserQuestion|subagent_type|model:\s*[\"']?(?:sonnet|haiku|opus)|disable-model-invocation|argument-hint:|\$ARGUMENTS|In Claude Code|(?:Agent|Skill) tool|SendMessage")
 EXPLICIT_ONLY = {"arc", "conventions", "fresh-air", "handoff"}
 BUNDLED_PATH = re.compile(r"(?<![\w/$])((?:\.\./|\./|references/|scripts/|assets/|examples/)[\w./-]+\.(?:md|py|mjs))\b")
 

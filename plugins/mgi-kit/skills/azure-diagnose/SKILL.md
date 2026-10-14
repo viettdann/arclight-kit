@@ -5,7 +5,7 @@ description: "Read-only az CLI diagnosis of live App Service, Functions, Contain
 
 # Azure diagnose
 
-Two modes. **Diagnose**: find out why one running workload misbehaves, from evidence with timestamps (sections 1 to 4). **Audit**: survey a tenant for what is failing, at risk, or unobservable, then rank it ([Audit](#audit)). Both are read-only: no restart, scale, setting change, redeploy, or diagnostic setting added, even when it is the obvious fix. Give the fix and the command, and let the user run it.
+Two modes. **Diagnose**: find out why one running workload misbehaves, from evidence with timestamps (sections 1 to 4). **Audit**: survey a tenant for what is failing, at risk, or unobservable, then rank it ([Audit](references/codex-workflow.md#audit)). Both are read-only: no restart, scale, setting change, redeploy, or diagnostic setting added, even when it is the obvious fix. Give the fix and the command, and let the user run it.
 
 Before starting, read `references/codex-workflow.md` for the complete workflow, checks, and report format. Load its other references only when the relevant step calls for them.
 

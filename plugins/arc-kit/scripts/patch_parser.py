@@ -94,3 +94,29 @@ def patch_added(lines, hunks, kind):
         if not states:
             return set()
     return set.intersection(*states.values()) if states else set()
+
+
+def patch_before(lines, hunks, kind):
+    if kind == "Add":
+        return ""
+    previous, cursor = [], 0
+    for body, anchor, eof in hunks:
+        expected = [row[1:] for row in body if row[0] != "-"]
+        if not expected:
+            return None
+        search_start = cursor
+        if anchor is not None:
+            anchors = matching_starts(lines, [anchor], cursor, False)
+            if len(anchors) != 1:
+                return None
+            search_start = anchors[0] + 1
+        append = not any(row[0] in " -" for row in body)
+        starts = matching_starts(lines, expected, search_start, eof or append)
+        if len(starts) != 1:
+            return None
+        start = starts[0]
+        previous.extend(lines[cursor:start])
+        previous.extend(row[1:] for row in body if row[0] != "+")
+        cursor = start + len(expected)
+    previous.extend(lines[cursor:])
+    return "\n".join(previous)

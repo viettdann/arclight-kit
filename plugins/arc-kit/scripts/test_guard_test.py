@@ -38,6 +38,20 @@ class TestGuardTest(unittest.TestCase):
         result = self.patch('new_test.py', content, command)
         self.assertEqual((result.returncode, result.stderr), (0, ""))
 
+    def test_codex_update_reports_new_case_alongside_moved_case(self):
+        content = "def helper():\n    pass\n\ndef test_existing():\n    pass\n\ndef test_new():\n    pass\n"
+        command = "*** Begin Patch\n*** Update File: new_test.py\n@@\n-def test_existing():\n-    pass\n-\n def helper():\n     pass\n+\n+def test_existing():\n+    pass\n+\n+def test_new():\n+    pass\n*** End Patch"
+        result = self.patch("new_test.py", content, command)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("test_new", result.stderr)
+        self.assertNotIn("test_existing", result.stderr)
+
+    def test_codex_patch_does_not_report_moved_case(self):
+        content = "def helper():\n    pass\n\ndef test_existing():\n    pass\n"
+        command = "*** Begin Patch\n*** Update File: new_test.py\n@@\n-def test_existing():\n-    pass\n-\n def helper():\n     pass\n+\n+def test_existing():\n+    pass\n*** End Patch"
+        result = self.patch("new_test.py", content, command)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+
     def test_codex_patch_deduplicates_same_session(self):
         first = self.patch('new_test.py', 'def test_added():\n    pass\n')
         second = self.patch('new_test.py', 'def test_added():\n    pass\n')

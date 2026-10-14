@@ -5,7 +5,7 @@ description: "Audit technical plans before execution for real APIs, valid refere
 
 # Plan Auditor
 
-The plan to audit is: $ARGUMENTS
+Audit the plan file or plan text named in the current user request.
 
 Before starting, read `references/codex-workflow.md` for the complete workflow, checks, and report format. Load its other references only when the relevant step calls for them.
 

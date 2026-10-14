@@ -5,7 +5,7 @@ description: "Verify this session's finished work against the requested scope, t
 
 # Verifier: Completeness Check and Code Review
 
-Arguments: $ARGUMENTS
+Use arguments and constraints from the current user request; do not assume host variable substitution.
 
 Before starting, read `references/codex-workflow.md` for the complete workflow, checks, and report format. Load its other references only when the relevant step calls for them.
 

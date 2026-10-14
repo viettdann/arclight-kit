@@ -38,6 +38,20 @@ class DotnetGuardTest(unittest.TestCase):
         result = self.patch('Order.cs', content, command)
         self.assertEqual((result.returncode, result.stderr), (0, ""))
 
+    def test_codex_update_reports_new_finding_alongside_moved_suppression(self):
+        content = "using System;\n#pragma warning disable CS8618\n#nullable disable\n"
+        command = "*** Begin Patch\n*** Update File: Order.cs\n@@\n-#pragma warning disable CS8618\n using System;\n+#pragma warning disable CS8618\n+#nullable disable\n*** End Patch"
+        result = self.patch("Order.cs", content, command)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("#nullable disable", result.stderr)
+        self.assertNotIn("CS8618", result.stderr)
+
+    def test_codex_patch_does_not_report_moved_suppression(self):
+        content = "using System;\n#pragma warning disable CS8618\n"
+        command = "*** Begin Patch\n*** Update File: Order.cs\n@@\n-#pragma warning disable CS8618\n using System;\n+#pragma warning disable CS8618\n*** End Patch"
+        result = self.patch("Order.cs", content, command)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+
     def test_codex_patch_deduplicates_same_session(self):
         first = self.patch('Order.cs', '#pragma warning disable CS8618\n')
         second = self.patch('Order.cs', '#pragma warning disable CS8618\n')

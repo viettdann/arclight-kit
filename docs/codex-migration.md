@@ -27,6 +27,14 @@ Paths in the last column are under `plugins/` unless otherwise stated. Historica
 
 ## Sync with the Claude line
 
+The 2026-10-14 merge `16b9828` integrates `main` through `5fe23ac`. The Codex catalog now contains 25 skills: arc-design and arc-kit 2.4.0, mgi-kit 1.3.0. It adds technical style, UI fidelity/SEO/installed-app checks, supervised execution, EF Core review, Azure Pipelines diagnostics, work-item briefs, and live Azure diagnostics.
+
+Supervise packages worker/reviewer briefs as references, not custom Claude agents. It inherits the session model by default; alternative models require user-requested routing and runtime support. Without permitted delegation it runs inline and reports missing independent review. The worker-specific agent-git-guard remains an unregistered standalone helper: Codex tool hooks do not provide the Claude worker identity contract needed to enforce it.
+
+Test-guard and dotnet-guard observe completed apply_patch commands. Their bounded patch helpers reconstruct pre-patch content to distinguish new findings from moved code. Each independently installable plugin bundles identical helpers; validation detects drift. Ambiguous reconstruction, generated/oversized files, and paths outside the hook working directory are skipped. Feedback is advisory and does not roll back edits.
+
+The post-merge audit removes remaining host argument placeholders and Claude delegation assumptions, fixes entrypoint links after moving content into references, and checks invocation/runtime patterns in bundled Markdown. Script tests and repository checks do not establish live host loading, worker isolation, hook trust, or live Azure authorization.
+
 The 2.3.0 releases (arc-design, arc-kit) integrate `main` through `ac70815` (upstream arc-kit 1.9.0, arc-design 1.6.0); mgi-kit remains at 1.2.0. Merge commit `1f0ec60` records both histories and resolves upstream workflow changes into the existing Codex references. The prior sync through `f2bb39d` is recorded by merge `8acdccd`, followed by the 2.2.0 adaptations. Earlier syncs used a linear imported history rather than a two-parent merge.
 
 Future syncs fetch `origin` and merge `origin/main` into `codex`; use fast-forward when possible and an ordinary merge when histories diverge. Do not squash or cherry-pick the upstream batch. `git merge-base codex origin/main` identifies the shared upstream point, and `git log codex..origin/main` lists pending commits. Keep subsequent Codex adaptations separate when practical.

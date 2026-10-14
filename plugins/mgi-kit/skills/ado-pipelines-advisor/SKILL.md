@@ -5,7 +5,7 @@ description: "Write, optimize, review, and preview Azure DevOps (Azure Pipelines
 
 # Azure Pipelines advisor
 
-Five modes: **Write** a pipeline or template, **Optimize** an existing one, **Review** one for defects, **Preview** its server-side expansion, **Diagnose** a failed run. Diagnose needs only [Mode routing](#mode-routing) and [Scripts](#scripts); the YAML rules below matter only when the cause is in the YAML.
+Five modes: **Write** a pipeline or template, **Optimize** an existing one, **Review** one for defects, **Preview** its server-side expansion, **Diagnose** a failed run. Diagnose needs only [Mode routing](references/codex-workflow.md#mode-routing) and [Scripts](references/codex-workflow.md#scripts); the YAML rules below matter only when the cause is in the YAML.
 
 Before starting, read `references/codex-workflow.md` for the complete workflow, checks, and report format. Load its other references only when the relevant step calls for them.
 

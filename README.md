@@ -114,7 +114,7 @@ The standalone command checks all lines of the named files. The hook checks only
 
 ## Patch review guards
 
-`arc-kit` test-guard lists new test cases in completed `apply_patch` results and asks for the regression each catches. `mgi-kit` dotnet-guard reports new skipped tests, warning/analyzer suppressions, empty catches, sleeps in tests, and central package version bypasses. Both return advisory feedback after the edit; neither rolls it back. Shell-written edits do not trigger them. Ambiguous patch context, oversized/generated files, and paths outside the hook working directory are skipped. Each plugin bundles its patch reader so mgi-kit works without arc-kit.
+`arc-kit` test-guard compares completed `apply_patch` results against pre-patch content, ignores moved cases, and asks for the regression each newly introduced test catches. `mgi-kit` dotnet-guard compares pre/post-patch findings and reports new skipped tests, warning/analyzer suppressions, empty catches, sleeps in tests, and central package version bypasses. Both return advisory feedback after the edit; neither rolls it back. Shell-written edits do not trigger them. Ambiguous patch context, oversized/generated files, and paths outside the hook working directory are skipped. Each plugin bundles its patch reader so mgi-kit works without arc-kit.
 
 ## Destructive guard
 

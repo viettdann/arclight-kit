@@ -151,7 +151,7 @@ def main():
     from patch_inputs import changed_files
     session = payload.get("session_id") or payload.get("transcript_path") or ""
     reported = False
-    for path, text, added in changed_files(payload):
+    for path, text, added, before in changed_files(payload):
         if SKIP_PATH.search(path.as_posix()):
             continue
         rules, csharp = rules_for(str(path))
@@ -164,9 +164,11 @@ def main():
                 end = text.count("\n", 0, match.end())
                 if any(i in added for i in range(start, end + 1)):
                     added.add(start)
+        extra = Counter((what, line) for _, what, line in added_findings(found, findings(before, rules, csharp)))
         for i, what, line in found:
-            if i not in added or not first_seen(f"{session}|{path}|{what}|{line}"):
+            if i not in added or extra[(what, line)] <= 0 or not first_seen(f"{session}|{path}|{what}|{line}"):
                 continue
+            extra[(what, line)] -= 1
             if not reported:
                 print("dotnet-guard: this edit hides a failure instead of fixing it:", file=sys.stderr)
             reported = True

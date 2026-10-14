@@ -24,8 +24,10 @@ def changed_files(payload):
             text = path.read_text(encoding="utf-8")
             if len(text.encode("utf-8")) > PARSER.MAX_BYTES:
                 continue
-            added = PARSER.patch_added(text.splitlines(), hunks, kind)
-            if added:
-                yield path, text, added
+            lines = text.splitlines()
+            added = PARSER.patch_added(lines, hunks, kind)
+            before = PARSER.patch_before(lines, hunks, kind) if added else None
+            if added and before is not None:
+                yield path, text, added, before
         except (OSError, ValueError, UnicodeError, RuntimeError):
             continue

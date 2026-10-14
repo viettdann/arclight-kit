@@ -100,6 +100,16 @@ class PackageValidationTest(unittest.TestCase):
         path.write_text(path.read_text() + "\nMAX_BYTES = 1\n")
         self.assert_error("independently bundled patch helpers differ")
 
+    def test_host_argument_placeholder_is_rejected(self):
+        path = self.root / "plugins/arc-kit/skills/plan-auditor/SKILL.md"
+        path.write_text(path.read_text() + "\nAudit $ARGUMENTS.\n")
+        self.assert_error("runtime instruction")
+
+    def test_claude_delegation_assumption_is_rejected_in_reference(self):
+        path = self.root / "plugins/arc-kit/skills/plan-auditor/references/codex-workflow.md"
+        path.write_text(path.read_text() + "\nIn Claude Code you have access to sub-agents.\n")
+        self.assert_error("legacy runtime instruction")
+
     def test_handoff_explicit_invocation(self):
         path = self.root / "plugins/arc-kit/skills/handoff/agents/openai.yaml"
         path.write_text(path.read_text().replace("allow_implicit_invocation: false", "allow_implicit_invocation: true"))

@@ -26,7 +26,7 @@ Worker brief: `../executor/references/worker.md`. Reviewer brief: `../executor/r
 
 ## Phase 0: Load the plan
 
-Arguments: $ARGUMENTS
+Use arguments and constraints from the current user request; do not assume host variable substitution.
 
 If independent review is available, use a fresh reviewer with only the packet and diff; otherwise review inline and report that limitation.
 

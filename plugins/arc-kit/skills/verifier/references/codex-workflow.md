@@ -2,7 +2,7 @@
 
 Resolve bundled paths from the parent skill directory containing SKILL.md, including paths in references; resolve target project paths from the project working directory. Before a shell command, resolve bundled script paths to absolute paths and quote them. Follow project AGENTS.md and the active runtime's instructions, tools, permissions, and concurrency limits. Existing user authorization persists across discovery, implementation, and review; ask only about unresolved scope or actions outside it. Use available question tools for preferences, or ask in chat when unavailable. Delegate only when allowed and supported; otherwise run the same checks inline and report when an independent review was unavailable. Inherit the session model unless the user explicitly requests model routing and the runtime supports it. Do not assume named plugin agents, fixed model names, or a fixed worker count.
 
-Arguments: $ARGUMENTS
+Use arguments and constraints from the current user request; do not assume host variable substitution.
 
 Phase 0 confirms every planned or requested task was done; Phases 1-2 review the changed code and fix it. Completeness runs first even when the user asks only for a code review: tasks get dropped silently through context truncation, interruptions, or oversight, and reviewing the code that exists never surfaces the code that does not.
 
@@ -68,7 +68,7 @@ Under existing implementation authorization, finish clearly defined in-scope tas
 
 ## Phase 1: Five Review Agents in Parallel
 
-**Small diffs.** Under 5 files and under 50 lines, read the five checklists (and the UI checklist when it applies) and run the reviews inline instead of spawning agents, under the same output contract and do-not-flag list. Agent 5 still runs as a fresh agent when the diff touches authentication, authorization, payments, secrets, or a migration that deletes data, since size says nothing about risk.
+**Small diffs.** Under 5 files and under 50 lines, read the five checklists (and the UI checklist when it applies) and run the reviews inline instead of spawning agents, under the same output contract and do-not-flag list. For authentication, authorization, payments, secrets, or a migration that deletes data, use a fresh correctness/security reviewer when delegation is permitted and available; otherwise perform that review inline and report the missing isolation.
 
 Otherwise, when delegation is authorized and available, run the five review areas with fresh reviewers within the runtime concurrency limit; batch remaining areas. Without delegation, review inline and report the missing isolation. Never pass this session's account of why the code works, and never use a worker carrying the full conversation under review: both carry the reasoning under review.
 

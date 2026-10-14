@@ -121,6 +121,14 @@ class SkillLintTest(unittest.TestCase):
                 self.assertFalse(target.startswith(("/", "..")) or "/../" in target, f"skill-lint: {path} links outside its skill: {link}")
                 self.assertLessEqual(target.count("/"), 1, f"skill-lint: {path} links more than one directory deep: {link}")
 
+    def test_skill_local_anchors_exist(self):
+        for _, _, path in components():
+            text = read(path)
+            headings = re.findall(r"^#{1,6} (.+)$", text, re.M)
+            anchors = {re.sub(r"[^\w -]", "", heading.lower()).replace(" ", "-") for heading in headings}
+            for anchor in re.findall(r"\]\(#([\w-]+)\)", text):
+                self.assertIn(anchor, anchors, f"skill-lint: {path} has missing anchor #{anchor}")
+
     def test_marketplace_matches_plugins(self):
         from validate_plugins import validate
         errors, _ = validate()
