@@ -1,6 +1,6 @@
 # Task versions
 
-Snapshot: 2026-09-28. Sources: the Azure DevOps Services section of the [task index](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/?view=azure-pipelines) for majors, and `GET https://dev.azure.com/{org}/_apis/distributedtask/tasks` (the `deprecated` and `preview` flags) for status. Each row links to the task reference page of its latest major; fetch it with `&accept=text/markdown` for inputs.
+Snapshot: 2026-10-14. Sources: the Azure DevOps Services section of the [task index](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/?view=azure-pipelines) for majors, and `GET https://dev.azure.com/{org}/_apis/distributedtask/tasks` (the `deprecated` and `preview` flags) for status. Each row links to the task reference page of its latest major; fetch it with `&accept=text/markdown` for inputs.
 
 ## How to use this table
 
