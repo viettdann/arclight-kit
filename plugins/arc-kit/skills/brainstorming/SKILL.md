@@ -104,7 +104,7 @@ The saved design doc describes the target state only. When a draft element is dr
   ## Design               architecture, components, data flow, error handling
   ## Implementation Plan  one line per file: path + what changes + the check that proves it
   ## Assumptions          what the plan relies on that is not verified yet, and how to verify each
-  ## Verification         tests to write or run, what counts as done, edge cases to check
+  ## Verification         tests to write or run, what counts as done, and the inputs and failure modes a user would hit that the goal doesn't name (empty, huge, malformed, duplicate, concurrent), each with the Implementation Plan line whose check covers it
   ## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
   ```
 

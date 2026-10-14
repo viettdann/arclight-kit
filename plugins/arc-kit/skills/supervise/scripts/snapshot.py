@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Snapshot, backup, check, and diff for arc-kit:supervise, so the skill runs the same under bash, zsh, and macOS."""
+"""Snapshot, backup, check, diff, review marks, and the run log for arc-kit:supervise, so the skill runs the same under bash, zsh, and macOS."""
 import argparse
 import contextlib
 import difflib
@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 def git(root, *args):
@@ -165,13 +166,46 @@ def unified(before, after, old_label, new_label):
     return out
 
 
+def owned_by(run, group):
+    owned = load(run, "owned.json", {}).get(group)
+    if owned is None:
+        print(f"snapshot: no group {group} in {run}", file=sys.stderr)
+    return owned
+
+
+def reviewed_dir(run, group):
+    return os.path.join(run, ".reviewed", group)
+
+
+def mark(args):
+    root = run_root(args.run)
+    owned = owned_by(args.run, args.group)
+    if owned is None:
+        return 2
+    dest = reviewed_dir(args.run, args.group)
+    # Start empty so a file deleted since the last mark is absent here too.
+    shutil.rmtree(dest, ignore_errors=True)
+    os.makedirs(dest)
+    for rel in owned:
+        source = os.path.join(root, rel)
+        if os.path.isfile(source):
+            os.makedirs(os.path.dirname(os.path.join(dest, rel)), exist_ok=True)
+            shutil.copy2(source, os.path.join(dest, rel))
+    print(dest)
+    return 0
+
+
 def diff(args):
     root = run_root(args.run)
-    owned = load(args.run, "owned.json", {}).get(args.group)
+    owned = owned_by(args.run, args.group)
     if owned is None:
-        print(f"snapshot: no group {args.group} in {args.run}", file=sys.stderr)
         return 2
     base = os.path.join(args.run, args.group)
+    if args.since_review:
+        base = reviewed_dir(args.run, args.group)
+        if not os.path.isdir(base):
+            print(f"snapshot: group {args.group} has no mark; run `mark` before sending findings back", file=sys.stderr)
+            return 2
     for rel in owned:
         before, after = read(os.path.join(base, rel)), read(os.path.join(root, rel))
         old_label = f"a/{rel}" if before is not None else "/dev/null"
@@ -179,6 +213,20 @@ def diff(args):
         # Bytes straight to stdout: a strict UTF-8 stdout (macOS) would reject non-UTF-8 content.
         sys.stdout.buffer.writelines(unified(before, after, old_label, new_label))
     sys.stdout.buffer.flush()
+    return 0
+
+
+def log(args):
+    path = os.path.join(args.run, "log.txt")
+    if not args.entry:
+        try:
+            with open(path) as f:
+                sys.stdout.write(f.read())
+        except FileNotFoundError:
+            pass
+        return 0
+    with locked(args.run), open(path, "a") as f:
+        f.write(f"{time.strftime('%H:%M:%S')} {' '.join(args.entry)}\n")
     return 0
 
 
@@ -196,10 +244,19 @@ def main():
     p = sub.add_parser("check", help="compare the worktree with the snapshot, ignoring every owned file; exit 1 on findings")
     p.add_argument("run")
     p.set_defaults(func=check)
-    p = sub.add_parser("diff", help="unified diff of a group's owned files against its backup")
+    p = sub.add_parser("diff", help="unified diff of a group's owned files against its backup, or against its last mark")
     p.add_argument("run")
     p.add_argument("group")
+    p.add_argument("--since-review", action="store_true", help="diff against the state saved by `mark` instead of the backup")
     p.set_defaults(func=diff)
+    p = sub.add_parser("mark", help="save a group's owned files as reviewed, the base for `diff --since-review`")
+    p.add_argument("run")
+    p.add_argument("group")
+    p.set_defaults(func=mark)
+    p = sub.add_parser("log", help="append an entry to the run log; with no entry, print the log")
+    p.add_argument("run")
+    p.add_argument("entry", nargs="*")
+    p.set_defaults(func=log)
     args = parser.parse_args()
     return args.func(args)
 

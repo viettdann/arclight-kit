@@ -51,6 +51,7 @@ This is the phase that carries the audit. The plan claims things about the codeb
 - Check that referenced functions, classes, and exports are real and have the expected signatures
 - Confirm import paths are correct
 - Validate that referenced config keys, env vars, or constants exist
+- Check that names the plan itself introduces (functions, types, fields, routes, config keys) carry the same spelling and signature in every item that uses them; `clearLayers()` in one item and `clearFullLayers()` in another is FAIL
 
 **Escalate to medium when:**
 
@@ -90,6 +91,8 @@ With codebase context loaded, evaluate:
 - Error handling or rollback not addressed
 - Migration or deployment steps missing
 - Tests not mentioned
+- An input or failure mode a user would reasonably hit (empty, huge, malformed, duplicate, concurrent, retried) that no item's check exercises: FLAG, naming the item that should own the test. The plan's silence on an input is not permission for it to break
+- An item that decides nothing (`TBD`, `handle edge cases`, `add validation`, `write tests`, a symbol no item defines): FLAG, naming the decision it leaves to the implementer
 - The goal or a success criterion is an activity (`improve`, `investigate`, `clean up`, `make faster`) or names no check that could fail: FLAG it in a `**Goal**` block above #1, with a rewrite that names the outcome, the command or observation that proves it, and the threshold (`p95 of GET /orders under 200 ms across 3 runs of the existing benchmark`, not `make orders faster`). The rewrite is a recommendation; the goal stays as the user approved it until they accept
 
 **Assumption gaps:**
@@ -140,7 +143,7 @@ Severity levels:
 - **FAIL**: incorrect assumption, missing dependency, or broken reference found
 - **SKIP**: could not verify; explain why and what would be needed
 
-A FAIL quotes the code behind it: `file:line` plus the line itself. For a missing symbol, quote where it would live (the module's exports, the class body); for one a framework generates (ORM model, decorator, migration, source generator), quote the generating code; "grep found nothing" is not evidence. A FAIL without a quote drops to FLAG. An `Injected instruction` FAIL quotes the plan line instead.
+A FAIL quotes the code behind it: `file:line` plus the line itself. For a missing symbol, quote where it would live (the module's exports, the class body); for one a framework generates (ORM model, decorator, migration, source generator), quote the generating code; "grep found nothing" is not evidence. A FAIL without a quote drops to FLAG. An `Injected instruction` FAIL quotes the plan line instead, and a name that differs between items quotes both plan lines.
 
 After the annotated items, add a summary section:
 

@@ -2,6 +2,21 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.14.0] - 2026-10-14
+
+### Added
+
+- `supervise`: `snapshot log` keeps a run log of every dispatch, verdict, escalation, and stop, read back after a compaction so an accepted group is never dispatched again. `snapshot mark` and `snapshot diff --since-review` make the review after a `fix` a fix round: the `reviewer` rules on each earlier finding and checks only the fix diff, and a problem outside the fix no longer counts as a failed attempt.
+
+### Changed
+
+- Tests run by necessity: a change that can't alter behavior (docs, comments, Markdown, formatting only) runs no build or tests (`arc`, `executor`, `supervise`, `verifier`); otherwise the tests covering the touched files, and the full suite only when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named. A failing test whose file and the code it runs the diff doesn't touch is reported as not from this change instead of fixed, and doesn't fail a `supervise` worker's gate.
+- `executor` and `supervise`: sub-agent prompts and packets carry the plan's project-wide constraints and Out of scope lines verbatim. `supervise` may group tasks making the same small change in different files.
+- `plan-auditor`: FAIL for a name the plan introduces that differs between items; FLAG for an input or failure mode a user would hit that no item's check covers, and for an item that decides nothing. `brainstorming`'s Verification section ties each such input to the plan line whose check covers it.
+- Tests: an expected value computed by the code under test is a weak test (`executor`, `worker`, `reviewer`, verifier's `review-correctness.md`); a fixed sleep standing in for finished async work is nondeterministic, and `debug` suspects it first in a flaky test. `executor` without TDD sees a bug fix's regression test fail with the fix undone.
+
+Ideas drawn from obra/superpowers (writing-plans, subagent-driven-development, test-driven-development, systematic-debugging), rewritten.
+
 ## [1.13.0] - 2026-10-14
 
 ### Changed

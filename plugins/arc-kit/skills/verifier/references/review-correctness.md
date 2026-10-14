@@ -33,9 +33,9 @@ A guard the diff adds (a validator, authorization check, regex, lint rule, hook,
 9. **Tests**:
    - **Missing**: a bug fix with no regression test; a new or changed branch or contract with no test when a plausible regression in it can be named; an authorization check with no test for the denied case
    - **Junk**: tests that assert a constant or string copied from the code, markup or style (a border, a class, a label), only that a function or command was called, framework or language behavior, or what the type checker already proves; tests added to match the project's existing tests rather than to catch a named regression. A characterization test pinned before a refactor is not junk
-   - **Weak**: tests that assert implementation details (mock call counts, private state) instead of observable behavior, or that pass whatever the code does
+   - **Weak**: tests that assert implementation details (mock call counts, private state) instead of observable behavior, or that pass whatever the code does, including an expected value computed by the code under test or its helpers instead of a hand-derived literal
    - **Weakened**: tests the diff deletes, skips (`.skip`, `xit`, `[Ignore]`, `Skip =`), or loosens without a planned behavior change; snapshot or approved files (`__snapshots__/`, `*.snap`, `*.verified.*`) the diff regenerated without a planned behavior change
-   - **Nondeterministic**: a test that depends on the clock, the timezone, the order of unordered results, or the real network
+   - **Nondeterministic**: a test that depends on the clock, the timezone, the order of unordered results, or the real network; a fixed sleep or delay standing in for "the async work has finished" instead of waiting on that condition with a timeout
    - **Test-only production code**: a method or property added to production code only for tests to call
    - **Wrong mocks**: a mock of the very side effect the test is meant to verify; a mock response missing fields the real API returns, so the code that reads them never runs under test
 10. **React**: when the diff touches React components, hooks, or stores, also check the rules marked (correctness) in `react-performance.md`, in the same directory as this checklist; a rule there that says to report under security goes under item 8

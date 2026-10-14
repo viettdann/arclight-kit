@@ -168,5 +168,33 @@ class SnapshotTest(unittest.TestCase):
         write(os.path.join(self.repo, "src/b.ts"), "recreated\n")
         self.assertIn("foreign-changed src/b.ts", self.run_script("check", run).stdout)
 
+    def test_diff_since_review_shows_only_the_fix(self):
+        run = self.take()
+        self.run_script("backup", run, "A", "src/a.ts", "src/new.ts", "src/gone.ts")
+        write(os.path.join(self.repo, "src/a.ts"), "base\nuser edit\nfirst round\n")
+        write(os.path.join(self.repo, "src/gone.ts"), "temp\n")
+        self.assertEqual(self.run_script("diff", run, "A", "--since-review").returncode, 2)
+        self.assertEqual(self.run_script("mark", run, "A").returncode, 0)
+        write(os.path.join(self.repo, "src/a.ts"), "base\nuser edit\nfirst round\nfix\n")
+        write(os.path.join(self.repo, "src/new.ts"), "new\n")
+        os.remove(os.path.join(self.repo, "src/gone.ts"))
+        out = self.run_script("diff", run, "A", "--since-review").stdout
+        self.assertIn("+fix", out)
+        self.assertNotIn("+first round", out)
+        self.assertIn("--- /dev/null", out)
+        self.assertIn("-temp", out)
+        self.assertIn("+first round", self.run_script("diff", run, "A").stdout)
+        # A second mark replaces the first, so a file deleted in between stays absent.
+        self.run_script("mark", run, "A")
+        self.assertEqual(self.run_script("diff", run, "A", "--since-review").stdout, "")
+
+    def test_log_appends_and_prints(self):
+        run = self.take()
+        self.assertEqual(self.run_script("log", run).stdout, "")
+        self.run_script("log", run, "A", "sonnet", "1", "dispatched")
+        self.run_script("log", run, "A", "sonnet", "1", "accept")
+        lines = self.run_script("log", run).stdout.splitlines()
+        self.assertEqual([l.split(" ", 1)[1] for l in lines], ["A sonnet 1 dispatched", "A sonnet 1 accept"])
+
 if __name__ == "__main__":
     unittest.main()

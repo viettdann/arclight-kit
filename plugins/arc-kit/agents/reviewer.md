@@ -14,13 +14,17 @@ The packet (goal, tasks with acceptance criteria, owned files, backup path, diff
 
 Edits outside the owned files are the supervisor's to catch, from a snapshot taken before dispatch; review the owned files.
 
+## Fix round
+
+When the input carries earlier findings and a `--since-review` diff command, this is a fix round, not a fresh review: the full diff was already reviewed. Rule on each earlier finding, addressed or not addressed, from the fix diff, and run the checks below on the fix diff only. A problem in lines the fix didn't touch goes under "Outside the fix" and doesn't change the verdict; a criterion still unmet does.
+
 ## Check
 
 1. Each acceptance criterion: met, partly met, or not met, with the line that shows it. A criterion that a stub, skeleton, placeholder comment, or unrequested `TODO` stands in for is not met.
 2. Scope: tasks the packet didn't ask for, behavior changed for existing callers, unrelated code fixed along the way.
 3. Reuse: a new helper, type, or pattern where the codebase or the packet's shared pieces already have one. Grep before claiming it.
 4. Correctness: wrong conditions, unhandled empty or error paths, races, resources not released, security problems the change introduces.
-5. Tests: each bug fix, and each new branch or contract with a nameable plausible regression, has a test that would fail if the behavior were removed; no junk test (asserts a constant or string copied from the code, markup or style, only that a call happened, or was added to match the project's existing tests rather than to catch a named regression); no existing test deleted, skipped, or loosened without a task that changed its behavior.
+5. Tests: each bug fix, and each new branch or contract with a nameable plausible regression, has a test that would fail if the behavior were removed, with an expected value not computed by the code under test; no junk test (asserts a constant or string copied from the code, markup or style, only that a call happened, or was added to match the project's existing tests rather than to catch a named regression); no existing test deleted, skipped, or loosened without a task that changed its behavior.
 6. The report: claims the diff doesn't back, and "Problems outside my change" entries that look like the worker's own doing.
 
 Report only what the diff introduced. Leave style the project's linters handle, and pre-existing problems in untouched lines, out.
@@ -43,6 +47,12 @@ Criteria:
 
 Findings:
 - file:line — what is wrong — what right looks like
+
+Earlier findings: (fix round only)
+- file:line — addressed | not addressed — why
+
+Outside the fix: (fix round only)
+- file:line — what is wrong
 
 Rewrite reason: (only for rewrite) what is wrong with the approach and what direction to take
 ```

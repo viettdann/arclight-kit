@@ -34,7 +34,7 @@ When you hesitate between Haiku and Sonnet, ask whether you can write the packet
 - [ ] Phase 2: groups formed, tier per group
 - [ ] Phase 3: snapshot and backups taken, packets dispatched
 - [ ] Phase 4: every group accepted or stopped
-- [ ] Phase 5: build, full suite, plan cross-check, verifier
+- [ ] Phase 5: build and tests, plan cross-check, verifier
 - [ ] Phase 6: commit proposed
 ```
 
@@ -69,7 +69,7 @@ A fast scan, not deep exploration: plan contradictions, files, modules, or APIs 
 
 1. Map each task to the files it touches; a quick Grep or Glob usually names them. List new files too: a new file belongs to the task that creates it.
 2. Find what two or more tasks would each need but doesn't exist yet: a helper, a type, a constant, a migration. Make creating it a task of its own, or give it to one task, and order every task that uses it after that one. Two workers who each need a date formatter will otherwise write two.
-3. Tasks that share a file go into one group (union-find on file overlap); a group runs sequentially in one worker. Merge two groups too when one writes a table, queue, cache key, or endpoint the other reads, or when one uses something the other creates. Say what you merged and why.
+3. Tasks that share a file go into one group (union-find on file overlap); a group runs sequentially in one worker. Merge two groups too when one writes a table, queue, cache key, or endpoint the other reads, or when one uses something the other creates. Tasks making the same small change in different files (one rename, one added field, one import swap) may share a group without sharing a file: one worker and one review instead of one each. Say what you merged and why.
 4. Order tasks inside a group: shared pieces, types, and interfaces, then implementation with its tests, then integration.
 5. Pick each task's tier from the table and the Phase 0 model words; a group takes the highest tier among its tasks.
 6. A task whose files Grep and Glob can't name goes to a Lookup first. If the Lookup names them, group the task like any other; if not, ask the user. A worker never starts without its owned files.
@@ -102,7 +102,8 @@ Backup: <run>/<group>/
 Diff with: python3 "${CLAUDE_SKILL_DIR}/scripts/snapshot.py" diff <run> <group>
 Read for context: <files and symbols worth reading first, with line numbers when you have them>
 Use, don't recreate: <shared pieces another group created, with paths; or "none">
-Constraints: <conventions, APIs to reuse, things not to touch, decisions already made in the plan>
+Constraints: <conventions, APIs to reuse, things not to touch, decisions already made in the plan, the plan's project-wide constraints verbatim>
+Out of scope: <the plan's Out of scope lines, verbatim; or "none">
 Verify with: <lint and test commands that cover the owned files>
 TDD: on | off
 ```
@@ -110,6 +111,8 @@ TDD: on | off
 For Haiku, add the exact shape of the change where you know it: the signature, the field name and type, the existing example to copy. For Opus, describe the problem and the constraints and leave the design to it.
 
 **Dispatch.** Spawn every group that can run now in one message. At most 6 agents run at once, workers, reviewers, and lookups together; queued work starts as running agents finish.
+
+**Run log.** Record every dispatch, verdict, escalation, and stop: `snapshot log <run> <group> <tier> <attempt> <event>`. After a compaction, or whenever you are unsure where the run stands, `snapshot log <run>` prints it (a lost `<run>` is the newest `supervise-*` directory in the temp directory); a group the log shows accepted is never dispatched again. The Phase 5 table is built from it.
 
 ## Phase 4: Check, gate, review
 
@@ -133,7 +136,7 @@ A report that lists a problem in a file the worker doesn't own, including one it
 
 ### Gate
 
-Rerun the worker's verify commands yourself rather than trusting the report; hand them to `arc-kit:test-runner` when they are slow. Don't run the project-wide build or type-check while other groups are mid-edit; their half-written files fail it. A failing gate is a failed attempt, sent back with the output and no review.
+Rerun the worker's verify commands yourself rather than trusting the report; hand them to `arc-kit:test-runner` when they are slow. Don't run the project-wide build or type-check while other groups are mid-edit; their half-written files fail it. A failing gate is a failed attempt, sent back with the output and no review; a failing test whose file and the code it runs the group's diff doesn't touch doesn't fail the gate, it goes to the Phase 5 report.
 
 ### Review
 
@@ -145,6 +148,8 @@ Read the group's diff (`snapshot diff <run> <group>`), the packet, and the worke
 Every diff is reviewed, small ones and Haiku ones included: the failures that matter here pass their tests (an invented helper where one exists, a criterion read the wrong way, a test that asserts whatever the code returns).
 
 A worker that disagreed with a finding gets a ruling from you: accept its reason and drop the finding, or keep the finding and say why.
+
+Before sending a `fix` back, run `snapshot mark <run> <group>`. The next review of the group is then a fix round: the reviewer gets the earlier findings and `snapshot diff <run> <group> --since-review`, rules on each finding, and looks for new problems only in that fix diff (the fix round in `reviewer.md`). Problems it lists outside the fix go back to the same worker with the next message, or to the verifier, and never count as a failed attempt. The review after an escalation or a `rewrite` is a full review again.
 
 `accept` closes the group. Keep its backup until Phase 5: the verifier may still send the group's files back. `fix` and `rewrite` are failed attempts.
 
@@ -167,8 +172,8 @@ Opus high counts as Opus for Phase 0 limits: "không dùng opus" excludes both, 
 
 Once every group is accepted or stopped:
 
-1. Run the full build and type-check.
-2. Run the full suite through `arc-kit:test-runner`.
+1. Build and test what the change can break: nothing for a change that can't alter behavior (docs, comments, Markdown, formatting only); otherwise the full build and type-check, plus the tests covering the touched files, or the full suite through `arc-kit:test-runner` when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named.
+2. A failing test whose file and the code it runs the final diff doesn't touch is reported as not from this run, with that evidence, and fixed only when the plan covers it.
 3. Cross-check every plan task against the final diff; tasks in stopped groups are listed as not done.
 4. Call the Skill tool with `arc-kit:verifier`; it reviews the change across groups, which per-group reviews can't see.
 5. Delete `<run>` when no group was stopped; otherwise keep it and name it in the report.

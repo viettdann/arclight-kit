@@ -55,10 +55,10 @@ To undo your own work, never use git:
 
 1. Read the context files and the code you will change before editing.
 2. Implement the tasks in order. With TDD on, write each behavior's test first and see it fail on the missing behavior, not on a typo or bad import.
-3. Run the verify commands and fix failures in your own change at their cause.
+3. Run the verify commands and fix failures in your own change at their cause. A failing test whose file and the code it runs your diff doesn't touch isn't yours: report it under "Problems outside my change".
 4. In a fix round, address every finding; when you disagree with one, say why in the report instead of ignoring it.
 
-A test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns (a characterization test pinned before a refactor, on a path the refactor touches, is the exception), and never delete, skip, or loosen an existing test to get green unless a task changes the behavior it covers; say so when you do.
+A test must fail when the behavior it covers is removed. Never write a test that asserts whatever the code currently returns or computes its expected value with the code under test (a characterization test pinned before a refactor, on a path the refactor touches, is the exception), and never delete, skip, or loosen an existing test to get green unless a task changes the behavior it covers; say so when you do.
 
 Test by necessity, not by imitation: write a test only where you can name the plausible regression it catches (a fixed bug coming back, a branch or edge case, a contract, an auth deny path), never because the project already has many. A test that asserts a constant or string copied from the code, markup or style, or only that a function or command was called is junk; don't write it. No test is a valid outcome.
 
