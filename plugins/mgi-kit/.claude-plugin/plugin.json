@@ -1,8 +1,16 @@
 {
   "name": "mgi-kit",
-  "version": "0.6.0",
-  "description": "Skills for the MGI .NET, TypeScript, Azure and Azure DevOps stack: api-contract, dotnet-upgrade, ado-pipelines-advisor, ado-work-item, azure-diagnose.",
+  "version": "0.7.0",
+  "description": "Skills for the MGI .NET, TypeScript, Azure and Azure DevOps stack: api-contract, dotnet-upgrade, efcore-review, ado-pipelines-advisor, ado-work-item, azure-diagnose, and the dotnet-guard hook.",
   "author": {
     "name": "viettdann"
+  },
+  "userConfig": {
+    "dotnet_guard_enabled": {
+      "type": "boolean",
+      "title": ".NET guard",
+      "description": "Flag skipped tests, warning and analyzer suppressions, empty catch blocks, sleeps in tests, and central package version bypasses added by Edit/Write",
+      "default": true
+    }
   }
 }

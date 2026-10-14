@@ -1,6 +1,6 @@
 ---
 name: ado-work-item
-description: "Brief an Azure DevOps work item: the current ask after later comments, done conditions, repro, parent, merged PRs. Read-only. Use when the user gives a work item ID or link (\"làm task 151858\")."
+description: "Brief an Azure DevOps work item: the current ask after later comments, done conditions, repro, parent, merged PRs. Read-only. Use when the user gives a work item ID or link (\"làm task 151858\"). Not for pipeline runs (see mgi-kit:ado-pipelines-advisor)."
 argument-hint: "[work item ID or URL]"
 ---
 

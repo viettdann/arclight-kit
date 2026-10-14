@@ -1,6 +1,6 @@
 ---
 name: azure-diagnose
-description: "Read-only az CLI diagnosis of live App Service, Functions, Container Apps, PostgreSQL flexible, Service Bus: why one resource errors, slows or won't start (\"app lỗi 500\"), or an audit of a whole tenant, cost included (\"Azure có gì đáng lo\", \"audit tenant\", \"chi phí Azure tăng\")."
+description: "Read-only az CLI diagnosis of live App Service, Functions, Container Apps, PostgreSQL flexible, Service Bus: why one resource errors, slows or won't start, or an audit of a whole tenant, cost included. Use when a deployed app or Azure resource misbehaves (\"app lỗi 500\", \"Azure có gì đáng lo\", \"audit tenant\", \"chi phí Azure tăng\"). Not for a failed pipeline run (see mgi-kit:ado-pipelines-advisor) or a bug that reproduces locally (see arc-kit:debug)."
 argument-hint: "[resource name and symptom | audit [tenant]]"
 ---
 

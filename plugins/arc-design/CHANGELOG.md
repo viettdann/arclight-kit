@@ -2,6 +2,14 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.1] - 2026-10-14
+
+### Changed
+
+- `restyle`: critique-only mode moves to `references/critique.md`, and before/after shots, a named reference, and a score move to `references/requests.md`, keeping `SKILL.md` under 20 KB. The description states its exclusions as "Not for".
+- `ui-check`: the full option list for `ui_check.mjs` moves to `references/options.md`; step 2 keeps the common options and points there for clicks, perf baselines, links, stress, and local files.
+- Descriptions: `design`, `restyle`, `ui-check`, `ui-interaction`, and `state-check` are shorter to keep the skill menu in budget.
+
 ## [1.8.0] - 2026-10-12
 
 ### Added

@@ -1,0 +1,17 @@
+{
+  "description": "dotnet-guard: flags skipped tests, warning and analyzer suppressions, empty catch blocks, sleeps in tests, and central package version bypasses added by Edit/Write to C#, MSBuild, and editorconfig files",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); case \"$input\" in *'.cs\"'*|*'proj\"'*|*'.props\"'*|*'.targets\"'*|*'config\"'*) printf '%s' \"$input\" | python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/dotnet-guard.py\";; esac",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

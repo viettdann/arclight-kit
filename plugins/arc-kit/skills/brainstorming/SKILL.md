@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Design before code: turns an idea into an approved design and implementation plan, asking in rounds only the judgment calls the codebase can't answer, then saves docs/plans/<date>-<topic>-design.md. Use before building a non-trivial feature, component, or architectural change, or when the user describes a multi-step system to create ('I want to build', 'how should I design', 'brainstorm', 'tôi muốn làm', 'thiết kế', 'lên kế hoạch'). Not for a small self-contained change like one helper function."
+description: "Design before code: turns an idea into an approved design and implementation plan, asking in rounds only the judgment calls the codebase can't answer, then saves a dated design doc under docs/plans/. Use before building a non-trivial feature, component, or architectural change, or when the user describes a multi-step system to create ('I want to build', 'how should I design', 'brainstorm', 'tôi muốn làm', 'thiết kế', 'lên kế hoạch'). Not for a small self-contained change like one helper function."
 ---
 
 # Brainstorming Ideas Into Designs

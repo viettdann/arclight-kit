@@ -2,7 +2,7 @@
 name: supervise
 argument-hint: "[plan-file] [haiku|sonnet|opus]"
 description: Opus supervises a plan (file or chat): routes each task group to a Haiku, Sonnet, or Opus worker by difficulty, reviews every diff, escalates a group up a tier after two failed attempts, then runs the verifier.
-when_to_use: "Trigger when the user calls supervise or wants a plan built by cheaper models under Opus review (\"dùng sonnet/haiku làm\", \"opus giám sát\", \"giao cho sonnet\", \"delegate to sonnet\", \"haiku mode\"). A plain \"làm đi\" or \"implement the plan\" with no model hint goes to arc-kit:executor."
+when_to_use: "Trigger when the user calls supervise or wants a plan built by cheaper models under Opus review (\"dùng sonnet/haiku làm\", \"opus giám sát\", \"giao cho sonnet\", \"delegate to sonnet\", \"haiku mode\"). Not for a plain \"làm đi\" or \"implement the plan\" with no model hint (see arc-kit:executor)."
 ---
 
 # Supervise

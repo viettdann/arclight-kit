@@ -6,8 +6,14 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGINS = os.path.join(ROOT, "plugins")
 DESCRIPTION_MAX = 930
+DESCRIPTION_MIN = 100
 CATALOG_MAX = 14000
-SKILL_BYTES_MAX = 24000
+SKILL_BYTES_MAX = 20000
+NAME_FORMAT = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+TAG_LIKE = re.compile(r"<[A-Za-z/][^>]*>")
+USE_WHEN = re.compile(r"\bUse (?:when|whenever|before|after)\b|\bTrigger (?:when|on)\b")
+NOT_FOR = re.compile(r"\bNot for\b")
+MD_LINK = re.compile(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)")
 PATH_REF = re.compile(r"(?<![\w./-])((?:references|scripts|assets|examples)/[\w./-]*\w\.\w+)")
 ROOT_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]*\w)")
 SKILL_DIR_REF = re.compile(r"\$\{CLAUDE_SKILL_DIR\}/([\w./-]*\w)")
@@ -79,13 +85,50 @@ class SkillLintTest(unittest.TestCase):
             self.assertEqual(fm.get("name"), name, f"skill-lint: name mismatch in {path}")
             self.assertTrue(fm.get("description"), f"skill-lint: empty description in {path}")
 
+    def test_name_format(self):
+        for plugin, name, path in components():
+            self.assertRegex(name, NAME_FORMAT, f"skill-lint: {plugin}:{name} is not lowercase words joined by single hyphens")
+            self.assertLessEqual(len(name), 64, f"skill-lint: {plugin}:{name} name is over 64 chars")
+
     def test_description_budget(self):
+        # The skill menu renders description and when_to_use together; agents are listed separately.
         total = 0
         for plugin, name, path in components():
-            desc = parse_frontmatter(read(path))["description"]
-            total += len(desc)
-            self.assertLessEqual(len(desc), DESCRIPTION_MAX, f"skill-lint: {plugin}:{name} description is {len(desc)} chars")
-        self.assertLessEqual(total, CATALOG_MAX, f"skill-lint: catalog descriptions total {total} chars")
+            fm = parse_frontmatter(read(path))
+            menu = len(fm["description"]) + len(fm.get("when_to_use", ""))
+            self.assertLessEqual(menu, DESCRIPTION_MAX, f"skill-lint: {plugin}:{name} description and when_to_use are {menu} chars")
+            if "/skills/" in path:
+                total += menu
+        self.assertLessEqual(total, CATALOG_MAX, f"skill-lint: skill menu totals {total} chars")
+
+    def test_description_routes(self):
+        for plugin, name, path in components():
+            fm = parse_frontmatter(read(path))
+            text = f"{fm['description']} {fm.get('when_to_use', '')}"
+            self.assertIsNone(TAG_LIKE.search(text), f"skill-lint: {plugin}:{name} description has a tag-like <...>, which marketplace sync rejects")
+            self.assertGreaterEqual(len(fm["description"]), DESCRIPTION_MIN, f"skill-lint: {plugin}:{name} description is too short to route on")
+            if "/skills/" not in path or fm.get("disable-model-invocation") == "true":
+                continue
+            self.assertRegex(text, USE_WHEN, f"skill-lint: {plugin}:{name} description has no \"Use when\" trigger")
+            self.assertRegex(text, NOT_FOR, f"skill-lint: {plugin}:{name} description has no \"Not for\" exclusion against its siblings")
+
+    def test_skill_links_stay_inside_the_skill(self):
+        for plugin, name, path in components():
+            if "/skills/" not in path:
+                continue
+            for link in MD_LINK.findall(read(path)):
+                target = link.split("#")[0]
+                self.assertFalse(target.startswith(("/", "..")) or "/../" in target, f"skill-lint: {path} links outside its skill: {link}")
+                self.assertLessEqual(target.count("/"), 1, f"skill-lint: {path} links more than one directory deep: {link}")
+
+    def test_marketplace_matches_plugins(self):
+        market = json.loads(read(os.path.join(ROOT, ".claude-plugin", "marketplace.json")))
+        listed = {p["name"]: p for p in market["plugins"]}
+        self.assertEqual(sorted(listed), sorted(os.listdir(PLUGINS)), "skill-lint: marketplace.json and plugins/ list different plugins")
+        for plugin, entry in listed.items():
+            self.assertEqual(os.path.normpath(os.path.join(ROOT, entry["source"])), os.path.join(PLUGINS, plugin), f"skill-lint: marketplace source for {plugin} is {entry['source']}")
+            manifest = json.loads(read(os.path.join(PLUGINS, plugin, ".claude-plugin", "plugin.json")))
+            self.assertEqual(entry.get("description"), manifest["description"], f"skill-lint: marketplace.json description for {plugin} differs from its plugin.json")
 
     def test_skill_body_budget(self):
         for plugin, name, path in components():

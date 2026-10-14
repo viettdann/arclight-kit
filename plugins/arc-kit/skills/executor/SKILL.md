@@ -2,14 +2,12 @@
 name: executor
 argument-hint: "[plan-file] [tdd]"
 description: >
-  Implements plans step-by-step with per-task codebase exploration, optional TDD, parallel sub-agents, and verification.
-  Reads a plan file, TODO list, checklist, or conversation plan, does a quick scan for
-  blocking unknowns, then each sub-agent explores on-the-fly before implementing its task.
-  Validates builds and tests continuously, cross-checks every plan item before reporting done,
-  and proposes commits once everything is verified. Use when a plan exists and implementation should begin.
-  Triggers when the user asks to begin implementing an existing plan, in English or Vietnamese
+  Implements a plan (file, TODO list, checklist, or chat) step by step with parallel sub-agents
+  that explore before each task, optional TDD, continuous build and test checks, and a cross-check
+  of every plan item before reporting done; proposes commits once verified. Use when a plan exists
+  and implementation should begin, or the user confirms a plan for execution
   ("execute the plan", "implement this", "start building", "thực thi", "triển khai",
-  "bắt đầu làm"), or confirms a plan for execution. Not for one-off edits with no plan.
+  "bắt đầu làm"). Not for one-off edits with no plan.
 ---
 
 # Executor

@@ -1,6 +1,6 @@
 ---
 name: ado-pipelines-advisor
-description: Write, optimize, review, and preview Azure DevOps (Azure Pipelines) YAML from verified rules: templates, extends, parameters, ${{ }} / $[ ] / $( ) expressions, output variables, conditions, triggers, deployment jobs and environments, service connections, secrets, caching, task versions, failed runs. Use when editing azure-pipelines.yml or pipeline templates, when a pipeline doesn't trigger, skips a stage, has an empty variable, or fails at template expansion, or a run failed, even if the user never says "Azure Pipelines".
+description: Write, optimize, review, and preview Azure DevOps (Azure Pipelines) YAML from verified rules: templates, extends, parameters, ${{ }} / $[ ] / $( ) expressions, output variables, conditions, triggers, deployment jobs and environments, service connections, secrets, caching, task versions, failed runs. Use when editing azure-pipelines.yml or pipeline templates, when a pipeline doesn't trigger, skips a stage, has an empty variable, or fails at template expansion, or a run failed, even if the user never says "Azure Pipelines". Not for a deployed app failing at runtime (see mgi-kit:azure-diagnose).
 ---
 
 # Azure Pipelines advisor

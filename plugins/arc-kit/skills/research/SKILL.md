@@ -1,6 +1,6 @@
 ---
 name: research
-description: "Answer a technical question from external sources with a citation behind every figure: compare libraries, tools, services, or approaches against the project's criteria, or check whether a version, API, limit, price, CVE, or support date holds today. Searches in rounds from primary sources, asks for verbatim quotes, keeps contradictions visible, probes with throwaway code when docs can't settle a deciding claim, and ends with a pick and what to re-verify. Use when the user asks to research, compare, evaluate, or spike (\"research\", \"so sánh thư viện\", \"nên dùng X hay Y\", \"tìm hiểu\", \"spike\", \"còn support không\", \"bản mới nhất là gì\"). Not for questions the repo's own code or an installed package's source answers."
+description: "Answer a technical question from external sources with a citation behind every figure: compare libraries, tools, services, or approaches against the project's criteria, or check whether a version, API, limit, price, CVE, or support date holds today. Searches primary sources in rounds, keeps contradictions visible, probes with throwaway code when docs can't settle a claim, and ends with a pick and what to re-verify. Use when the user asks to research, compare, evaluate, or spike (\"research\", \"so sánh thư viện\", \"nên dùng X hay Y\", \"tìm hiểu\", \"spike\", \"còn support không\", \"bản mới nhất là gì\"). Not for questions the repo's own code or an installed package's source answers."
 argument-hint: "[question]"
 ---
 

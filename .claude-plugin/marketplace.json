@@ -8,17 +8,17 @@
     {
       "name": "arc-design",
       "source": "./plugins/arc-design",
-      "description": "UI design from scratch, redesign, restyle, rendering checks, interaction and state rules, and state-check audits"
+      "description": "Design new UI with profiles and styles (design), give existing UI a new look (redesign), remove the generated look (restyle), measure rendering defects on a running page (ui-check), interaction and state rules (ui-interaction), and trace what controls actually do to state (state-check)."
     },
     {
       "name": "arc-kit",
       "source": "./plugins/arc-kit",
-      "description": "Daily session defaults, standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks"
+      "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks."
     },
     {
       "name": "mgi-kit",
       "source": "./plugins/mgi-kit",
-      "description": "MGI .NET and TypeScript stack skills: API breaking change detection, .NET version upgrades, Azure Pipelines YAML"
+      "description": "Skills for the MGI .NET, TypeScript, Azure and Azure DevOps stack: api-contract, dotnet-upgrade, efcore-review, ado-pipelines-advisor, ado-work-item, azure-diagnose, and the dotnet-guard hook."
     }
   ]
 }

@@ -1,6 +1,6 @@
 ---
 name: api-contract
-description: "Audit ASP.NET controllers, Minimal API endpoints, and DTOs against their TypeScript/JavaScript consumers (hand-written fetch/axios/HttpClient services or NSwag/OpenAPI clients) for contract drift in both directions: renamed or removed JSON keys, enum values, new required fields, status codes, type changes. Reads source, reports only. Use when checking for breaking API changes, FE/BE contract sync, or a DTO or controller change before merging, including after a refactor (\"check breaking change\", \"API có vỡ không\", \"FE BE còn khớp không\")."
+description: "Audit ASP.NET controllers, Minimal API endpoints, and DTOs against their TypeScript/JavaScript consumers (hand-written fetch/axios/HttpClient services or NSwag/OpenAPI clients) for contract drift in both directions: renamed or removed JSON keys, enum values, new required fields, status codes, type changes. Reads source, reports only. Use when checking for breaking API changes, FE/BE contract sync, or a DTO or controller change before merging, including after a refactor (\"check breaking change\", \"API có vỡ không\", \"FE BE còn khớp không\"). Not for query performance behind the endpoint (see mgi-kit:efcore-review)."
 license: MIT (adapted from github/awesome-copilot, see LICENSE.txt)
 ---
 
@@ -16,16 +16,26 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
 ## Process
 
 1. **Find the JSON serialization rules.** Check `Program.cs` or `Startup.cs`:
+   - Controllers and Minimal APIs have separate option sets: `AddControllers().AddJsonOptions(...)` for controllers, `ConfigureHttpJsonOptions(...)` for Minimal APIs. A setting in one doesn't apply to the other, so resolve the rules per endpoint kind.
    - ASP.NET Core with System.Text.Json uses camelCase property names by default. Names stay PascalCase only when `PropertyNamingPolicy = null` is set; Newtonsoft (`AddNewtonsoftJson`) follows its contract resolver.
-   - An explicit `[JsonPropertyName("...")]` or `[JsonProperty("...")]` wins over the policy. Skip properties with `[JsonIgnore]`.
-   - Request binding is case-insensitive by default, so casing alone rarely breaks a request; response casing always matters to a TypeScript client.
+   - An explicit `[JsonPropertyName("...")]` or `[JsonProperty("...")]` wins over the policy. Skip properties with `[JsonIgnore]`; `[JsonIgnore(Condition = WhenWritingNull)]` makes only that property optional in the response.
+   - Request binding is case-insensitive by default, so casing alone rarely breaks a request. `PropertyNameCaseInsensitive = false` makes it case-sensitive: then a casing difference in a request body is a break, and the field arrives as its default.
+   - `DefaultIgnoreCondition = WhenWritingNull` (or `NullValueHandling.Ignore` in Newtonsoft) drops null properties from responses: the key is absent and the TypeScript value is `undefined`, not `null`. A client that checks `=== null` takes the wrong branch.
+   - `RespectNullableAnnotations = true` (.NET 9+) rejects an explicit `null` for a non-nullable property with a 400, where it used to bind `null` silently.
+   - `NumberHandling` without `AllowReadingFromString` rejects a number sent as a string (`"42"`), which form-style clients do.
    - With `JsonStringEnumConverter` (global or on the type), enum member names are part of the contract; without it, numeric values are.
 
 2. **Map the C# contract surface.** For each endpoint in scope:
    - **Route and method**: controller `[Route]` plus action `[HttpGet("...")]` etc., or Minimal API `app.MapGet("...")` including `MapGroup` prefixes. Normalize parameters (`{id:int}`, `{id:guid}` → `{id}`). Keep the HTTP method with the route.
-   - **Auth**: `[Authorize]` and `[AllowAnonymous]` on the action and controller, `RequireAuthorization()` and `AllowAnonymous()` on the endpoint or group, and a global fallback policy.
+   - **Auth**: `[Authorize]` and `[AllowAnonymous]` on the action and controller, `RequireAuthorization()` and `AllowAnonymous()` on the endpoint or group, and a global fallback policy. With cookie auth, from ASP.NET Core 10 an unauthenticated call to an API endpoint (`[ApiController]`, a Minimal API that reads or writes JSON, `TypedResults`) gets 401 or 403 instead of a 302 to the login page.
    - **Inputs**: `[FromBody]` DTO, `[FromQuery]` and `[FromRoute]` parameters with their names.
-   - **Required request fields**: `[Required]`, `[BindRequired]`, the C# 11 `required` modifier, or a non-nullable value type (`int`, `Guid`, `bool`) with no default. Optional: nullable (`string?`, `int?`) or has a default initializer. Respect `#nullable enable`.
+   - **Required request fields**: `[Required]`, `[BindRequired]`, the C# 11 `required` modifier, or a non-nullable value type (`int`, `Guid`, `bool`) with no default. Optional: nullable (`string?`, `int?`) or has a default initializer.
+   - **Nullable reference types change what is required.** With `<Nullable>enable</Nullable>` (project or `Directory.Build.props`) or `#nullable enable` in the file:
+     - MVC treats every non-nullable reference property (`string Name`) as `[Required]` and returns 400 when it's missing or null, unless `SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true`.
+     - Minimal API parameters follow the annotation: `string name` is required, `string? name` is optional.
+     - `#nullable disable warnings` keeps the annotations, so the rules above still apply; only `#nullable disable` turns them off.
+     - Enabling nullable on a project, or removing a `?` from a request property, is a new required field for every client that omits it.
+   - **Minimal API validation**: from .NET 10, `builder.Services.AddValidation()` runs data annotations on Minimal API parameters. Adding it turns existing `[Required]`, `[Range]`, `[MaxLength]` attributes, which were ignored before, into new 400 responses.
    - **Response DTO**: property names after step 1, types, nullability.
    - **Status codes**: `[ProducesResponseType]`, `TypedResults`/`Results` return types, and explicit `StatusCode(...)`, `NotFound()`, `Conflict()` paths.
    - **Error shape**: ProblemDetails (`AddProblemDetails`, `Problem()`, `ValidationProblem()`, the automatic 400 from `[ApiController]`) or a custom error DTO, per endpoint.
@@ -47,6 +57,9 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
    - An error shape change (ProblemDetails ↔ custom DTO, `errors` dictionary ↔ list) the client's error handler parses the old way
    - Pagination switched from offset to cursor while the client still sends `page`/`skip` or reads a total count
    - A committed OpenAPI or NSwag file (`swagger.json`, `openapi.yaml`, `nswag.json` output) not regenerated after the change, so the next generated client bakes in the old contract
+   - A changed document generator with no endpoint change: Swashbuckle → `AddOpenApi`, a `Microsoft.AspNetCore.OpenApi` major (OpenAPI 3.1 writes `type: ["string", "null"]` instead of `nullable: true`), or new schema or operation transformers. Operation ids, schema names, and nullability can all change, and the regenerated client's method names and types with them. Diff the old and new documents instead of reading the code
+   - A cookie-authenticated frontend that detects an expired session by following the login redirect, now getting 401 from API endpoints (ASP.NET Core 10)
+   - A null property now omitted (`WhenWritingNull` added) that the client compares with `null`, or a request now rejected because `RespectNullableAnnotations`, `PropertyNameCaseInsensitive = false`, strict `NumberHandling`, nullable reference types, or `AddValidation()` was turned on
 
 5. **Client → backend drift**:
    - **Harmless dead field**: the client sends a property the backend ignores.
@@ -54,8 +67,10 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
 
 ## Report
 
-1. **Scope audited**: controllers, endpoints, DTOs, and TS/JS files, plus the serialization rules found in step 1 and where they are set.
+1. **Scope audited**: controllers, endpoints, DTOs, and TS/JS files, plus the serialization rules found in step 1 and where they are set, per endpoint kind, and whether nullable reference types are on.
 2. **Backend → client breaks**: grouped by endpoint. What changed, match method, impact on the client, severity (compile error vs. silent runtime failure).
 3. **Client → backend drift**: dead fields separated from silent runtime bugs.
 4. **No consumer found**: endpoints and DTOs that need manual confirmation.
 5. **Match confidence**: counts of findings from generated clients, hand-written route matches, and unmatched endpoints.
+
+Every finding names the C# file:line and the client file:line it rests on. When nothing breaks, say so in one line after the scope; don't fill the report with general API advice.

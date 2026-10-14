@@ -1,7 +1,7 @@
 ---
 name: plan-auditor
 argument-hint: "[plan-file-or-description]"
-description: "Audit and stress-test AI-generated plans before execution, catching their typical failure modes: hallucinated APIs, missing edge cases, understated complexity, over-engineering, and assumptions that don't match the codebase. Use whenever a plan, implementation strategy, or multi-step proposal needs verification before work begins or the user doubts its completeness (\"review this plan\", \"audit the plan\", \"does this plan make sense\", \"check for gaps\", \"verify the approach\", \"before we start\", \"hold on let me check\", \"review plan\", \"kiểm tra plan\", \"plan này ổn không\", \"soát lại kế hoạch\"), or pastes a plan and asks for feedback."
+description: "Audit and stress-test AI-generated plans before execution, catching their typical failure modes: hallucinated APIs, missing edge cases, understated complexity, over-engineering, and assumptions that don't match the codebase. Use whenever a plan, implementation strategy, or multi-step proposal needs verification before work begins or the user doubts its completeness (\"review this plan\", \"does this plan make sense\", \"check for gaps\", \"before we start\", \"kiểm tra plan\", \"plan này ổn không\"), or pastes a plan and asks for feedback. Not for code already written (see arc-kit:verifier)."
 ---
 
 # Plan Auditor

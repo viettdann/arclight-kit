@@ -2,7 +2,7 @@
 name: verifier
 argument-hint: "[plan-file]"
 description: Verifies this session's own finished work before commit and fixes what it finds. Checks completeness first, to catch dropped tasks and unrequested additions, then runs a parallel review for reuse, quality, efficiency, correctness and security, and comment and documentation hygiene, and applies the fixes.
-when_to_use: "Trigger on two intents, in English or Vietnamese: reviewing work this session finished or is about to commit (check my work, review before commit, cleanup before commit, \"review lại\", \"kiểm tra lại code vừa làm\", \"trước khi commit\"), and confirming nothing was dropped after a multi-step plan (did I miss anything, is everything done, \"sót gì không\", \"xong hết chưa\"). Conversation context that suggests tasks were forgotten mid-execution is enough on its own. Not for reviewing someone else's PR or code this session didn't write."
+when_to_use: "Trigger on two intents, in English or Vietnamese: reviewing work this session finished or is about to commit (check my work, review before commit, cleanup before commit, \"review lại\", \"kiểm tra lại code vừa làm\", \"trước khi commit\"), and confirming nothing was dropped after a multi-step plan (did I miss anything, is everything done, \"sót gì không\", \"xong hết chưa\"). Context showing a task was forgotten mid-execution is enough. Not for reviewing someone else's PR or code this session didn't write."
 ---
 
 # Verifier: Completeness Check and Code Review

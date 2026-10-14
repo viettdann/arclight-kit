@@ -4,7 +4,7 @@ Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
 - `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
-- `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics).
+- `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, EF Core query review, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics) and the `dotnet-guard` hook.
 
 ## Which skill
 
@@ -31,6 +31,7 @@ Claude Code marketplace with three plugins:
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI, or Azure Functions from in-process to isolated | `mgi-kit:dotnet-upgrade` |
+| An EF Core endpoint or job is slow or runs too many queries, or a query or model change is about to merge: N+1, in-memory filtering, saves in loops, Include explosion, index-defeating predicates, paging, tracking, overlapping contexts | `mgi-kit:efcore-review` |
 | Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion; why a run failed | `mgi-kit:ado-pipelines-advisor` |
 | Start work from an Azure DevOps work item: the current ask, repro, parent context, merged PRs, attachments | `mgi-kit:ado-work-item` |
 | An Azure app, function, container, or PostgreSQL server misbehaving live, or an audit of what is failing, at risk, unlogged, or costing more across a tenant | `mgi-kit:azure-diagnose` |
@@ -59,11 +60,11 @@ claude plugin install mgi-kit@arclight-kit
 
 Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check, Python 3.11+ for `ado-pipelines-advisor`'s scripts (the live ones need `AZURE_DEVOPS_EXT_PAT` or `az login`). Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, test-guard, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check, Python 3.11+ for `ado-pipelines-advisor`'s scripts (the live ones need `AZURE_DEVOPS_EXT_PAT` or `az login`), `python3` for `mgi-kit`'s `dotnet-guard` hook. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, test-guard, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
 
 ## Agents
 
-`arc-kit` ships `test-runner`: it runs a test command or the suite and returns only the counts and each failure with its location, message, likely cause, and whether a rerun passes, so long test output stays out of the main context. It reports and never fixes. `executor` (Phase 4) and `refactor` (baseline and verify) hand slow or full runs to it.
+`arc-kit` ships `test-runner`: it runs a test command or the suite and returns only the counts and each failure with its location, message, likely cause, and whether a rerun passes, so long test output stays out of the main context; the report stays under 80 lines, grouping failures that share a cause. It reports and never fixes. `executor` (Phase 4) and `refactor` (baseline and verify) hand slow or full runs to it.
 
 `supervise` dispatches to two more agents. `worker` implements one task packet: it edits only the files it owns, fixes errors in code its change touched, reports every other failure with whether its change caused it, undoes its work by hand or from a backup the supervisor took, and returns a fixed report or stops as blocked instead of guessing; the supervisor sets its model (Haiku max, Sonnet high, Opus medium or high) per call. `reviewer` (Opus, medium, no Edit or Write tool) checks one group's diff against its backup and acceptance criteria and returns `accept`, `fix` with `file:line` findings, or `rewrite`. Both run only read-only git, enforced by the `agent-git-guard` hook.
 
@@ -88,9 +89,13 @@ Set them in `/config` or when enabling the plugin. Tests: `python3 plugins/arc-k
 
 `arc-kit` also registers `arc-compact` (`SessionStart` on `compact`): when `/arc-kit:arc` was typed earlier in the session, it re-injects the `arc` rules after compaction; otherwise it prints nothing. It needs `sh`, `sed`, and `grep`.
 
+`mgi-kit` registers `dotnet-guard` (`PostToolUse` on `Edit|Write`), on by default (`dotnet_guard_enabled`). When an edit adds a line that hides a failure instead of fixing it, it lists each one and exits 2 so Claude undoes it and fixes the cause, or keeps it with a commented reason and tells you: in C#, a skipped test (`[Fact(Skip = ...)]`, `[Ignore]`, `[Explicit]`, `Assert.Inconclusive`), `#pragma warning disable`, `[SuppressMessage]`, `#nullable disable`, an empty `catch`, and `Thread.Sleep` or `Task.Delay` in a test project; in project, `.props`, and `.targets` files, `<NoWarn>` or a `NoWarn` attribute, `<WarningsNotAsErrors>`, `TreatWarningsAsErrors` false, `Nullable` disable, analyzers turned off, `VersionOverride`, and central package management turned off; in `.editorconfig` and `.globalconfig`, a diagnostic severity lowered to `none`, `silent`, or `suggestion`. A line counts as new only when it occurs more often than before the edit (for `Write`, the replaced file, else `HEAD`), so moving or editing around an existing suppression doesn't trigger it, and each line is flagged once per session. `bin/`, `obj/`, and generated files are skipped; a `sh` filter on the file name exits before starting Python for other files. Tests: `python3 plugins/mgi-kit/scripts/dotnet_guard_test.py`.
+
 ## Checks
 
-`python3 scripts/skill_lint_test.py` checks every skill and agent: frontmatter, description and body budgets, referenced paths, qualified skill names, README and `plugin.json` listings, and that each `plugin.json` version matches its changelog. `python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py` and `python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py`, and `python3 plugins/arc-kit/skills/supervise/scripts/snapshot_test.py` cover their scripts.
+`python3 scripts/skill_lint_test.py` checks every skill and agent: frontmatter, name format, description and body budgets (the skill menu counts `description` and `when_to_use` together), a "Use when" trigger and a "Not for" exclusion on every model-invoked skill, no tag-like `<...>` in descriptions, links that stay inside the skill and at most one directory deep, referenced paths, qualified skill names, README and `plugin.json` listings, `marketplace.json` matching each `plugin.json`, and that each `plugin.json` version matches its changelog. `python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py` and `python3 plugins/arc-kit/skills/verifier/scripts/collect_diff_test.py`, and `python3 plugins/arc-kit/skills/supervise/scripts/snapshot_test.py` cover their scripts.
+
+Writing a skill: the description is the only text the runtime routes on, so put the user's own words in it (symptoms, error codes, file names, quoted requests) and partition it from its siblings on the real difference, with the matching "Not for" in both. In the body, write the decisions a model gets wrong without the skill and cut what it already does unaided; prefer "when A, do B, never C, check D" tables over lists of options, end with a fixed output shape, add stop conditions so it doesn't over-apply, make it report checks as they actually ran, have it discover paths in the repo instead of asking for them, and keep rare or expensive paths in `references/` behind a pointer.
 
 ## Changes
 

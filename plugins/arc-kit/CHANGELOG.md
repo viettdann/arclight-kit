@@ -2,6 +2,13 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] - 2026-10-14
+
+### Changed
+
+- `test-runner`: the report stays under 80 lines and 8 KiB; past that, failures with one cause and message are grouped with a count, the rest are listed by name and location, and the report ends with the full log's path.
+- Descriptions: `debug` excludes a deployed Azure resource failing live (`mgi-kit:azure-diagnose`); `plan-auditor` excludes code already written (`verifier`); `supervise` states its exclusion as "Not for"; `brainstorming` no longer has a tag-like `<date>-<topic>` path, which marketplace sync rejects; `executor`, `research`, `debug`, `plan-auditor`, and `verifier` are shorter to keep the skill menu in budget.
+
 ## [1.12.0] - 2026-10-10
 
 ### Changed
