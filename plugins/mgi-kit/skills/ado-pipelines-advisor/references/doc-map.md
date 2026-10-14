@@ -2,6 +2,8 @@ URL map for live lookups: where each Azure Pipelines fact lives, what to look up
 
 ## How to fetch
 
+- Fetch the page from this map or a task's `docs` link in [task-versions.md](task-versions.md), with a WebFetch prompt that extracts just the input or key needed from the `azure-pipelines` moniker block.
+- Where docs and observations disagree the references record both; prefer the observation and say so.
 - Learn pages (docs, YAML schema, task reference, REST reference, release notes): append `?accept=text/markdown`, or `&accept=text/markdown` when the URL already has a query. Lines end in CRLF (`tr -d '\r'`). Front matter carries `title:`, `description:` and `ms.date`. Pages hold several `::: moniker range="..."` blocks; for Azure DevOps Services read the block whose range includes `azure-pipelines`.
 - Keep `?view=azure-devops` (docs) or `?view=azure-pipelines` (schema, tasks) or `?view=azure-devops-rest-7.1` (REST). Without it you may get another product version.
 - GitHub files: use `https://raw.githubusercontent.com/<owner>/<repo>/main/<path>` for markdown (for example the runner-images readmes). For issues and releases use `https://api.github.com/repos/<owner>/<repo>/issues/<n>` and `.../releases/latest` (JSON; `.body` is markdown).

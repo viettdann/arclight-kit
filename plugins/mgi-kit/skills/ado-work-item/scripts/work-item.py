@@ -240,7 +240,8 @@ def main():
             if code != 200:
                 print(f'- {name}: HTTP {code}')
                 continue
-            dest = out / f'{n:02d}-{re.sub(r"[^\w.-]", "_", name or "file")}'
+            safe = re.sub(r'[^\w.-]', '_', name or 'file')
+            dest = out / f'{n:02d}-{safe}'
             dest.write_bytes(raw)
             print(f'- {dest} ({len(raw)} bytes)')
     return 0

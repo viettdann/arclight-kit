@@ -15,16 +15,16 @@ Five modes: **Write** a pipeline or template, **Optimize** an existing one, **Re
 
 ## The user's instructions come first
 
-- What the user states (scope, what to ignore, how to pin, which tasks to avoid, what exists) overrides everything below. A settled choice is not reopened, re-argued or caveated.
-- Scope is the pipeline. Check every tool the YAML calls against its real CLI: build it and run its `--help` (or read its option parser) so each flag, parameter and path the YAML passes exists. Skip this when the user says to assume the happy path. Never run its tests, probe its behavior or audit its code unless asked.
-- What the pipeline references (variable groups, branches, tags, permissions, connections) is assumed to exist: not looked up, not listed as a precondition or risk.
-- Pin only what the user or the repo pins, the same way (a tag stays a tag). No SHA pins, `global.json`, lock files or `--locked-mode` the repo does not already have.
-- A correction changes only what it names. "Fewer tasks" never drops what the job needs to run; "why X?" asks for the reason, not a reversal.
-- Lead with the verdict and stay on the question: no prerequisite lists or skipped-check notes unless they change what the user must do.
+- What the user states (scope, pins, tasks to avoid, what exists) overrides everything below; a settled choice is not reopened or caveated.
+- Scope is the pipeline. Build each repo tool the YAML calls and check its `--help` (or option parser) for every flag and path passed, unless told to assume the happy path. No tests, probes or code audit unless asked.
+- Groups, branches, tags, permissions and connections the YAML references exist: not looked up or listed as risks.
+- Pins: keep the user's and the repo's as they are (a tag stays a tag); add no SHA pins, `global.json`, lock files or `--locked-mode`. Defaults 3 and 6 and template-repo tags (Hard rules) still apply.
+- A correction changes only what it names: "fewer tasks" keeps what the job needs; "why X?" asks for the reason, not a reversal.
+- Lead with the verdict; no prerequisite lists or skipped-check notes unless they change what the user must do.
 
 ## Defaults
 
-These take precedence over doc examples and over patterns in the user's existing pipelines, whose comments can be wrong: check a claim against the references before repeating it.
+These beat doc examples and the user's existing pipelines, whose comments can be wrong: check a claim against the references before repeating it.
 
 1. **Native task first.** Deployments use the deploy task for their target. Fall back to the CLI (`AzureCLI@3` when it needs the service connection, else `Bash@3`) when no task exists or the task is wrong or fails for the case.
 2. **Shell steps are `Bash@3` with `targetType: inline`** (`CmdLine@2` only to match an existing pipeline using it), never the `script:`/`bash:`/`pwsh:`/`powershell:` shortcuts. Every inline script starts with `set -euo pipefail`; neither task enables errexit.
@@ -40,6 +40,7 @@ These take precedence over doc examples and over patterns in the user's existing
 Frequent silent failures; details and sources in the linked reference.
 
 - **No side effects unless asked**: never queue a run, push, or change pipelines, policies or settings.
+- **Never expose a credential**: no `cat`, `source`, `echo` or `Read` of `.env`, no PAT asked in chat, no token picked for the user ([security.md](references/security.md#script-credentials)).
 - **Compile time vs runtime.** `${{ }}` runs at template expansion with parameters, literal variables and a subset of predefined variables; `$[ ]` runs before a stage/job with `variables`, `dependencies`, `stageDependencies`; `$( )` is expanded before each task. Variable-group values, `setvariable` values and runtime-only predefined variables (`Build.BuildId`, `System.PullRequest.*`, `System.AccessToken`) are empty inside `${{ }}` ([execution-model.md](references/execution-model.md#availability-matrix)).
 - **Macros do not expand in** `trigger`, `pr`, `schedules`, `resources` (including repository `ref:`), `- group:` names, `checkout: git://...@ref`, template paths, or service connection/environment/pool names taken from groups. Use `${{ parameters.x }}` ([execution-model.md](references/execution-model.md#where-macros-and-runtime-expressions-are-not-expanded)).
 - **An undefined `$(x)` stays literal.** In bash it becomes command substitution; in `env:` the process gets the text `$(x)`. Declare a default and read it through `env:` ([execution-model.md](references/execution-model.md#undefined-variables)).
@@ -57,11 +58,11 @@ Frequent silent failures; details and sources in the linked reference.
 
 ## Mode routing
 
-Load only what the task needs: find the section in the file's Contents and read that section, never `cat` a whole reference.
+Load only what the task needs: read the section listed in the file's Contents, never `cat` a whole reference.
 
 | Mode | Load | Output |
 |---|---|---|
-| Write | The sections you need of [execution-model.md](references/execution-model.md#availability-matrix) and [expressions-conditions.md](references/expressions-conditions.md#conditions), plus the topic files below | Run `detect.py` on the repo first and ask the user about every WARN line their instructions do not already answer. Complete YAML following the defaults and the detected package managers and version pins, then `task-versions.py check` on it and `preview.py` when a token, a host pipeline and the pushed templates exist (ask as in [Credentials](#scripts) about a missing token). Never ask the user to push or commit for a preview. |
+| Write | The sections you need of [execution-model.md](references/execution-model.md#availability-matrix) and [expressions-conditions.md](references/expressions-conditions.md#conditions), plus the topic files below | Run `detect.py` first; ask about each WARN line the user's instructions leave open. Complete YAML per the defaults and the detected package managers and pins, then `task-versions.py check` on it, and `preview.py` when a token, a host pipeline and the pushed templates exist (missing token: [Script credentials](references/security.md#script-credentials)); never ask the user to push or commit for one. |
 | Optimize | [performance.md](references/performance.md), [review-checklist.md](references/review-checklist.md#performance) | Measurements from `step-durations.py` (before), ranked changes with the expected saving, the YAML diff, and how to re-measure. No speedup claim without numbers: with no credentials or run history, mark changes "unmeasured" and give the before/after commands. |
 | Review | [review-checklist.md](references/review-checklist.md), then the reference each finding points to | `detect.py` on the repo when it is checked out, then findings by severity in the checklist's [finding format](references/review-checklist.md#finding-format), each with the offending line and a pasteable fix, then one line on what was not checked. |
 | Preview | [execution-model.md](references/execution-model.md#predefined-variables-at-compile-time), [templates.md](references/templates.md#10-error-messages) | Run `preview.py`; explain the `finalYaml` (what the templates and `${{ }}` produced) or the expansion error and its fix. Clean means expansion only (`Build.Reason` is `Manual`; conditions, `$[ ]`, macros unevaluated). |
@@ -85,8 +86,8 @@ Python 3.11+. `scripts/<name>.py` here and in the references means `python3 ${CL
 | `scripts/step-durations.py --org ORG --project P --pipeline-id ID [--top N] [--reason R]` | n/min/median/max seconds per job and step over recent runs; `--builds a,b,c` for before/after sets. |
 | `scripts/run-failure.py --org ORG --project P (--build ID \| --pipeline-id ID \| --pipeline NAME) [--branch REF] [--lines N]` | The pipeline's latest runs, the run's template validation errors, then each failed step's path, issues, and log tail without image-pull noise. A pipeline takes its latest failed run. |
 
-Credentials: the scripts read `AZURE_DEVOPS_EXT_PAT`, else `az login`, asking az for a token in the organization's own tenant (read from the org, or `ADO_TENANT`) whatever the default subscription is. If either works, run `scripts/auth-check.py --org ORG` and name the identity. Otherwise never pick a token: after the offline work, ask once whether to skip live checks, use a workspace `.env` key, or have the user `export AZURE_DEVOPS_EXT_PAT=...` or `az login`, plus the preview host pipeline ID (or offer `preview.py --list`). List `.env` keys with `cut -s -d= -f1 .env`; shell state does not persist, so prefix each command with `AZURE_DEVOPS_EXT_PAT="$(sed -n 's/^KEY=//p' .env | head -1 | tr -d "\"'")"`. Never print a secret (no `cat`, `source`, `echo` or `Read` of `.env`) or ask for the PAT in chat. PAT scopes: Build (Read) for preview, durations and run-failure, Agent Pools (Read) for `task-versions.py org`. Org and project come from the repo remote (`https://dev.azure.com/{org}/{project}/_git/{repo}`) or `ADO_ORG`/`ADO_PROJECT`.
+Before any live script, read [Script credentials](references/security.md#script-credentials).
 
 ## Live docs
 
-Fetch only what the references lack: the page from [doc-map.md](references/doc-map.md) or a task's `docs` link in [task-versions.md](references/task-versions.md), with `&accept=text/markdown`, and a WebFetch prompt that extracts just the input or key you need from the `azure-pipelines` moniker block. If a fetch fails, answer from the references marked "not verified against live docs". Where docs and observations disagree the references record both; prefer the observation and say so.
+Fetch only what the references lack, as in [doc-map.md](references/doc-map.md#how-to-fetch). On a failed fetch, answer from the references, marked "not verified against live docs".

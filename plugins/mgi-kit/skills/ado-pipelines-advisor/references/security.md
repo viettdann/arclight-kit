@@ -13,6 +13,7 @@ Secrets, identities, tokens, org/project pipeline settings and protected-resourc
 - [Templates, checks and step restrictions](#templates-checks-and-step-restrictions)
 - [Container jobs](#container-jobs)
 - [Data-plane roles in IaC](#data-plane-roles-in-iac)
+- [Script credentials](#script-credentials)
 - [Checklist](#checklist)
 
 ## Secret variables and masking
@@ -249,6 +250,17 @@ A pipeline that deploys Bicep or Terraform also deploys the app identities' role
 | Grants roles itself (the deploy identity) | Role Based Access Control Administrator, conditioned to the roles it assigns | Owner or User Access Administrator |
 
 Scope the assignment to the resource, not the resource group or subscription. A developer running the app locally needs the same data roles on their own identity.
+
+## Script credentials
+
+For the skill's live scripts (`auth-check.py`, `preview.py`, `step-durations.py`, `run-failure.py`, `task-versions.py org`), not for pipeline YAML.
+
+- The scripts read `AZURE_DEVOPS_EXT_PAT`, else `az login`, asking az for a token in the organization's own tenant (read from the org, or `ADO_TENANT`) whatever the default subscription is. If either works, run `scripts/auth-check.py --org ORG` and name the identity.
+- Otherwise, after the offline work, ask once: skip live checks, use a workspace `.env` key, or the user runs `export AZURE_DEVOPS_EXT_PAT=...` or `az login`; plus the preview host pipeline ID (or offer `preview.py --list`).
+- List `.env` keys with `cut -s -d= -f1 .env`. Shell state does not persist, so prefix each command with `AZURE_DEVOPS_EXT_PAT="$(sed -n 's/^KEY=//p' .env | head -1 | tr -d "\"'")"`.
+- Never print a secret (no `cat`, `source`, `echo` or `Read` of `.env`), ask for the PAT in chat, or pick a token for the user.
+- PAT scopes: Build (Read) for preview, durations and run-failure, Agent Pools (Read) for `task-versions.py org`.
+- Org and project come from the repo remote (`https://dev.azure.com/{org}/{project}/_git/{repo}`) or `ADO_ORG`/`ADO_PROJECT`.
 
 ## Checklist
 
