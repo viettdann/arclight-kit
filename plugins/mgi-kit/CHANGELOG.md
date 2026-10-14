@@ -2,6 +2,12 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-10-14
+
+### Added
+
+- `ado-pipelines-advisor`, from 4mgi-devops-claude-skills: writes, optimizes, reviews, and previews Azure Pipelines YAML against verified rules (compile time versus runtime expressions, output variables, conditions, triggers, deployment jobs, secrets, task versions), with per-target deploy patterns and read-only scripts for repo detection, task-version checks, server-side preview, and step durations.
+
 ## [0.3.0] - 2026-10-05
 
 ### Added

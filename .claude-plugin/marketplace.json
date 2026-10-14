@@ -18,7 +18,7 @@
     {
       "name": "mgi-kit",
       "source": "./plugins/mgi-kit",
-      "description": "MGI .NET and TypeScript stack skills: API breaking change detection, .NET version upgrades"
+      "description": "MGI .NET and TypeScript stack skills: API breaking change detection, .NET version upgrades, Azure Pipelines YAML"
     }
   ]
 }

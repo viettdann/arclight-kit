@@ -4,7 +4,7 @@ Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
 - `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
-- `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades).
+- `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades, Azure Pipelines YAML).
 
 ## Which skill
 
@@ -31,6 +31,7 @@ Claude Code marketplace with three plugins:
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI | `mgi-kit:dotnet-upgrade` |
+| Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion | `mgi-kit:ado-pipelines-advisor` |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 
@@ -56,7 +57,7 @@ claude plugin install mgi-kit@arclight-kit
 
 Install any one alone; none depends on another. `arc-kit:refactor` and `arc-kit:verifier` run `mgi-kit:api-contract` when both are installed. Upgrading from `arclight`: `claude plugin uninstall arclight@arclight-kit` first.
 
-Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check. Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, test-guard, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
+Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, Chromium, or Edge for the screenshot script (`restyle` and `redesign` check the rendered page with it, `design` uses it when asked), the same for `ui-check` (it needs a running page or a static file), `python3` for `restyle`'s tell scanner and `redesign`'s preserve check, Python 3.11+ for `ado-pipelines-advisor`'s scripts (the live ones need `AZURE_DEVOPS_EXT_PAT` or `az login`). Without them the skills still work and say what wasn't machine-checked. `arc-kit` needs `python3` for the comment-lint, test-guard, destructive-guard, and agent-git-guard hooks and `fresh-air`; without it, `worker` and `reviewer` can't run Bash.
 
 ## Agents
 
