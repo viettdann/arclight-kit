@@ -47,3 +47,5 @@ FAIL <test name> (<file>:<line>) [<cause>, deterministic|flaky]
 ```
 
 Without a baseline, omit the Baseline line. When everything passes, return the first two lines only.
+
+Keep the whole report under 80 lines and 8 KiB. With more failures than fit, group the ones that share a cause and an error message into one entry with the count and up to five test names, give full entries to the first failures of each distinct cause, then list the rest as `FAIL <test name> (<file>:<line>)` lines, and end with `Full log: <path>`.

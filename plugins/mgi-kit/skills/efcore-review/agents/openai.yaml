@@ -1,0 +1,4 @@
+interface:
+  display_name: "Efcore Review"
+  short_description: "Review EF Core data access for slow or wrong queries: N+1, filtering after ToList, SaveChanges in loops, Include row explosion, predicates that defeat an index, deep Skip/Take pagi"
+  default_prompt: "Use $efcore-review for this task."

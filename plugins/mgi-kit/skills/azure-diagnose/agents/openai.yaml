@@ -1,0 +1,4 @@
+interface:
+  display_name: "Azure Diagnose"
+  short_description: "Read-only az CLI diagnosis of live App Service, Functions, Container Apps, PostgreSQL flexible, Service Bus: why one resource errors, slows or won't start, or an audit of a whole t"
+  default_prompt: "Use $azure-diagnose for this task."

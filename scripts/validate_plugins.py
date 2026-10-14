@@ -126,14 +126,15 @@ def validate(root=ROOT):
             if "hooks" in extension:
                 hook = read_json(inside(base, extension["hooks"]))
                 handlers = hook["hooks"]["PostToolUse"]
+                expected_scripts = ["comment-lint.py", "test-guard.py"] if label == "arc-kit" else ["dotnet-guard.py"]
                 if len(handlers) != 1 or handlers[0]["matcher"] != "^apply_patch$":
-                    raise ValueError("comment lint must target apply_patch")
-                if len(handlers[0]["hooks"]) != 1:
-                    raise ValueError("comment lint requires one command handler")
-                for handler in handlers[0]["hooks"]:
-                    if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/comment-lint.py' not in handler["command"]:
+                    raise ValueError("patch guards must target apply_patch")
+                if len(handlers[0]["hooks"]) != len(expected_scripts):
+                    raise ValueError("patch guards require the configured command handlers")
+                for handler, script in zip(handlers[0]["hooks"], expected_scripts):
+                    if handler["type"] != "command" or '${PLUGIN_ROOT}/scripts/' + script not in handler["command"]:
                         raise ValueError("invalid hook command")
-                inside(base, "./scripts/comment-lint.py")
+                    inside(base, "./scripts/" + script)
                 starts = hook["hooks"].get("SessionStart", [])
                 if starts:
                     if len(starts) != 1 or starts[0]["matcher"] != "^compact$" or len(starts[0]["hooks"]) != 1:
@@ -180,6 +181,14 @@ def validate(root=ROOT):
     folders = {p.name for p in (root / "plugins").iterdir() if p.is_dir()}
     if folders != names:
         errors.append("marketplace entries do not match plugin directories")
+    parser_paths = [root / "plugins" / name / "scripts/patch_parser.py" for name in ("arc-kit", "mgi-kit")]
+    reader_paths = [root / "plugins" / name / "scripts/patch_inputs.py" for name in ("arc-kit", "mgi-kit")]
+    for paths in (parser_paths, reader_paths):
+        try:
+            if paths[0].read_bytes() != paths[1].read_bytes():
+                errors.append("independently bundled patch helpers differ")
+        except OSError as exc:
+            errors.append(f"missing patch helper: {exc}")
     if list(root.glob(".claude-plugin/*")) or list((root / "plugins").glob("*/.claude-plugin/*")):
         errors.append("legacy Claude manifests remain")
     return errors, skill_count

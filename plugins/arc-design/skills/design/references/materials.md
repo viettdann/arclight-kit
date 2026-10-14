@@ -23,6 +23,8 @@ The default material: an opaque surface token with a 1px hairline where it meets
 - Light: the hairline is the text color at about 6–10% (`border` token). Dark: white at about 6–10% alpha (`rgb(255 255 255 / 0.08)`), not a fixed grey hex: the same token reads one step lighter on every layer, where a hex disappears on one surface and glares on another.
 - A hairline is decorative, around 1.2:1. A boundary that identifies a control (text input, select, checkbox) needs 3:1 against its surface, so inputs use `border-strong`, checked with `scripts/contrast.mjs` as `ui`.
 - Hover on a solid surface changes its value (one step), not its position or shadow, in the tool profile.
+- A text field's fill is the surface it sits on or one step below it (`bg-subtle`), never a step above: a lighter fill reads as a raised button, a darker one as a slot to type into. Its 3:1 boundary (above) still identifies it.
+- Photos and screenshots get a 1px outline inside the edge in black at about 10% (white at about 10% in dark themes): `outline: 1px solid rgb(0 0 0 / 0.1); outline-offset: -1px`. An image with a white or black edge then keeps its shape on a surface of the same value. Never use a tinted grey, which reads as a dirty edge. The outline follows the image's radius; avatars keep their ring (`avatars.md`).
 
 ## Lightness layers
 
@@ -86,6 +88,7 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - **Double bezel** (premium): an outer shell (subtle tinted background, hairline ring, 6–8px padding, shell radius from the premium radius table) holding an inner core (its own background, an inset top highlight, radius = outer − padding). One or two objects per page, never every card.
 - **Solid lip** (playful, bubbly): a 3–4px band of a darker shade of the fill under buttons and cards, drawn as a hard shadow (`0 4px 0 <darker step>`); press removes it and moves the element down by the same distance.
 - **Hard offset shadow** (playful, neo-brutal): an unblurred shadow in the ink color (`4px 4px 0 var(--ink)`) with a 2–3px ink border; press translates the element into its shadow.
+- **Lit edge** (technical): a 1px inset top highlight plus a tight contact shadow (`inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(<canvas> / 0.3)`) on the primary button only, so the one filled control reads as a physical key on a flat page. No border with it.
 - **Inversion** (brutalist): a solid block in the text color with the canvas color as text, for the one thing that matters on the screen. Depth in brutalist comes from rules and inversion only.
 
 ## Checks
@@ -96,4 +99,5 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - [ ] Gradients and glow only where the profile or style allows, never under body text.
 - [ ] Texture removed under `prefers-contrast: more` (and frozen under reduced motion if it moves); body text outside it or passing with it on.
 - [ ] Input boundaries pass 3:1; hairlines are alpha in dark themes.
+- [ ] Text fields sit at or below their surface's value; photos carry the 1px alpha outline.
 - [ ] Style materials appear only with their style, on one or two objects where the style says so.

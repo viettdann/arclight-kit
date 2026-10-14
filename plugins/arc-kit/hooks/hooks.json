@@ -1,5 +1,5 @@
 {
-  "description": "Comment lint: flags wrapped, overlong, banner, and multi-line block comments added by apply_patch. Arc reload: re-injects the arc defaults after compaction when $arc was invoked this session; opt-in destructive guard blocks dangerous shell commands",
+  "description": "Codex patch comment lint, new-test review, arc reload after compaction, and opt-in destructive shell guard.",
   "hooks": {
     "PreToolUse": [
       {
@@ -20,6 +20,11 @@
           {
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/scripts/comment-lint.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/test-guard.py\"",
             "timeout": 10
           }
         ]

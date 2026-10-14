@@ -203,12 +203,35 @@ export const waitFor = async ({ evaluate }, css) => {
   if (!found) await fail(`--wait-for: ${css} did not appear within 10s`);
 };
 
+// Selectors go into page JS as JSON strings, so quotes in them can't break the expression.
+export const q = (css) => `document.querySelector(${JSON.stringify(css)})`;
+
+// Viewport box plus scroll offset; exits 2 when nothing matches or it has no size. scroll=false keeps a hover above it under the pointer.
+export const box = async ({ evaluate }, css, what, scroll = true) => {
+  const r = await evaluate(`(() => { const el = ${q(css)}; if (!el) return null; ${scroll ? "el.scrollIntoView({ block: 'center', inline: 'center' });" : ''}
+    const b = el.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, sx: scrollX, sy: scrollY }; })()`);
+  if (!r) await fail(`${what}: no element matches ${css}`);
+  if (!(r.w > 0 && r.h > 0)) await fail(`${what}: ${css} has no size (hidden?)`);
+  return r;
+};
+
+// A click that lands on another element (an overlay, a pointer-events: none gap) is the finding, so it is reported, not forced.
+export const realClick = async (cdp, css) => {
+  const b = await box(cdp, css, '--click');
+  const x = b.x + b.w / 2, y = b.y + b.h / 2;
+  const hit = await cdp.evaluate(`(() => { const el = document.elementFromPoint(${x}, ${y}), t = ${q(css)}; return !el || t.contains(el) ? '' : el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + [...el.classList].slice(0, 2).map((c) => '.' + c).join(''); })()`);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+  for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+  return hit;
+};
+
 export const MEDIA = { 'reduced-motion': ['prefers-reduced-motion', 'reduce'], 'contrast-more': ['prefers-contrast', 'more'],
   'reduced-transparency': ['prefers-reduced-transparency', 'reduce'], 'forced-colors': ['forced-colors', 'active'] };
 
-// Width under 700 emulates a phone. The scheme is always set: headless Chrome otherwise follows the OS theme.
+// Width under 700 emulates a touch phone (`pointer: coarse`). The scheme is always set: headless Chrome otherwise follows the OS theme.
 export const emulate = async ({ send }, { width, height, scheme, media = [] }) => {
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 700 });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: width < 700, maxTouchPoints: 5 });
   const features = media.map((m) => ({ name: MEDIA[m][0], value: MEDIA[m][1] }));
   features.push({ name: 'prefers-color-scheme', value: scheme });
   await send('Emulation.setEmulatedMedia', { features });

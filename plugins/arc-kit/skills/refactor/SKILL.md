@@ -1,19 +1,19 @@
 ---
 name: refactor
-description: "Restructure existing code while preserving observable behavior: extract, inline, rename, move, split functions or modules, reduce complexity, and remove duplication or dead code. Map contracts and consumers, pin behavior with proportionate checks, and make small verified changes. Use for refactor, tái cấu trúc, tách hàm, đổi tên, or dọn code; not a behavior-changing rewrite."
+description: "Restructure existing code while preserving observable behavior: extract, inline, rename, move, split functions or modules, reduce complexity, and remove duplication or dead code. Map contracts and consumers, pin behavior with proportionate checks, and make small verified changes. Use when the user requests refactor, tái cấu trúc, tách hàm, đổi tên, or dọn code; Not for behavior-changing rewrites."
 ---
 
 # Refactor
 
-Change structure, never behavior. Behavior is everything a caller, user, or other system can observe: return values, thrown errors and their messages, output and wire formats, side effects and their order, sync versus async, null handling, log lines something parses, and every name another codebase depends on.
+Resolve bundled paths from the parent skill directory containing SKILL.md, including paths in references; resolve target project paths from the project working directory. Before a shell command, resolve bundled script paths to absolute paths and quote them. Follow project AGENTS.md and the active runtime's instructions, tools, permissions, and concurrency limits. Existing user authorization persists across discovery, implementation, and review; ask only about unresolved scope or actions outside it. Use available question tools for preferences, or ask in chat when unavailable. Delegate only when allowed and supported; otherwise run the same checks inline and report when an independent review was unavailable. Inherit the session model unless the user explicitly requests model routing and the runtime supports it. Do not assume named plugin agents, fixed model names, or a fixed worker count.
 
-Follow applicable AGENTS.md instructions. Use Vietnamese in chat and English in files unless the user requests otherwise. Resolve paths from the verified project root and skill resources from this loaded skill directory.
+Change structure, never behavior. Behavior is everything a caller, user, or other system can observe: return values, thrown errors and their messages, output and wire formats, side effects and their order, sync versus async, null handling, log lines something parses, and every name another codebase depends on.
 
 ## 1. Scope
 
 - State the goal in one line (what becomes easier to change) and the files in scope. Infer both from the request; ask only when the target is unclear.
 - Keep feature work and bug fixes out. A bug found mid-refactor goes in the report, not in the diff; mixing the two makes the "behavior unchanged" claim unverifiable.
-- For work spanning several packages, show the contract map and move sequence, then continue within the existing refactor authorization. Ask only about a material contract or scope decision. For larger efforts, use installed skills `arc-kit:brainstorming` and `arc-kit:executor` (explicit invocations: `$brainstorming`, `$executor`); these refactor rules still apply.
+- If the scope spans several packages or more than a handful of files, show the step-2 contract map and the move sequence, and wait for approval before editing. For larger efforts, plan through `brainstorming` and run through `executor`; this skill's rules still apply to each step.
 
 ## 2. Map the contract surface
 
@@ -29,13 +29,13 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 
 ## 3. Pin behavior
 
-- Run the tests that cover the scope and record the baseline. Report pre-existing failures; don't fix them. A slow or large suite runs under the test runner brief (`../executor/references/test-runner.md`), here and in step 5, with this baseline passed in.
-- If meaningful observable behavior is at risk and coverage is thin, write characterization tests first (unit or integration; e2e only when requested): call the code with representative and edge inputs and assert what it returns today, including output that looks wrong. A characterization test that asserts the "correct" value instead of the current one hides a behavior change.
-- For a mechanical rename or low-impact cleanup, existing type checks and consumer inspection may be sufficient; do not create tests that mirror implementation. If behavior cannot be pinned, state the limitation and choose a bounded mechanical transformation. Ask only if completing the requested refactor requires a material unverified behavior risk.
+- Run the tests that cover the scope and record the baseline. Report pre-existing failures; don't fix them. A slow or large suite goes through the the test runner brief (`../executor/references/test-runner.md`) agent, here and in step 5, with this baseline passed in.
+- If coverage is thin, write characterization tests first (unit or integration, never e2e): call the code with representative and edge inputs and assert what it returns today, including output that looks wrong. A characterization test that asserts the "correct" value instead of the current one hides a behavior change. Pin only call paths the refactor will touch, and name that path for each test.
+- If behavior can't be pinned (no harness, I/O that can't be faked), say so and limit the work to mechanical, tool-driven moves (LSP rename, extract) unless the user accepts the risk.
 
 ## 4. Move in small steps
 
-- One transformation per step. After each: build or type-check, then run the pinned tests. On red, diagnose the failure, correct or manually undo only your own step, and take a smaller one.
+- One transformation per step. After each: build or type-check, then run the pinned tests. On red, undo that step with Edit (not git) and take a smaller one.
 - Prefer LSP rename over text replacement. With text replacement, update every consumer found in step 2 in the same step.
 - Add abstraction only when it removes real duplication: no strategy, builder, or chain for two branches, no shared helper before three real call sites. Fewer layers is the usual win.
 - An interface earns its place with two implementations that exist now (production and a test fake counts); with one, it is indirection. Inline it, unless something outside the scope implements or injects it by that name (step 2).
@@ -45,10 +45,10 @@ The compiler does not see the serialized and string-based ones: renaming a seria
 
 ## 5. Verify and report
 
-- Run the project's required checks and the build, type-check, lint, and tests relevant to the affected packages. Broaden when shared-contract impact warrants it and compare against the baseline.
+- Run build, type-check, lint, the pinned tests, and the test suite of every touched package. Compare against the baseline.
 - If the goal is a complexity target, measure it with the project's own analyzer (Sonar, ESLint `complexity` or `sonarjs/cognitive-complexity`, .NET code metrics) before and after, and put both numbers in the report.
 - Grep for every old name to confirm no stale reference. Diff the frozen surfaces from step 2 to confirm they are unchanged.
-- If the scope touched ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, use the installed `mgi-kit:api-contract` skill when available (explicit invocation: `$api-contract`).
+- If the scope touched ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, read and follow the installed skill `mgi-kit:api-contract` when it is installed.
 
 Report in this shape:
 

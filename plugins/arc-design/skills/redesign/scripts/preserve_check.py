@@ -2,7 +2,8 @@
 """List hooks that existed before a redesign and are gone after it.
 
 Compares hrefs, ids, form field names, form actions, data-* attributes,
-<title>, and meta descriptions between two files or two directories.
+<title>, meta descriptions, canonical URLs, and og:/twitter: share tags
+between two files or two directories.
 Heuristic regex extraction: works on HTML, JSX/TSX, Vue, Svelte, Astro.
 Skipped as presentation: anything inside <svg>, `name` on icon components,
 and <link> hrefs for stylesheets, fonts, preloads, and icons.
@@ -33,28 +34,51 @@ REGISTER = re.compile(r"""\bregister\(\s*["'`]([^"'`$]+)["'`]""")  # react-hook-
 TITLE = re.compile(r"<title>(.*?)</title>", re.S | re.I)
 SVG = re.compile(r"<svg\b.*?</svg>", re.S | re.I)
 META = re.compile(r"<meta\b[^>]*>", re.I)
+LINK = re.compile(r"<link\b[^>]*>", re.I)
 TAG_ATTR = re.compile(r"""([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{\s*["'`]([^"'`]*)["'`]\s*\})""")
 META_API = re.compile(r"\b(?:export\s+const\s+metadata|generateMetadata|useHead|useSeoMeta|definePageMeta)\b")
-META_FIELD = re.compile(r"""\b(title|description)\s*:\s*(["'`])((?:(?!\2)[^\\]|\\.)*)\2""")
+META_LINK = re.compile(r"""\brel\s*:\s*["'`]canonical["'`]\s*,\s*href\s*:\s*(["'`])((?:(?!\1)[^\\]|\\.)*)\1""")
+META_FIELD = re.compile(r"""\b(title|description|canonical)\s*:\s*(["'`])((?:(?!\2)[^\\]|\\.)*)\2""")
 TAG_NAME = re.compile(r"<([\w.:-]+)")
+CANONICAL_REL = re.compile(r"""\brel\s*=\s*["'{`]*\s*canonical\b""", re.I)
 ASSET_REL = re.compile(r"""\brel\s*=\s*["'{`]*\s*(?:stylesheet|preconnect|preload|modulepreload|prefetch|dns-prefetch|(?:apple-touch-|mask-|shortcut )?icon)\b""", re.I)
+
+
+def enclosing_tag(text, pos):
+    """The tag name (lowercased) and source of the tag around pos, or (None, "")."""
+    start = text.rfind("<", 0, pos)
+    if start < 0:
+        return None, ""
+    end = text.find(">", pos)
+    tag = text[start:end + 1 if end >= 0 else len(text)]
+    m = TAG_NAME.match(tag)
+    return (m.group(1).lower(), tag) if m else (None, "")
 
 
 def presentation(text, pos, kind):
     """True for a match that is styling, not a hook: an icon component's name, an asset <link>'s href."""
     if kind not in ("name", "href"):
         return False
-    start = text.rfind("<", 0, pos)
-    if start < 0:
-        return False
-    end = text.find(">", pos)
-    tag = text[start:end + 1 if end >= 0 else len(text)]
-    m = TAG_NAME.match(tag)
-    if not m:
+    name, tag = enclosing_tag(text, pos)
+    if name is None:
         return False
     if kind == "name":
-        return "icon" in m.group(1).lower()
-    return m.group(1).lower() == "link" and bool(ASSET_REL.search(tag))
+        return "icon" in name
+    return name == "link" and bool(ASSET_REL.search(tag))
+
+
+def canonical_link(text, pos):
+    """True for the href of <link rel="canonical">, which is compared as `canonical`, not `href`."""
+    name, tag = enclosing_tag(text, pos)
+    return name == "link" and bool(CANONICAL_REL.search(tag))
+
+
+def tag_attrs(tag):
+    return {m.group(1).lower(): next(g for g in m.groups()[1:] if g is not None) for m in TAG_ATTR.finditer(tag)}
+
+
+def static(value):
+    return bool(value) and "{" not in value and "$" not in value
 
 
 def files(path):
@@ -69,7 +93,7 @@ def files(path):
 
 
 def extract(path):
-    found = {k: set() for k in [*PATTERNS, "title", "meta description"]}
+    found = {k: set() for k in [*PATTERNS, "title", "meta description", "canonical", "share tags"]}
     for f in files(path):
         try:
             with open(f, encoding="utf-8", errors="ignore") as fh:
@@ -79,24 +103,33 @@ def extract(path):
         markup = SVG.sub("", text)
         for kind, rx in PATTERNS.items():
             for m in rx.finditer(markup):
-                if presentation(markup, m.start(), kind):
+                if presentation(markup, m.start(), kind) or (kind == "href" and canonical_link(markup, m.start())):
                     continue
                 if kind == "data-*":
                     value = next(g for g in m.groups()[1:] if g is not None)
                     found[kind].add(f"{m.group(1)}={value}")
                 else:
                     value = next((g for g in m.groups() if g is not None), "")
-                    if value and "{" not in value and "$" not in value:
+                    if static(value):
                         found[kind].add(value)
         found["name"].update(REGISTER.findall(text))
         found["title"].update(" ".join(t.split()) for t in TITLE.findall(SVG.sub("", text)))
         for tag in META.findall(text):
-            attrs = {m.group(1).lower(): next(g for g in m.groups()[1:] if g is not None) for m in TAG_ATTR.finditer(tag)}
+            attrs = tag_attrs(tag)
             if attrs.get("name", "").lower() == "description" and "content" in attrs:
                 found["meta description"].add(attrs["content"])
+            key = attrs.get("property") or attrs.get("name") or ""
+            if key.lower().startswith(("og:", "twitter:")) and static(attrs.get("content", "")):
+                found["share tags"].add(f"{key}={attrs['content']}")
+        for tag in LINK.findall(markup):
+            attrs = tag_attrs(tag)
+            if CANONICAL_REL.search(tag) and static(attrs.get("href", "")):
+                found["canonical"].add(attrs["href"])
         if META_API.search(text):
             for field, _, value in META_FIELD.findall(text):
-                found["title" if field == "title" else "meta description"].add(value)
+                found[{"title": "title", "description": "meta description"}.get(field, "canonical")].add(value)
+            for _, value in META_LINK.findall(text):
+                found["canonical"].add(value)
     return found
 
 

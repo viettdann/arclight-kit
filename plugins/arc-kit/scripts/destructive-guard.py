@@ -343,16 +343,8 @@ def check_find(args):
     return "ask", "find -delete or -exec rm deletes every match"
 
 
-def check_argv(argv):
-    argv = strip_wrappers(argv)
-    if not argv:
-        return []
+def check_destructive(raw, argv):
     head, args = posixpath.basename(argv[0]), argv[1:]
-    if head in SHELLS:
-        script = shell_script(args)
-        return check_command(script) if script is not None else []
-    if head == "eval":
-        return check_command(" ".join(args))
     if head == "rm":
         found = check_rm(args)
     elif head == "git":
@@ -393,7 +385,37 @@ def check_sql(cmd, argvs):
     return found
 
 
-def check_command(cmd):
+def env_scripts(argv):
+    # `env -S 'cmd args'` runs its value as a command line, which strip_wrappers would drop as an option value.
+    if not any(posixpath.basename(t) == "env" for t in argv):
+        return []
+    scripts = []
+    for t, nxt in zip(argv, argv[1:] + [None]):
+        if t in ("-S", "--split-string") and nxt is not None:
+            scripts.append(nxt)
+        elif t.startswith("--split-string="):
+            scripts.append(t.split("=", 1)[1])
+        elif t.startswith("-S") and len(t) > 2:
+            scripts.append(t[2:])
+    return scripts
+
+
+def check_argv(argv, argv_check=check_destructive, command_check=check_sql, hint=KEYWORD_HINT):
+    found = [f for script in env_scripts(argv) for f in check_command(script, argv_check, command_check, hint)]
+    raw, argv = argv, strip_wrappers(argv)
+    if not argv:
+        return found
+    head, args = posixpath.basename(argv[0]), argv[1:]
+    if head in SHELLS:
+        script = shell_script(args)
+        return found + (check_command(script, argv_check, command_check, hint) if script is not None else [])
+    if head == "eval":
+        return found + check_command(" ".join(args), argv_check, command_check, hint)
+    return found + argv_check(raw, argv)
+
+
+def check_command(cmd, argv_check=check_destructive, command_check=check_sql, hint=KEYWORD_HINT):
+    # agent-git-guard walks commands with its own argv_check; shells, eval, and obfuscation are followed the same way for both.
     if IFS.search(cmd):
         return [("deny", "${IFS} word-splitting obfuscation")]
     if DECODE_PIPE.search(cmd) or DECODE_SUBST.search(cmd):
@@ -401,11 +423,11 @@ def check_command(cmd):
     try:
         segments = split(cmd)
     except ValueError as e:
-        return [("deny", f"cannot parse a command with destructive keywords ({e})")] if KEYWORD_HINT.search(cmd) else []
+        return [("deny", f"cannot parse a command that mentions {hint.search(cmd).group(0)} ({e})")] if hint.search(cmd) else []
     argvs = [tokens(s) for s in segments]
-    found = check_sql(cmd, argvs)
+    found = command_check(cmd, argvs) if command_check else []
     for argv in argvs:
-        found += check_argv(argv)
+        found += check_argv(argv, argv_check, command_check, hint)
     return found
 
 

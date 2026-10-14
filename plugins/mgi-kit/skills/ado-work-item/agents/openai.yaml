@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ado Work Item"
+  short_description: "Brief an Azure DevOps work item: the current ask after later comments, done conditions, repro, parent, merged PRs. Read-only. Use when the user gives a work item ID or link (\\\"l\u00e0m "
+  default_prompt: "Use $ado-work-item for this task."

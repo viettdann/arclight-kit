@@ -1,0 +1,4 @@
+interface:
+  display_name: "Supervise"
+  short_description: "Supervise a plan with scoped worker packets, snapshots, per-group review, escalation, and a run log. Use when the user requests supervised delegation or model routing. Not for ordi"
+  default_prompt: "Use $supervise for this task."

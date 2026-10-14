@@ -214,6 +214,164 @@ class ScanTellsTest(unittest.TestCase):
         self.assertNoTell("a.tsx", '<div className="h-2 w-32 animate-pulse rounded-full bg-zinc-200" />\n', "pulsing dot")
         self.assertNoTell("a.tsx", '<span className="h-2 w-2 rounded-full bg-green-500" />\n', "pulsing dot")
 
+    def test_line_height_unit(self):
+        self.assertTell("a.css", "p { line-height: 24px; }\n", "line-height with a unit")
+        self.assertTell("a.css", "p { line-height: 1.5rem; }\n", "line-height with a unit")
+        self.assertTell("a.tsx", '<p className="leading-[24px]">x</p>\n', "line-height with a unit")
+        self.assertTell("a.tsx", "<p style={{ lineHeight: '24px' }}>x</p>\n", "line-height with a unit")
+        self.assertNoTell("a.tsx", '<p className="leading-6">x</p>\n', "line-height with a unit")
+        self.assertNoTell("a.css", "p { line-height: 1.5; }\n", "line-height with a unit")
+
+    def test_letter_spacing_px(self):
+        self.assertTell("a.css", "h1 { letter-spacing: 1px; }\n", "letter-spacing in px")
+        self.assertTell("a.tsx", '<h1 className="tracking-[1px]">x</h1>\n', "letter-spacing in px")
+        self.assertTell("a.tsx", "<h1 style={{ letterSpacing: 1 }}>x</h1>\n", "letter-spacing in px")
+        self.assertTell("a.tsx", "<h1 style={{ letterSpacing: '1px' }}>x</h1>\n", "letter-spacing in px")
+        self.assertNoTell("a.tsx", '<h1 className="tracking-[-0.02em]">x</h1>\n', "letter-spacing in px")
+        self.assertNoTell("a.tsx", "<h1 style={{ letterSpacing: 0 }}>x</h1>\n", "letter-spacing in px")
+
+    def test_raw_opentype_tag(self):
+        self.assertTell("a.css", '.n { font-feature-settings: "tnum" 1; }\n', "raw OpenType tag")
+        self.assertTell("a.css", ".h { font-variation-settings: 'wght' 650; }\n", "raw OpenType tag")
+        self.assertNoTell("a.css", '.a { font-feature-settings: "ss01" 1; }\n', "raw OpenType tag")
+        self.assertNoTell("a.css", '.a { font-variation-settings: "GRAD" 80; }\n', "raw OpenType tag")
+
+    def test_font_default_disabled(self):
+        self.assertTell("a.css", "a { text-decoration-skip-ink: none; }\n", "font default disabled")
+        self.assertTell("a.css", "h1 { font-kerning: none; }\n", "font default disabled")
+        self.assertNoTell("a.css", "h1 { font-kerning: normal; }\n", "font default disabled")
+
+    def test_balance_on_paragraph(self):
+        self.assertTell("a.tsx", '<p className="text-balance">x</p>\n', "balance on a paragraph")
+        self.assertTell("a.css", "p {\n  text-wrap: balance;\n}\n", "balance on a paragraph")
+        self.assertTell("a.vue", "<style>\np {\n  margin: 0;\n  text-wrap: balance;\n}\n</style>\n", "balance on a paragraph")
+        self.assertNoTell("a.tsx", '<h2 className="text-balance">x</h2>\n', "balance on a paragraph")
+        self.assertNoTell("a.css", "h2 {\n  text-wrap: balance;\n}\n", "balance on a paragraph")
+        self.assertNoTell("a.vue", "<style>\np { margin: 0; }\nh2 {\n  text-wrap: balance;\n}\n</style>\n", "balance on a paragraph")
+
+    def test_tight_leading_on_paragraph(self):
+        self.assertTell("a.tsx", '<p className="text-sm leading-tight">x</p>\n', "tight line-height on wrapping text")
+        self.assertTell("a.tsx", '<p className="leading-none">x</p>\n', "tight line-height on wrapping text")
+        self.assertNoTell("a.tsx", '<h1 className="leading-tight">x</h1>\n', "tight line-height on wrapping text")
+
+    def test_unselectable_text(self):
+        self.assertTell("a.tsx", '<main className="select-none">x</main>\n', "unselectable text")
+        self.assertTell("a.css", "body {\n  user-select: none;\n}\n", "unselectable text")
+        self.assertNoTell("a.tsx", '<button className="select-none">x</button>\n', "unselectable text")
+        self.assertNoTell("a.css", ".handle {\n  user-select: none;\n}\n", "unselectable text")
+
+    def test_font_smoothing_in_component(self):
+        self.assertTell("a.tsx", '<div className="antialiased text-sm">x</div>\n', "font smoothing in a component")
+        self.assertTell("a.css", ".card {\n  -webkit-font-smoothing: antialiased;\n}\n", "font smoothing in a component")
+        self.assertNoTell("a.tsx", '<body className="antialiased">x</body>\n', "font smoothing")
+        self.assertNoTell("a.css", "html {\n  -webkit-font-smoothing: antialiased;\n}\n", "font smoothing")
+        self.assertNoTell("a.css", ":root { -webkit-font-smoothing: antialiased; }\n", "font smoothing")
+
+    def test_line_clamp_without_box(self):
+        self.assertTell("a.css", ".t {\n  -webkit-line-clamp: 3;\n  overflow: hidden;\n}\n", "line-clamp without a box")
+        self.assertNoTell("a.css", ".t {\n  display: -webkit-box;\n  -webkit-box-orient: vertical;\n  -webkit-line-clamp: 3;\n}\n", "line-clamp without")
+        self.assertNoTell("a.tsx", '<p className="line-clamp-3">x</p>\n', "line-clamp without")
+
+    def test_full_viewport_width(self):
+        self.assertTell("a.tsx", '<div className="w-screen bg-zinc-50">x</div>\n', "100vw width")
+        self.assertTell("a.css", ".bar { width: 100vw; }\n", "100vw width")
+        self.assertTell("a.tsx", "<div style={{ width: '100vw' }}>x</div>\n", "100vw width")
+        self.assertTell("a.css", ".x{width: calc(100vw - 240px)}\n", "100vw width")
+        self.assertNoTell("a.tsx", '<div className="fixed bottom-0 w-screen">x</div>\n', "100vw width")
+        self.assertNoTell("a.css", ".bar {\n  position: fixed;\n  width: 100vw;\n}\n", "100vw width")
+        self.assertNoTell("a.tsx", '<div className="max-w-screen-lg w-full">x</div>\n', "100vw width")
+        self.assertNoTell("a.css", ".a { max-width: 100vw; }\n", "100vw width")
+
+    def test_viewport_query_in_component(self):
+        self.assertTell("Card.tsx", "const S = styled.div`\n  @media (max-width: 640px) {\n    padding: 0;\n  }\n`;\n", "viewport query in a component")
+        self.assertTell("Card.module.css", "@media screen and (width < 40em) {\n  .a { padding: 0; }\n}\n", "viewport query in a component")
+        query = "@media (max-width: 640px) {\n  .a { padding: 0; }\n}\n"
+        self.assertNoTell("globals.css", query, "viewport query")
+        self.assertNoTell("layout.tsx", "const S = styled.div`\n" + query + "`;\n", "viewport query")
+        self.assertNoTell("Theme.tsx", "const G = createGlobalStyle`\n" + query + "`;\n", "viewport query")
+        self.assertNoTell("Card.module.css", "@media (min-width: 48em) {\n  .a { padding: 0; }\n}\n", "viewport query")
+        self.assertNoTell("Card.module.css", "@container (max-width: 30rem) {\n  .a { padding: 0; }\n}\n", "viewport query")
+        os.mkdir(os.path.join(self.root, "pages"))
+        self.assertNoTell(os.path.join("pages", "Home.tsx"), "const S = styled.div`\n" + query + "`;\n", "viewport query")
+
+    def test_container_variant_without_container(self):
+        self.assertTell("a.tsx", '<div className="flex flex-col @md:flex-row">x</div>\n', "container variant with no @container")
+        self.assertTell("a.tsx", '<div className="@[34rem]:grid-cols-2">x</div>\n', "container variant with no @container")
+        self.assertTell("a.tsx", '<div className="@max-md:hidden">x</div>\n', "container variant with no @container")
+        two = '<div className="@md:flex-row">x</div>\n<div className="@lg:grid">y</div>\n'
+        self.assertEqual(len([t for t in self.tells("a.tsx", two) if "container variant with no" in t]), 1)
+        self.assertNoTell("a.tsx", '<section className="@container">\n<div className="@md:flex-row">x</div>\n</section>\n', "container variant with no")
+        self.assertNoTell("a.tsx", '<div className="@md/sidebar:flex-row">x</div>\n', "container variant with no")
+        self.assertNoTell("a.vue", '<button @click="x">Go</button>\n', "container variant with no")
+        self.assertNoTell("a.css", ".a { @apply @md:flex-row; }\n", "container variant with no")
+
+    def test_container_variant_on_own_container(self):
+        self.assertTell("a.tsx", '<div className="@container @md:flex-row">x</div>\n', "@container and an @ variant on one element")
+        self.assertNoTell("a.tsx", '<div className="@container"><div className="@md:flex-row">x</div></div>\n', "@container and an @ variant")
+        self.assertNoTell("a.tsx", '<div className="@container/card p-4">x</div>\n', "@container and an @ variant")
+
+    def test_false_data_attribute(self):
+        self.assertTell("a.html", '<div data-open="false">x</div>\n', "behavior: boolean data attribute")
+        self.assertTell("a.tsx", '<li data-selected={isSelected ? "true" : "false"}>x</li>\n', "boolean data attribute")
+        self.assertNoTell("a.tsx", "<li data-index={String(index)}>x</li>\n", "boolean data attribute")
+        self.assertNoTell("a.tsx", "<div data-open={open || undefined}>x</div>\n", "boolean data attribute")
+        self.assertNoTell("a.tsx", '<div aria-expanded={open ? "true" : "false"}>x</div>\n', "boolean data attribute")
+        self.assertNoTell("a.tsx", '<div data-state={open ? "open" : "closed"}>x</div>\n', "boolean data attribute")
+        self.assertNoTell("a.html", '<a data-turbo="false" data-bs-dismiss="false" data-ad-slot="false">x</a>\n', "boolean data attribute")
+
+    def test_copy_successfully(self):
+        self.assertTell("a.tsx", 'toast.success("Project created successfully");\n', "'successfully' in UI copy")
+        self.assertTell("a.html", "<p>Your changes were saved successfully.</p>\n", "'successfully' in UI copy")
+        self.assertTell("a.ts", "setMsg('Uploaded successfully');\n", "'successfully' in UI copy")
+        self.assertNoTell("a.ts", 'console.log("Fetched successfully");\n', "'successfully'")
+        self.assertNoTell("a.ts", 'it("renders successfully", () => {});\n', "'successfully'")
+        self.assertNoTell("a.ts", 'throw new Error("not completed successfully");\n', "'successfully'")
+        self.assertNoTell("a.ts", "const successfullyLoaded = true; // returns successfully\n", "'successfully'")
+        self.assertNoTell("a.test.tsx", 'toast.success("Project created successfully");\n', "'successfully'")
+        self.assertTell("a.tsx", "<p>Your test (beta) was saved successfully.</p>\n", "'successfully' in UI copy")
+        self.assertTell("a.ts", 'setMsg("Exported successfully. Download it.");\n', "'successfully' in UI copy")
+
+    def test_copy_oops(self):
+        self.assertTell("a.html", "<h2>Oops! Something went wrong</h2>\n", "'Oops'")
+        self.assertTell("a.ts", 'setError("Something went wrong");\n', "'Oops'")
+        self.assertTell("a.ts", 'toast.error("Something went wrong");\n', "'Oops'")
+        self.assertTell("a.ts", "const t = { title: 'Whoops, try again' };\n", "'Oops'")
+        self.assertNoTell("a.ts", "const oopsie = 1;\n", "'Oops'")
+        self.assertNoTell("a.ts", 'console.error("something went wrong", e);\n', "'Oops'")
+        self.assertNoTell("a.ts", 'logger.warn("oops");\n', "'Oops'")
+        self.assertNoTell("a.ts", "// oops, fix later\n", "'Oops'")
+
+    def test_copy_exclamation(self):
+        self.assertTell("a.html", "<h1>Welcome aboard!</h1>\n", "exclamation mark")
+        self.assertTell("a.ts", 'toast("Saved!");\n', "exclamation mark")
+        self.assertTell("a.ts", "const s = x ? 'Done!' : '';\n", "exclamation mark")
+        self.assertTell("a.html", "<p>You are all set! </p>\n", "exclamation mark")
+        for line in ("if (!user) return;", ".a { color: red !important; }", "const s = '#!/usr/bin/env node';", "const s = '!important';",
+                     'const s = a !== b ? "x" : "y";', "{!open && <Menu />}", 'expect(screen.getByText("Saved!"));'):
+            self.assertNoTell("a.tsx", line + "\n", "exclamation mark")
+        self.assertNoTell("a.spec.ts", 'toast("Saved!");\n', "exclamation mark")
+        os.mkdir(os.path.join(self.root, "__tests__"))
+        self.assertNoTell(os.path.join("__tests__", "a.ts"), 'toast("Saved!");\n', "exclamation mark")
+
+    def test_vague_link_text(self):
+        self.assertTell("a.html", '<a href="/r">Read more</a>\n', "vague link text")
+        self.assertTell("a.tsx", '<Link to="/x">click here</Link>\n', "vague link text")
+        self.assertTell("a.html", '<a href="/d">Details &rarr;</a>\n', "vague link text")
+        self.assertNoTell("a.html", '<a href="/r" aria-label="Read more about the Q3 report">Read more</a>\n', "vague link text")
+        self.assertNoTell("a.html", '<a href="/r">Read more about pricing</a>\n', "vague link text")
+        self.assertNoTell("a.html", '<a href="/x">Learn more</a>\n', "vague link text")
+        self.assertNoTell("a.html", '<a href="/x">More</a>\n', "vague link text")
+
+    def test_hand_built_relative_time(self):
+        self.assertTell("a.tsx", "const s = `${mins}m ago`;\n", "hand-built relative time")
+        self.assertTell("a.tsx", "<span>{diff} minutes ago</span>\n", "hand-built relative time")
+        self.assertTell("a.ts", "const s = `${n} days ago`;\n", "hand-built relative time")
+        self.assertNoTell("a.ts", "const s = '2 days ago';\n", "hand-built relative time")
+        self.assertNoTell("a.ts", "const s = rtf.format(-n, 'day');\n", "hand-built relative time")
+
+    def test_new_rules_skip_minified_lines(self):
+        self.assertNoTell("a.css", ".a{line-height:24px}" + ".b{color:red}" * 200 + "\n", "line-height with a unit")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,10 @@
 # arclight-kit for Codex
 
-Three independent Codex plugins, containing 20 skills:
+Three independent Codex plugins, containing 25 skills:
 
 - **arc-design**: design new UI, redesign or refine existing UI, check rendering, implement interaction states, and trace what controls do to state.
-- **arc-kit**: daily session defaults, planning, execution, debugging, research, writing, review, refactoring, conventions, handoffs, reversible project-skill disabling, and the comment-lint, arc-reload, and opt-in destructive-guard hooks.
-- **mgi-kit**: audit ASP.NET API contracts against TypeScript and JavaScript consumers, and upgrade .NET solutions.
+- **arc-kit**: daily session defaults, planning, execution, debugging, research, writing, supervised execution, review, refactoring, conventions, handoffs, reversible project-skill disabling, and the comment-lint, test-guard, arc-reload, and opt-in destructive-guard hooks.
+- **mgi-kit**: audit ASP.NET API contracts, upgrade .NET solutions, review EF Core queries, inspect Azure Pipelines and work items, diagnose live Azure resources, and review failure-hiding .NET edits.
 
 This branch targets Codex. See [the migration analysis](docs/codex-migration.md) for the platform changes and compatibility limits.
 
@@ -46,6 +46,7 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | Explore a non-trivial feature or architectural decision | arc-kit | `$brainstorming` |
 | Audit a proposed implementation plan | arc-kit | `$plan-auditor` |
 | Implement an existing plan; `tdd` turns on test-first | arc-kit | `$executor` |
+| Supervise a plan with worker packets, snapshots, escalation, and a run log | arc-kit | `$supervise` |
 | Reproduce a bug, confirm its cause, fix it once, keep a regression test | arc-kit | `$debug` |
 | Compare libraries or approaches, or check a version, limit, price, CVE, or support date, with sources | arc-kit | `$research` |
 | Write, check, or edit prose people read | arc-kit | `$writing` |
@@ -56,8 +57,12 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | Disable or restore a project's local skills | arc-kit | `$fresh-air` (explicit only) |
 | Check backend/frontend contract drift | mgi-kit | `$api-contract` |
 | Move a .NET solution to a newer target framework | mgi-kit | `$dotnet-upgrade` |
+| Review EF Core query performance and correctness | mgi-kit | `$efcore-review` |
+| Review, optimize, preview, or diagnose Azure Pipelines | mgi-kit | `$ado-pipelines-advisor` |
+| Read a work item and its implementation context | mgi-kit | `$ado-work-item` |
+| Diagnose or audit live Azure resources | mgi-kit | `$azure-diagnose` |
 
-`arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly. `executor`, `refactor`, and `verifier` run full or slow suites under the test runner brief (`plugins/arc-kit/skills/executor/references/test-runner.md`), delegated when the runtime allows it, inline otherwise; Codex plugins don't package custom agents.
+`arc` is optional, applies when explicitly selected, and yields to session and project instructions. Naming a skill in a request is enough; these are not Claude plugin slash commands. `refactor` and `verifier` can use `api-contract` when installed; otherwise they check relevant contracts directly. `executor`, `refactor`, and `verifier` run full or slow suites under the test runner brief (`plugins/arc-kit/skills/executor/references/test-runner.md`), delegated when the runtime allows it, inline otherwise; Codex plugins don't package custom agents. `supervise` carries worker and reviewer briefs, snapshots, fix rounds, and a run log. It inherits the session model; alternate model routing requires an explicit user request and runtime support. When delegation is unavailable it runs inline and reports that independent review was unavailable. The upstream worker-specific agent-git-guard is retained as a standalone helper, but is not registered or claimed as enforced in Codex.
 
 `design` combines a **profile** (`tool`, `marketing`, or `read`) with an optional **style**:
 
@@ -68,8 +73,9 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | `brutalist` | Swiss print or terminal, visible grid |
 | `cinematic` | Immersive, scroll-paced, image-led |
 | `playful` | Saturated palette, chunky type, spring motion |
+| `technical` | Dark layered surfaces, one warm accent, sourced metrics, and real code |
 
-The current Codex releases are arc-design 2.3.0, arc-kit 2.3.0, and mgi-kit 1.2.0, synchronized with `main` through `ac70815`. Design references cover color ramps, icons, canvas effects, and interaction motion; UI checks include phone input zoom and worst-case data. The verifier also reviews UI regressions and shared-component consumers.
+The current Codex releases are arc-design 2.4.0, arc-kit 2.4.0, and mgi-kit 1.3.0, synchronized with `main` through `5fe23ac`. Design references cover color ramps, icons, canvas effects, and interaction motion; UI checks include phone input zoom and worst-case data. The verifier also reviews UI regressions and shared-component consumers.
 
 Only load references needed by the task. Bundled script paths resolve from the installed skill's directory, while target project paths resolve from the project's working directory.
 
@@ -81,6 +87,8 @@ Keep each `SKILL.md` within 8,000 UTF-8 bytes, including frontmatter. Codex trun
 - `git` and `sh` for the verifier's diff collector; `bash` for the debug skill's human-in-the-loop repro script.
 - Node 22+ for browser helpers; Chrome, Chromium, or Edge available locally (including a supported Playwright browser cache). `CHROME=/absolute/path` selects a browser.
 - A running page or static HTML file for rendering checks. Skill instructions allow starting the project's existing local dev command for an authorized check.
+- `supervise` snapshot locking uses Unix `fcntl` (Linux/macOS); it does not run natively on Windows.
+- The Azure skills need the Azure CLI and the credentials/scopes described in each skill; validation does not call live Azure or Azure DevOps APIs.
 - Delegation is optional. Workflow skills use available Codex sub-agent tools only when allowed, inherit runtime model/concurrency settings, and work inline when delegation is unavailable.
 
 Missing browser/runtime capabilities are reported as unchecked portions of a task. No MCP server or connector is required by these plugins.
@@ -93,6 +101,8 @@ Missing browser/runtime capabilities are reported as unchecked portions of a tas
 | --- | --- | --- |
 | `ARC_COMMENT_LINT_ENABLED` | `true` | Set to `false`, `0`, `no`, or `off` to disable. |
 | `ARC_COMMENT_LINT_WIDTH` | `150` | Width threshold, minimum 60 columns. |
+| `ARC_TEST_GUARD_ENABLED` | `true` | Review newly added test cases in completed patches. |
+| `ARC_DOTNET_GUARD_ENABLED` | `true` | Review newly added .NET failure-hiding patterns (mgi-kit). |
 
 Set these in the environment that launches Codex. They are script options, not Codex plugin settings. Shell-written changes do not trigger this hook. Check those files explicitly:
 
@@ -101,6 +111,10 @@ python3 plugins/arc-kit/scripts/comment-lint.py --files path/to/file.ts path/to/
 ```
 
 The standalone command checks all lines of the named files. The hook checks only added lines it can locate reliably in the final file; ambiguous patch context may leave lines unchecked. Files outside the hook working directory, generated files, unsupported/binary files, and inputs larger than 2 MB are skipped. This is a style aid, not an enforcement boundary.
+
+## Patch review guards
+
+`arc-kit` test-guard lists new test cases in completed `apply_patch` results and asks for the regression each catches. `mgi-kit` dotnet-guard reports new skipped tests, warning/analyzer suppressions, empty catches, sleeps in tests, and central package version bypasses. Both return advisory feedback after the edit; neither rolls it back. Shell-written edits do not trigger them. Ambiguous patch context, oversized/generated files, and paths outside the hook working directory are skipped. Each plugin bundles its patch reader so mgi-kit works without arc-kit.
 
 ## Destructive guard
 
@@ -126,6 +140,11 @@ node --test scripts/cdp_auth_test.mjs
 node --test scripts/ui_targets_test.mjs
 python3 -m unittest discover -s scripts -p '*_test.py'
 python3 plugins/arc-kit/scripts/comment_lint_test.py
+python3 plugins/arc-kit/scripts/test_guard_test.py
+python3 plugins/arc-kit/scripts/agent_git_guard_test.py
+python3 plugins/arc-kit/skills/supervise/scripts/snapshot_test.py
+python3 plugins/mgi-kit/scripts/dotnet_guard_test.py
+python3 plugins/arc-design/skills/redesign/scripts/preserve_check_test.py
 python3 plugins/arc-kit/scripts/arc_compact_test.py
 python3 plugins/arc-kit/scripts/destructive_guard_test.py
 python3 plugins/arc-design/skills/restyle/scripts/scan_tells_test.py

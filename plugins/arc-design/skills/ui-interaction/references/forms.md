@@ -6,7 +6,7 @@
 - Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Emails, usernames, and codes also get `autocapitalize="none"`, `autocorrect="off"`, and `spellcheck="false"`, or the phone keyboard capitalizes the first letter and "corrects" the value into a different one.
 - `enterkeyhint` names what the keyboard's Enter key does (`search`, `send`, `go`, `next` on a field followed by another, `done` on the last), so the label on the phone keyboard matches the action it triggers.
 - Inputs, selects, and textareas render at 16px or larger on touch: iOS Safari zooms the page into any focused field under 16px and leaves it zoomed. Keep the dense size for fine pointers only: 16px under `@media (pointer: coarse)`, or `text-base sm:text-sm`, which approximates touch by width and misses a large tablet. Never fix it with `maximum-scale=1` in the viewport meta, which also blocks the pinch zoom low-vision users need.
-- Group fields by meaning (Personal, Shipping, Payment). The gap inside a group is clearly smaller than the gap between groups, so no divider lines are needed.
+- Group fields by meaning (Personal, Shipping, Payment). The gap inside a group is at most half the gap between groups, so no divider lines are needed.
 - Long forms that split naturally become steps grouped by meaning, not by field count. Show progress, validate within each step, and persist entered data so Back and refresh lose nothing.
 - Never ask for the same information twice in one flow (WCAG 3.3.7): prefill it from an earlier step or offer a choice ("Billing address same as shipping"), unless re-entry is the point (confirming a new password) or the old value is no longer valid.
 
@@ -46,6 +46,15 @@
 - **Blur commits, everywhere.** Clicking away saves, as in docs and spreadsheets, so work is never lost to a stray click. Pick this once for the whole app and never vary it. An unchanged value sends no request; an empty required value reverts to the saved one.
 - **Save optimistically** (`feedback.md`): the new value shows at once. If the server rejects it, the text rolls back to the saved value, the draft is kept, and the message says why and offers a retry ("Couldn't save, your draft is kept · Retry"); reopening the edit restores the draft.
 
+## Consent
+
+- Refusing is as easy and as visible as accepting: "Reject all" sits beside "Accept all" on the first layer, same size, style, and number of clicks. A refusal shown as a muted link or behind "Manage settings" is what European regulators treat as invalid consent.
+- Required processing is stated, not asked, so it has no checkbox. Each optional purpose (analytics, marketing, personalization) is its own control, off by default, never pre-ticked and never bundled into accepting the terms.
+- Labels name the choice and its effect ("Allow analytics cookies", "Email me product updates"), with no shaming decline ("No thanks, I like paying more") and no false urgency.
+- Withdrawing is as easy as giving: a persistent link (footer or settings) reopens the same choices, and a change applies without a reload.
+- Browser permission prompts (notifications, location, camera) fire from the user action that needs them, after one line saying why, never on page load: once denied, the page can't ask again, so a wasted prompt costs the feature.
+- Legal and consent wording comes from its owner: write a placeholder marked for review instead of inventing terms, and never change the meaning of existing text.
+
 ## Checks
 
 - [ ] Every input has a visible label, the correct `type`, and `autocomplete`.
@@ -56,3 +65,4 @@
 - [ ] Paste works in password, OTP, and masked fields.
 - [ ] No step asks again for information an earlier step already collected.
 - [ ] Inline edit is used only where a typo is cheap; entering edit moves nothing; Enter, Escape, and blur behave the same everywhere; a rejected save rolls back and keeps the draft.
+- [ ] Consent offers reject beside accept at equal weight, optional purposes start off and are separate from required processing, and the choices can be reopened later; permission prompts fire only from a user action.

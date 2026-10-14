@@ -9,7 +9,7 @@ const end = source.indexOf('  // Cursor is inherited', start);
 assert.ok(start >= 0 && end > start, 'target audit section must exist');
 const targetAudit = source.slice(start, end);
 
-function checkTarget(width, height, mobile) {
+function checkTarget(width, height, mobile, extension = null) {
   const findings = [];
   const button = {
     tagName: 'BUTTON', textContent: 'Save', labels: [],
@@ -19,7 +19,10 @@ function checkTarget(width, height, mobile) {
   runInNewContext(targetAudit, {
     document: { querySelectorAll: () => [button] },
     visible: () => true,
-    box: () => ({ width, height }),
+    box: () => ({ left: 0, top: 0, right: width, bottom: height, width, height }),
+    getComputedStyle: (el, pseudo) => pseudo
+      ? (extension || { content: 'none' })
+      : { position: extension ? 'relative' : 'static', borderLeftWidth: '0', borderTopWidth: '0' },
     sel: () => 'button',
     mobile,
     add: (check, el, detail) => findings.push({ check, detail }),
@@ -44,3 +47,10 @@ for (const mobile of [false, true]) {
     }
   });
 }
+
+
+test('a pseudo-element hit area can meet the minimum without enlarging its glyph', () => {
+  const extension = { content: '""', display: 'block', position: 'absolute', pointerEvents: 'auto', left: '-4px', top: '-4px', width: '24px', height: '24px' };
+  assert.deepEqual(checkTarget(16, 16, true, extension), []);
+  assert.equal(checkTarget(16, 16, true, { ...extension, pointerEvents: 'none' })[0].check, 'target');
+});

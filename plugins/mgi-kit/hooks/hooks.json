@@ -1,0 +1,17 @@
+{
+  "description": "Report newly added .NET failure-hiding patterns in completed Codex patches.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/dotnet-guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

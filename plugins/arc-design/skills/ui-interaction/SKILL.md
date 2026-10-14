@@ -5,7 +5,7 @@ description: "Behavior and state rules for interactive UI: forms and validation,
 
 # UI Interaction Rules
 
-Resolve reference and script paths relative to this `SKILL.md`. Before running a helper from the project directory, replace its relative path with the absolute installed path; keep the project working directory so target paths resolve correctly. Read applicable `AGENTS.md` instructions first. Use the session’s available shell, file-editing, and image-viewing tools; load only the references needed for the task.
+Resolve bundled paths from the parent skill directory containing SKILL.md, including paths in references; resolve target project paths from the project working directory. Before a shell command, resolve bundled script paths to absolute paths and quote them. Follow project AGENTS.md and the active runtime's instructions, tools, permissions, and concurrency limits. Existing user authorization persists across discovery, implementation, and review; ask only about unresolved scope or actions outside it. Use available question tools for preferences, or ask in chat when unavailable. Delegate only when allowed and supported; otherwise run the same checks inline and report when an independent review was unavailable. Inherit the session model unless the user explicitly requests model routing and the runtime supports it. Do not assume named plugin agents, fixed model names, or a fixed worker count.
 
 Generated UI tends to render only the happy path: every column in the table, a disabled submit button, a blank screen when search finds nothing, a generic "Are you sure?". These rules cover the rest.
 
@@ -15,15 +15,17 @@ Generated UI tends to render only the happy path: every column in the table, a d
 
 | Surface you create or change | Load |
 | --- | --- |
-| Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle, inline edit, file upload | `references/forms.md` |
+| Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle, inline edit, file upload, consent and cookie choices, browser permission prompts | `references/forms.md` |
+| Custom components the platform and library don't provide: controlled and uncontrolled props, form submission and `required`, `data-*` and CSS-variable styling hooks, role choice (slider, meter, progressbar, toolbar, tree) | `references/components.md` |
 | Tables (including tables on phones and in narrow panels), lists, clickable cards, selection, bulk actions, pagination, search, filters, command palette | `references/data.md` |
 | Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips | `references/overlays.md` |
 | Tabs, accordions, navigation, scroll restoration, sticky headers and jump links | `references/navigation.md` |
 | Drag and drop, resizable panes and split handles, swipe, pull to refresh | `references/gestures.md` |
-| Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy, AI-generated output (streaming, drafts, prompt box) | `references/feedback.md` |
+| Loading, errors, success and done screens, empty states, toasts, notifications, badges and unread counts, copy to clipboard, optimistic updates, autosave, microcopy (tone, case, status wording), onboarding steps, UI sound, AI-generated output (streaming, drafts, prompt box) | `references/feedback.md` |
 | Animations and transitions: whether to animate, durations, popover origins, enter and exit, tooltip groups, motion performance | `references/motion.md` |
-| Delete, irreversible actions, undo | `references/destructive.md` |
+| Delete, remove, archive, disconnect, irreversible actions, undo | `references/destructive.md` |
 | Settings pages: apply model and save bar, grouping, settings search, modified and reset, danger zone | `references/settings.md` |
+| Installed web app or PWA: manifest, home-screen icons, startup images, navigation in standalone mode, install prompt or hint | `references/installed-app.md` |
 
 2. For each new component, or existing component that gains a new async state, decide its states before building: loading, empty, error, success, and partial (some items failed, some data missing, a stream cut off). For a new screen, write a state table: one row per feature, one column per state, and every cell holds a decided design (what shows and what the user can do next) or `n/a` with the reason. For a single component, one or two lines do, e.g. "UserTable: loading skeleton, empty (no users / no match), error with retry, partial (failed rows marked, retry per row); skipped bulk selection (not requested)." Put it in the summary or PR description, not in code comments. Skip it when the change adds no new component and no new async state.
 3. Build what was asked. Don't add surfaces nobody requested (offline banner, bulk selection, settings panel); suggest them instead.
@@ -43,5 +45,3 @@ Data safety, then accessibility, then preserving the user's input and place, the
 ## Project overrides
 
 If `DESIGN.md` or existing components already define a behavior (toast position, blur-to-save, confirmation policy), follow the project. Flag it only when it breaks data safety or accessibility.
-
-Preserve existing control sizes and density tokens. Touch input alone does not justify resizing shared buttons or rows. Assess the actual hit area and spacing before reporting a target problem; extend a hit area locally when needed without changing the visual size or layout.

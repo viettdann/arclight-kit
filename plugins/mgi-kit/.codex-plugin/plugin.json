@@ -1,7 +1,7 @@
 {
   "name": "mgi-kit",
-  "version": "1.2.0",
-  "description": "Audit ASP.NET APIs against TypeScript and JavaScript consumers, and upgrade .NET projects.",
+  "version": "1.3.0",
+  "description": "Audit ASP.NET API contracts, upgrade .NET, review EF Core queries, inspect Azure Pipelines and work items, and diagnose live Azure resources.",
   "author": {
     "name": "viettdann"
   },
@@ -9,12 +9,13 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "MGI Kit",
-    "shortDescription": "Audit ASP.NET APIs against TypeScript and JavaScript consumers, and upgrade .NET projects.",
+    "shortDescription": "Audit ASP.NET API contracts, upgrade .NET, review EF Core queries, inspect Azure Pipelines and work items, and diagnose live Azure resources.",
     "developerName": "viettdann",
     "category": "Developer Tools",
     "defaultPrompt": [
       "Audit this API change against its frontend consumers.",
       "Upgrade this solution to the next .NET version."
     ]
-  }
+  },
+  "hooks": "./hooks/hooks.json"
 }

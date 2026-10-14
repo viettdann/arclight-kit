@@ -2,6 +2,79 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-10-14
+
+- Sync main through `5fe23ac`; preserve Codex packaging, runtime adaptation, and patch hooks.
+- Add Codex supervise with worker/reviewer briefs, snapshots, run logs, fix rounds, and runtime-aware model routing.
+- Port test-guard to completed apply_patch calls; retain comment lint, arc reload, and opt-in destructive guard.
+- Integrate plan-gap checks, fix-round review, and tests by necessity without resetting existing authorization.
+
+## [1.14.0] - 2026-10-14
+
+### Added
+
+- `supervise`: `snapshot log` keeps a run log of every dispatch, verdict, escalation, and stop, read back after a compaction so an accepted group is never dispatched again. `snapshot mark` and `snapshot diff --since-review` make the review after a `fix` a fix round: the `reviewer` rules on each earlier finding and checks only the fix diff, and a problem outside the fix no longer counts as a failed attempt.
+
+### Changed
+
+- Tests run by necessity: a change that can't alter behavior (docs, comments, Markdown, formatting only) runs no build or tests (`arc`, `executor`, `supervise`, `verifier`); otherwise the tests covering the touched files, and the full suite only when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named. A failing test whose file and the code it runs the diff doesn't touch is reported as not from this change instead of fixed, and doesn't fail a `supervise` worker's gate.
+- `executor` and `supervise`: sub-agent prompts and packets carry the plan's project-wide constraints and Out of scope lines verbatim. `supervise` may group tasks making the same small change in different files.
+- `plan-auditor`: FAIL for a name the plan introduces that differs between items; FLAG for an input or failure mode a user would hit that no item's check covers, and for an item that decides nothing. `brainstorming`'s Verification section ties each such input to the plan line whose check covers it.
+- Tests: an expected value computed by the code under test is a weak test (`executor`, `worker`, `reviewer`, verifier's `review-correctness.md`); a fixed sleep standing in for finished async work is nondeterministic, and `debug` suspects it first in a flaky test. `executor` without TDD sees a bug fix's regression test fail with the fix undone.
+
+Ideas drawn from obra/superpowers (writing-plans, subagent-driven-development, test-driven-development, systematic-debugging), rewritten.
+
+## [1.13.0] - 2026-10-14
+
+### Changed
+
+- `test-runner`: the report stays under 80 lines and 8 KiB; past that, failures with one cause and message are grouped with a count, the rest are listed by name and location, and the report ends with the full log's path.
+- Descriptions: `debug` excludes a deployed Azure resource failing live (`mgi-kit:azure-diagnose`); `plan-auditor` excludes code already written (`verifier`); `supervise` states its exclusion as "Not for"; `brainstorming` no longer has a tag-like `<date>-<topic>` path, which marketplace sync rejects; `executor`, `research`, `debug`, `plan-auditor`, and `verifier` are shorter to keep the skill menu in budget.
+
+## [1.12.0] - 2026-10-10
+
+### Changed
+
+- `plan-auditor`: a goal or success criterion that is an activity (`improve`, `investigate`, `clean up`, `make faster`) or names no check that could fail is FLAG, reported above the first item with a rewrite naming the outcome, the proving command or observation, and the threshold.
+- `worker`: requested code is written in full, with no placeholder comments, stub bodies, skeletons, or unrequested `TODO`; a task it can't finish is reported `blocked` or `failed`, never `done`. `reviewer` counts a criterion a stub stands in for as not met.
+
+### Removed
+
+- `verifier`: the RTL direction bullet in `review-ui.md`.
+
+Ideas drawn from openai/skills (define-goal) and Leonxlnx/taste-skill (full-output-enforcement, the source of the worker rule), rewritten.
+
+## [1.11.0] - 2026-10-08
+
+### Added
+
+- `test-guard` hook (`PostToolUse` on `Edit|Write`, on by default, `test_guard_enabled` turns it off): when an edit adds test cases to a code file named as a test, it lists each new case and exits 2, asking Claude to delete the junk ones and name the regression each kept test catches. Recognizes Python, JS/TS, Go, C#, Java/Kotlin, Rust, Swift, PHP, and RSpec cases, and reads attribute-style names from the following lines. A case is new only when its name occurs more often than before the edit, so editing, renaming, or moving a case doesn't trigger it; each case is asked about once per session. Tested by `test_guard_test.py`.
+
+### Changed
+
+- Test rules in `arc`, `executor`, `worker`, `reviewer`, and `verifier`: test by necessity, not by imitation. A test needs a nameable plausible regression; the project's existing tests are never the reason; tests of copied constants or strings, markup or style, or only that a call happened are junk; no test is a valid outcome. `executor` with TDD off no longer adds a test for every new behavior, and `verifier` reports junk tests.
+- `refactor`: each characterization test pins a call path the refactor touches and names it.
+- `supervise`: the Haiku tier takes a test for a named regression instead of a test that follows an existing pattern.
+- `comment-lint` reads added lines and skipped paths from the shared `scripts/added_lines.py`.
+- `executor` and `worker`: a characterization test pinned before a refactor is an exception to the rule against asserting what the code currently returns.
+
+## [1.10.0] - 2026-10-08
+
+### Added
+
+- `supervise`: Opus loads a plan (file or chat), consolidates it into tasks with derived acceptance criteria, groups them by file overlap with shared helpers and types built first, and routes each group to a Haiku (max), Sonnet (high), or Opus (medium) worker by difficulty. Every diff is measured against a backup of the group's files taken before dispatch and reviewed: up to about 150 lines inline against `reviewer`'s checks, larger ones by `reviewer`. A failed report, a failing gate, or a `fix` or `rewrite` verdict is a failed attempt; two at a tier move the group up one tier, and `rewrite` goes to Opus at high, the ceiling. `haiku`, `sonnet`, or `opus` sets the starting tier, "only" a tier pins it, and a ceiling or floor said in words is honored. A snapshot of HEAD, the stash list, and hashes of uncommitted files outside the run is compared after every report: a moved HEAD, a changed stash list, or a touched foreign file pauses the run for the user, and a stray edit stops its group. Snapshot, backups, the check, and per-group diffs run through `scripts/snapshot.py` (`take`, `backup`, `check`, `diff`), so they behave the same under bash, zsh, and macOS, with paths through symlinks, spaces, non-ASCII names, staged renames, binary files, and files without a final newline; tested by `snapshot_test.py`. Ends with build, full suite, plan cross-check, and `verifier`, and reports each group's tier path.
+- `worker` agent (Read, Edit, Write, Grep, Glob, Bash): implements one task packet within its owned files, fixes errors in code its change touched, reports other failures with whether its change caused them, undoes work by hand or from the backup, never with git, and returns a fixed report or stops as blocked.
+- `reviewer` agent (Opus, medium, no Edit or Write): returns `accept`, `fix` with `file:line` findings, or `rewrite` for one group's diff against its backup.
+- `agent-git-guard` hook (`PreToolUse` on `Bash` and the edit tools, always on): inside `worker` and `reviewer`, allows only read-only git and denies the rest, `stash` included, plus config overrides through flags, `GIT_*` variables, or `HOME`/`XDG_CONFIG_HOME` in front of git, writing or program-launching options, aliases and `git-*` helpers, git started by launchers such as `find -exec`, `xargs`, `watch`, and `env -S`, and any access to `.git/` or git config files; the denial tells the agent to report to the supervisor. Fails closed for those agents and never starts Python for others. Reuses `destructive-guard`'s command walker. Tested by `agent_git_guard_test.py`.
+
+### Changed
+
+- `destructive-guard`: `check_command` and `check_argv` take the per-command check, the whole-command check, and the unparseable-command hint as arguments, so `agent-git-guard` reuses the walk through shells, `eval`, substitutions, wrappers, and obfuscation instead of copying it. An unparseable command's reason now names the keyword it mentions.
+
+### Fixed
+
+- `destructive-guard`: `env -S 'cmd'` and `env --split-string='cmd'` are checked as command lines; before, `strip_wrappers` dropped the value as an option argument, so `env -S 'rm -rf /'` passed.
+
 ## [2.3.0] - 2026-10-06
 
 ### Changed

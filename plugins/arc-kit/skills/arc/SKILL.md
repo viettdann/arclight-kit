@@ -33,6 +33,11 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 
 **E2E tests belong to the user.** Never write, run, install, or wire an e2e tool into the repo unless explicitly asked.
 
+**Tests need a named regression:** a bug, edge case, contract, denied auth path, or pinned refactor behavior. No tests of copied constants, markup, calls alone, or framework behavior. Adding no test is valid.
+
+**Checks match risk.** Docs/comments/formatting need no tests or build. Run affected tests; use the full suite for shared code, contracts, config, dependencies, builds, or unclear coverage.
+
+
 ## Git
 
 **`docs/` belongs to the user.** Design notes, plans, drafts. Leave `docs/` unstaged and uncommitted unless the user explicitly asks. Never reset or revert those files without an explicit request. Production source of truth lives in code.

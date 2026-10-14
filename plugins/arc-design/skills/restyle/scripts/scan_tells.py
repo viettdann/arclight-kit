@@ -126,6 +126,33 @@ WIDE_SHADOW_CSS = re.compile(r"box-?[sS]hadow:\s*['\"]?(?:inset\s+)?(?:-?[\d.]+(
 NEG_EM = r"-(?:0?\.(?:04\d*[1-9]|0[5-9]|[1-9])\d*|[1-9]\d*(?:\.\d+)?)em"
 STOCK = r"\b(?:built for|meet your new|the future of)\b"
 
+# Test helpers and loggers quote strings no user reads.
+# Case-sensitive and call-shaped, so copy such as "error." or "save it." still counts as copy.
+NOT_CODE = r"^(?!.*(?:(?<![\w.])(?:console|logger)\s*\.|(?<![\w.])(?:log|debug|expect)\s*\(|(?<![\w.])(?:it|test|describe)\s*\(\s*['\"`]|\bthrow\b|\bnew\s+\w*Error\s*\(|\b(?:get|find|query)(?:All)?By\w*\s*\()).*"
+
+
+def copy_check(pattern):
+    """A copy rule that ignores comments and code-only strings."""
+    rx = re.compile(NOT_CODE + "(?i:" + pattern + ")")
+    return Check(lambda l: not COMMENT.match(l) and bool(rx.search(INLINE_COMMENT.sub("", l))))
+
+
+# A fixed layer spans the viewport by design, so only an in-flow element counts.
+FULL_WIDTH_TW = same_string(r"(?<![\w:-])(?:min-)?w-(?:screen|\[100vw\])(?![\w-])", r"^(?!.*(?<![\w:-])fixed(?![\w-]))")
+FULL_WIDTH_CSS = re.compile(r"(?<![\w-])(?:min-)?width:\s*['\"]?(?:calc\(\s*)?100vw\b")
+CQ_VARIANT = r"(?<![\w-])@(?:min-|max-)?(?:3xs|2xs|xs|sm|md|lg|xl|[2-7]xl|\[[^\]\s]+\]):"
+CONTAINER = re.compile(r"(?<![\w-])@container(?![\w-])|container-type\s*:|containerType\b")
+
+
+def selector(tags):
+    """A type selector as it appears in a rule block: "p {", "main p,", "html:lang(x)"."""
+    return r"(?:^|[\s,}>+~])" + tags + r"(?=\s*[{,:.\[>+~]|\s*$)"
+
+
+PARAGRAPH = re.compile(selector("p") + r"|<p\b", re.M)
+TEXT_ROOT = re.compile(selector("(?:html|body|main|article|p)") + r"|<(?:html|body|main|article|p)\b", re.M)
+DOC_ROOT = re.compile(selector("(?:html|body|:root)"), re.M)
+
 RULES = [
     # (principle, label, regex or Check)
     ("1-color", "gradient", re.compile(r"\bbg-gradient-to-\w+|\bbg-(?:linear|radial|conic)(?:-[\w\[]|\b)|(?:linear|radial|conic)-gradient\(|\bbg-clip-text\b")),
@@ -151,6 +178,12 @@ RULES = [
     ("5-copy", "emoji in UI text", EMOJI),
     ("5-copy", "filler verb", re.compile(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer)\b", re.I)),
     ("5-copy", "placeholder name/text", re.compile(r"lorem ipsum|\bjohn doe\b|\bjane doe\b|(?<![@\w/-])acme\b(?![/-])", re.I)),
+    ("5-copy", "'successfully' in UI copy (the past tense says it: 'Changes saved')", copy_check(r"(?:>[^<>]*\bsuccessfully\b|(['\"`])(?:(?!\1).)*\bsuccessfully\b)")),
+    ("5-copy", "'Oops' / 'Something went wrong' (say what failed and the next step)", copy_check(r"(?:>[^<>]*|(['\"`])(?:(?!\1).)*)\b(?:oops|whoops|something went wrong)\b")),
+    # Only a "!" after a letter and before the closing quote or tag is copy, so operators never match.
+    ("5-copy", "exclamation mark in UI copy (calm errors, quiet success)", copy_check(r"(?:>[^<>{}]*[A-Za-z]!\s*<|(['\"`])[^'\"`]*[A-Za-z]!\s*\1)")),
+    # "Learn more" belongs to the 6-marketing rule and bare "more" is too common in code to grep.
+    ("5-copy", "vague link text (name the destination, or an aria-label starting with the visible words)", re.compile(r"<(?:a|Link)\b(?![^>]*\baria-label)[^>]*>\s*(?:click here|here|read more|details|this link)\s*(?:→|&rarr;|›|&rsaquo;|»|&raquo;)?\s*</(?:a|Link)>", re.I)),
     ("6-marketing", "stock headline phrase (state the concrete outcome)", re.compile(STOCK, re.I)),
     ("6-marketing", "'Learn more' as the CTA label (name what the click gets)", re.compile(r">\s*learn more\s*(?:→|&rarr;|›|&rsaquo;|»|&raquo;|&gt;)?\s*<|\b(?:label|text|cta|title)\s*[:=]\s*['\"`]learn more['\"`]", re.I)),
     ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*[A-Za-z]")),
@@ -161,6 +194,7 @@ RULES = [
     ("7-code", "random color (hash a stable id instead?)", re.compile(r"(?:colou?r|\bbg\b|\bhue\b|palette|hsl|['\"`]#)[^;]*Math\.random\(\)|Math\.random\(\)[^;]*(?:colou?r|\bbg\b|\bhue\b|palette)", re.I)),
     ("7-code", "hand-rolled compact number (Intl.NumberFormat notation: 'compact'?)", re.compile(r"/\s*1(?:e[369]|_?000(?:_?000){0,2})\s*\)?\s*\.toFixed\(\d?\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMBkmb](?![A-Za-z])|\.toFixed\(\d\)\s*\}?\s*\+?\s*[`'\"]?\s*[KMB](?![A-Za-z])")),
     ("7-code", "hand-rolled plural (Intl.PluralRules or the i18n library's plural)", re.compile(r"\?\s*(['\"`])s\1\s*:\s*(['\"`])\2|\?\s*(['\"`])\3\s*:\s*(['\"`])s\4|(?:[!=]==?|[<>]=?)\s*\d\s*\?\s*(['\"`])([A-Za-z][\w ]*?)\5\s*:\s*(['\"`])\6e?s\7|(?:[!=]==?|[<>]=?)\s*\d\s*\?\s*(['\"`])([A-Za-z][\w ]*?)e?s\8\s*:\s*(['\"`])\9\10")),
+    ("7-code", "hand-built relative time (Intl.RelativeTimeFormat)", re.compile(r"\}\s?(?:s|m|h|d|w|secs?|mins?|minutes?|hours?|days?|weeks?|months?|years?)\s+ago\b")),
     # Both literals carry words and face the variable with a space, so keys, paths, and class lists don't match.
     ("7-code", "sentence built by concatenation (one translatable string with placeholders)", re.compile(r"^(?!.*\b(?:console|throw|Error|log(?:ger)?)\b).*(['\"])[^'\"]*[A-Za-z]{2}[^'\"]*\s\1\s*\+\s*[\w.$()\[\]]+\s*\+\s*(['\"])\s[^'\"]*[A-Za-z]{2}")),
     ("7-code", "fixed width on a text button (longer labels and translations overflow; min-w + padding?)", re.compile(r"<[Bb]utton\b[^<>]*?(?:(?<![\w-])w-\d+(?:\.5)?(?![\w-])|(?<![\w-])width:\s*['\"]?\d+(?:px)?\b)[^<>]*>\s*[^<>{}\s]*[A-Za-z]{2}[^<>]*<")),
@@ -185,12 +219,27 @@ RULES = [
     ("7-code", "outline removed with no focus-visible style in the file", re.compile(r"(?<![\w:-])outline-none(?![\w-])|(?<![\w-])outline:\s*['\"]?(?:none|0)(?![\w.-])")),
     ("7-code", "hidden reveal start state without a JS guard (blank if the script fails)", re.compile(r"(?<![\w-])opacity:\s*['\"]?0(?![\w.%])|(?<![\w:-])opacity-0(?![\w-])")),
     ("7-code", "escalated z-index", re.compile(r"\bz-\[\d{3,}\]|z-index:\s*\d{3,}|\bzIndex:\s*\d{3,}")),
+    ("7-code", "line-height with a unit (unitless, e.g. 1.5, scales with the font)", re.compile(r"(?<![\w-])line-height:\s*['\"]?\d*\.?\d+(?:px|r?em|pt)\b|(?<![\w-])leading-\[\d*\.?\d+(?:px|r?em)\]|\blineHeight:\s*['\"`]\d*\.?\d+(?:px|r?em|pt)\b")),
+    # In a JSX style object a bare number is px.
+    ("7-code", "letter-spacing in px (tracking in em scales with the font)", re.compile(r"(?<![\w-])letter-spacing:\s*['\"]?-?\d*\.?\d+px\b|(?<![\w-])tracking-\[-?\d*\.?\d+px\]|\bletterSpacing:\s*(?:['\"`]-?\d*\.?\d+px\b|-?(?!0(?:\.0*)?(?![\d.]))\d*\.?\d+(?![\w.%]))")),
+    ("7-code", "raw OpenType tag where a property exists (font-variant-numeric, font-weight, font-stretch, font-style?)", re.compile(r"(?:font-feature-settings|fontFeatureSettings)\s*:[^;}]*?['\"](?:tnum|lnum|onum|zero|frac|smcp)['\"]|(?:font-variation-settings|fontVariationSettings)\s*:[^;}]*?['\"](?:wght|wdth|opsz|ital|slnt)['\"]")),
+    ("7-code", "font default disabled (text-decoration-skip-ink or font-kerning: none; adjust text-underline-offset instead)", re.compile(r"(?:text-decoration-skip-ink|font-kerning)\s*:\s*none\b|(?:textDecorationSkipInk|fontKerning)\s*:\s*['\"`]none\b")),
+    ("7-code", "balance on a paragraph (text-wrap: pretty for body text)", re.compile(r"<p\b[^<>]*(?<![\w-])text-balance(?![\w-])|text-wrap:\s*balance\b")),
+    ("7-code", "tight line-height on wrapping text (1.4 or more for paragraphs)", re.compile(r"<p\b[^<>]*(?<![\w-])leading-(?:none|tight)(?![\w-])")),
+    ("7-code", "unselectable text (user-select: none only on drag and gesture surfaces)", re.compile(r"<(?:html|body|main|article|p)\b[^<>]*(?<![\w-])select-none(?![\w-])|(?<![\w])user-select:\s*none\b")),
+    ("7-code", "font smoothing in a component (antialiased once on the root)", re.compile(r"<(?!(?:html|body)\b)[A-Za-z][\w.:-]*\b[^<>]*(?<![\w-])antialiased(?![\w-])|-webkit-font-smoothing\s*:")),
+    ("7-code", "line-clamp without a box (display: -webkit-box and -webkit-box-orient: vertical, or Tailwind line-clamp-*)", re.compile(r"-webkit-line-clamp\s*:|\bWebkitLineClamp\s*:")),
+    ("7-code", "100vw width (includes the scrollbar, scrolls sideways on desktop: width 100% or inset-x-0?)", Check(lambda l: bool(FULL_WIDTH_CSS.search(l)) or FULL_WIDTH_TW(l))),
+    ("7-code", "viewport query in a component (container query on its wrapper, see design/references/layout.md?)", re.compile(r"@media[^{]*?\(\s*(?:max-width\s*:|width\s*<)")),
+    ("7-code", "container variant with no @container in this file (does every parent provide one? otherwise it never applies)", re.compile(CQ_VARIANT)),
+    ("7-code", "@container and an @ variant on one element (an element can't query itself: move the variant to a child?)", Check(same_string(r"(?<![\w-])@container(?![\w-])", CQ_VARIANT))),
+    ("7-code", "boolean data attribute set to \"false\" ([data-x] still matches; x || undefined)", re.compile(r"(?<![\w-])data-(?!bs-|turbo|gramm|cfasync|pjax|ad-)[\w-]+=(?:([\"'])false\1|\{\s*(?:([\"'`])false\2|[^{}]*\?\s*([\"'`])true\3\s*:\s*([\"'`])false\4)\s*\})")),
 ]
 
 # 7-code hits that change handlers or behavior; the rest are presentation fixes.
 BEHAVIOR = ("scroll event listener", "clipboard write", "scroll to top", "hard-coded header offset", "mouse events for dragging",
             "indeterminate as an attribute", "disabled for validity", "disabled while busy", "column hidden by viewport",
-            "Enter handler", "context menu blocked", "pointer drag")
+            "Enter handler", "context menu blocked", "pointer drag", "boolean data attribute")
 
 FLOATING = re.compile(r"(?<![\w-])(?:fixed|sticky|absolute)\b|position:\s*['\"]?(?:fixed|sticky|absolute)")
 
@@ -213,6 +262,11 @@ SUPPRESS_NEAR = [
     ("pointer drag", re.compile(r"pointer-?cancel|lostpointercapture", re.I), 0, 0, "file"),
     # The marketing profile's guard: the hidden start state applies only once a script marked the page (`.js .reveal`).
     ("hidden reveal", re.compile(r"(?:^|[\s,{>~+])(?:html|:root|body)?\.js(?=[\s.,{:>\[])|\.no-js\b|\[data-js\]|<noscript\b|classList\.(?:add|remove|replace|toggle)\(\s*['\"](?:no-)?js['\"]", re.M), 0, 0, "file"),
+    ("font smoothing", DOC_ROOT, 0, 0, "rule"),
+    ("100vw width", re.compile(r"position:\s*['\"]?fixed\b"), 0, 0, True),
+    ("viewport query", re.compile(r"\bcreateGlobalStyle\b"), 0, 0, "file"),
+    ("container variant with no", CONTAINER, 0, 0, "file"),
+    ("line-clamp without", re.compile(r"-webkit-box\b|WebkitBox\b"), 0, 0, "file"),
 ]
 REQUIRE_NEAR = [
     ("scroll to top", re.compile(r"pathname|location|router|\$route|\bnavigat(?:e|ion)\b|afterEach|useEffect|watch\(", re.I), 4, 1, False),
@@ -221,6 +275,8 @@ REQUIRE_NEAR = [
     ("pointer drag", re.compile(r"pointer-?down", re.I), 0, 0, "file"),
     # A blink keyframe also drives busy indicators; only a caret or typing element makes it a cursor.
     ("blinking cursor", re.compile(r"caret|cursor(?!\s*:)|typ(?:ing|ewriter)|animate-"), 0, 0, True),
+    ("balance on a paragraph", PARAGRAPH, 0, 0, "rule"),
+    ("unselectable text", TEXT_ROOT, 0, 0, "rule"),
 ]
 FILE_CHECKS = [rx for table in (SUPPRESS_NEAR, REQUIRE_NEAR) for _, rx, _, _, scope in table if scope == "file"]
 # label -> [(skip the hit when the context check returns this value, regex, before, after, scope)]
@@ -315,10 +371,38 @@ def css_block(lines, i):
     return "".join(lines[start:end + 1])
 
 
+COMPONENT_EXTS = {".jsx", ".tsx", ".vue", ".svelte"}
+# Page-level files and route folders legitimately use viewport queries.
+PAGE_DIRS = {"pages", "routes", "app", "layouts", "layout"}
+PAGE_FILE = re.compile(r"(?i)^(?:layout|page|app|_app|_document|\+layout|\+page|root|header|footer|nav\w*|sidebar|shell)\b")
+TEST_FILE = re.compile(r"\.(?:test|spec)\.|(?:^|/)__tests__/")
+COPY_LABELS = {label for principle, label, _ in RULES if principle == "5-copy"}
+ONCE_PER_FILE = ("container variant with no",)
+
+
+def skip_path(label, path):
+    """True when the rule doesn't apply to this kind of file."""
+    rel = os.path.relpath(path).replace(os.sep, "/")
+    name = os.path.basename(rel)
+    ext = os.path.splitext(name)[1].lower()
+    if label.startswith("viewport query"):
+        component = ext in COMPONENT_EXTS or ".module." in name
+        return not component or bool(PAGE_DIRS & set(rel.split("/")[:-1])) or bool(PAGE_FILE.match(name))
+    if label.startswith("container variant with no"):
+        return ext in STYLE_EXTS
+    if label in COPY_LABELS:
+        return bool(TEST_FILE.search(rel))
+    return False
+
+
 def skip_hit(label, lines, i, style, file_found):
     for want, rx, before, after, scope in CONTEXT[label]:
         if scope == "file":
             found = file_found[rx]
+        elif scope == "rule":
+            # A markup line names its own tag; a declaration in a .vue or .svelte <style> belongs to the rule block above it.
+            line = lines[i - 1]
+            found = bool(rx.search(line if "<" in line and not style else css_block(lines, i)))
         else:
             found = bool(rx.search(css_block(lines, i))) if scope and style else near(lines, i, rx, before, after)
         if found == want:
@@ -373,6 +457,7 @@ def scan(paths):
         # The file-level icon hit is reported ahead of this file's per-line hits, so output order stays stable.
         icon_at = len(hits.get("2-decoration", ()))
         dashes = []
+        seen = set()
         for i, line in enumerate(lines, 1):
             if len(line) > MAX_LINE:
                 skipped += 1
@@ -382,8 +467,10 @@ def scan(paths):
             snippet = line.strip()[:140]
             for principle, label, rx in RULES:
                 if rx.search(line):
-                    if skip_hit(label, lines, i, ext in STYLE_EXTS, file_found):
+                    if label in seen or skip_path(label, path) or skip_hit(label, lines, i, ext in STYLE_EXTS, file_found):
                         continue
+                    if label.startswith(ONCE_PER_FILE):
+                        seen.add(label)
                     if principle == "7-code":
                         label = ("behavior: " if label.startswith(BEHAVIOR) else "presentation: ") + label
                     hits[principle].append({"file": path, "line": i, "tell": label, "snippet": snippet})

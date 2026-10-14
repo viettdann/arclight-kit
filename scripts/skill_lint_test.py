@@ -6,12 +6,26 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGINS = os.path.join(ROOT, "plugins")
 DESCRIPTION_MAX = 930
-CATALOG_MAX = 13000
+DESCRIPTION_MIN = 100
+CATALOG_MAX = 14000
 SKILL_BYTES_MAX = 8000
+NAME_FORMAT = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+TAG_LIKE = re.compile(r"<[A-Za-z/][^>]*>")
+USE_WHEN = re.compile(r"\bUse (?:when|whenever|before|after)\b|\bTrigger (?:when|on)\b")
+NOT_FOR = re.compile(r"\bNot for\b")
+MD_LINK = re.compile(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)")
 PATH_REF = re.compile(r"(?<![\w./-])((?:references|scripts|assets|examples)/[\w./-]*\w\.\w+)")
 ROOT_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]*\w)")
 SKILL_DIR_REF = re.compile(r"\$\{CLAUDE_SKILL_DIR\}/([\w./-]*\w)")
 NAME_REF = re.compile(r"(?<![\w-])(arc-kit|arc-design|mgi-kit):([a-z][a-z-]*[a-z])")
+REMOTE_EXEC = {
+    "curl or wget piped to a shell": re.compile(r"\b(?:curl|wget)\b[^|\n]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh|fish)\b", re.I),
+    "eval of command output": re.compile(r"(?<![\w-])eval\s+[\"']?\$\("),
+    "base64 decoded into an interpreter": re.compile(r"base64\s+(?:-d|--decode)[^|\n]*\|\s*(?:sh|bash|node|python3?)\b", re.I),
+    "Invoke-Expression on downloaded content": re.compile(r"\b(?:Invoke-Expression|iex)\b.*\b(?:DownloadString|Invoke-WebRequest|iwr|irm)\b", re.I),
+    "URL with a raw IP address": re.compile(r"https?://(?!127\.0\.0\.1\b|0\.0\.0\.0\b)(?:\d{1,3}\.){3}\d{1,3}\b"),
+}
+LINT_ALLOW = re.compile(r"skill-lint:\s*allow\s+\S")
 
 
 def parse_frontmatter(text):
@@ -53,6 +67,16 @@ def markdown_files():
                 yield os.path.join(dirpath, file)
 
 
+def instruction_files():
+    for plugin in sorted(os.listdir(PLUGINS)):
+        for part in ("skills", "agents"):
+            for dirpath, dirs, files in os.walk(os.path.join(PLUGINS, plugin, part)):
+                dirs[:] = [d for d in dirs if d not in ("__pycache__", "node_modules")]
+                for file in files:
+                    if file.endswith((".md", ".py", ".sh", ".mjs", ".js", ".yml", ".yaml")) and not file.endswith("_test.py"):
+                        yield os.path.join(dirpath, file)
+
+
 class SkillLintTest(unittest.TestCase):
     def test_frontmatter_has_name_and_description(self):
         for plugin, name, path in components():
@@ -61,19 +85,51 @@ class SkillLintTest(unittest.TestCase):
             self.assertEqual(fm.get("name"), name, f"skill-lint: name mismatch in {path}")
             self.assertTrue(fm.get("description"), f"skill-lint: empty description in {path}")
 
+    def test_name_format(self):
+        for plugin, name, path in components():
+            self.assertRegex(name, NAME_FORMAT, f"skill-lint: {plugin}:{name} is not lowercase words joined by single hyphens")
+            self.assertLessEqual(len(name), 64, f"skill-lint: {plugin}:{name} name is over 64 chars")
+
     def test_description_budget(self):
+        # The skill menu renders description and when_to_use together; agents are listed separately.
         total = 0
         for plugin, name, path in components():
-            desc = parse_frontmatter(read(path))["description"]
-            total += len(desc)
-            self.assertLessEqual(len(desc), DESCRIPTION_MAX, f"skill-lint: {plugin}:{name} description is {len(desc)} chars")
-        self.assertLessEqual(total, CATALOG_MAX, f"skill-lint: catalog descriptions total {total} chars")
+            fm = parse_frontmatter(read(path))
+            menu = len(fm["description"]) + len(fm.get("when_to_use", ""))
+            self.assertLessEqual(menu, DESCRIPTION_MAX, f"skill-lint: {plugin}:{name} description and when_to_use are {menu} chars")
+            if "/skills/" in path:
+                total += menu
+        self.assertLessEqual(total, CATALOG_MAX, f"skill-lint: skill menu totals {total} chars")
+
+    def test_description_routes(self):
+        for plugin, name, path in components():
+            fm = parse_frontmatter(read(path))
+            text = f"{fm['description']} {fm.get('when_to_use', '')}"
+            self.assertIsNone(TAG_LIKE.search(text), f"skill-lint: {plugin}:{name} description has a tag-like <...>, which marketplace sync rejects")
+            self.assertGreaterEqual(len(fm["description"]), DESCRIPTION_MIN, f"skill-lint: {plugin}:{name} description is too short to route on")
+            if "/skills/" not in path or name in {"arc", "conventions", "handoff", "fresh-air"}:
+                continue
+            self.assertRegex(text, USE_WHEN, f"skill-lint: {plugin}:{name} description has no \"Use when\" trigger")
+            self.assertRegex(text, NOT_FOR, f"skill-lint: {plugin}:{name} description has no \"Not for\" exclusion against its siblings")
+
+    def test_skill_links_stay_inside_the_skill(self):
+        for plugin, name, path in components():
+            if "/skills/" not in path:
+                continue
+            for link in MD_LINK.findall(read(path)):
+                target = link.split("#")[0]
+                self.assertFalse(target.startswith(("/", "..")) or "/../" in target, f"skill-lint: {path} links outside its skill: {link}")
+                self.assertLessEqual(target.count("/"), 1, f"skill-lint: {path} links more than one directory deep: {link}")
+
+    def test_marketplace_matches_plugins(self):
+        from validate_plugins import validate
+        errors, _ = validate()
+        self.assertEqual(errors, [], "skill-lint: " + "; ".join(errors))
 
     def test_skill_body_budget(self):
         for plugin, name, path in components():
-            with self.subTest(skill=f"{plugin}:{name}"):
-                size = os.path.getsize(path)
-                self.assertLessEqual(size, SKILL_BYTES_MAX, f"skill-lint: {path} is {size} bytes; move details into references/")
+            size = os.path.getsize(path)
+            self.assertLessEqual(size, SKILL_BYTES_MAX, f"skill-lint: {path} is {size} bytes")
 
     def test_referenced_paths_exist(self):
         for path in markdown_files():
@@ -102,6 +158,14 @@ class SkillLintTest(unittest.TestCase):
             listed = f"{plugin}:{name}" if "/skills/" in path else f"`{name}`"
             self.assertTrue(listed in readme or re.search(rf"^\|[^\n]*\| {re.escape(plugin)} \| `\${re.escape(name)}`(?: \([^\n]*\))? \|$", readme, re.M), f"skill-lint: README does not list {listed}")
             self.assertTrue(os.path.isfile(os.path.join(os.path.dirname(path), "agents", "openai.yaml")), f"skill-lint: {plugin}:{name} lacks discovery metadata")
+
+    def test_no_remote_code_execution(self):
+        for path in instruction_files():
+            for n, line in enumerate(read(path).splitlines(), 1):
+                if LINT_ALLOW.search(line):
+                    continue
+                for what, pattern in REMOTE_EXEC.items():
+                    self.assertIsNone(pattern.search(line), f"skill-lint: {path}:{n} has {what}; add `skill-lint: allow <reason>` on the line if intended")
 
     def test_version_matches_changelog(self):
         for plugin in sorted(os.listdir(PLUGINS)):

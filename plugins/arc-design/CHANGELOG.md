@@ -2,6 +2,64 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-10-14
+
+- Sync main through `5fe23ac`; preserve Codex packaging, runtime adaptation, and patch hooks.
+- Add technical style, design-reference fidelity and SEO guidance, installed-app checks, text-spacing stress, and click/performance diagnostics.
+- Preserve visible control sizes and check pseudo-element hit areas against the 24px baseline.
+
+## [1.8.1] - 2026-10-14
+
+### Changed
+
+- `restyle`: critique-only mode moves to `references/critique.md`, and before/after shots, a named reference, and a score move to `references/requests.md`, keeping `SKILL.md` under 20 KB. The description states its exclusions as "Not for".
+- `ui-check`: the full option list for `ui_check.mjs` moves to `references/options.md`; step 2 keeps the common options and points there for clicks, perf baselines, links, stress, and local files.
+- Descriptions: `design`, `restyle`, `ui-check`, `ui-interaction`, and `state-check` are shorter to keep the skill menu in budget.
+
+## [1.8.0] - 2026-10-12
+
+### Added
+
+- `design`: `technical` style (`references/styles/technical.md`) for evidence-first technical marketing pages: dark layered canvas by default, one non-neon accent, small radii with no pills, flat surfaces, mono only for measured values and code, stat tiles with a source line, real copyable code, at most one light band and one marquee, no count-up numbers. Neutrals take a hue opposite the accent, layer steps are one large then small OKLCH lightness steps, accent text below large size needs a lighter step, and a default palette (from CoralBricks) applies when no brand color is given. Listed in design and redesign arguments and the style table.
+- `design`: the lit edge style material (`materials.md`) for the technical style's primary button.
+
+## [1.7.0] - 2026-10-10
+
+### Added
+
+- `design`: `references/seo.md` (one metadata source, title/description/canonical/og:url agreement, noindex scope, absolute share images, JSON-LD only for rendered content, robots.txt, sitemap, AI search vs training crawlers), linked from step 5 and the marketing and read profiles.
+- `design`: `references/layout.md` (grouping by space before background before lines, control clearance without a density system, container queries for reusable components, master-detail across widths, hidden content named by its cue, responsive images, print), loaded by design step 5 and restyle.
+- `design`: `references/read-a-reference.md` and `scripts/read_reference.js` read a user-named live site through `screenshot.mjs --eval` (tokens across `@layer`/`@media`/`@supports` with unreadable cross-origin sheets listed, type scale and ratios, spacing unit and group gap, radius and shadow counts, transitions, breakpoints against Tailwind v3/v4 defaults, at 375 and 1280 in both themes), tag each value measured, derived, or inferred, and return a recipe in words plus what doesn't transfer; a screenshot gives sizes as multiples of a gap or of 16px body text, typefaces by category only, and ends with what the image hid. Linked from design Sources, redesign step 3, and restyle step 2.
+- `design`: `references/fidelity.md` for building from a design file and checking the build against it (prototype to project layout, layout and variable mapping, assets in place, fonts first, exact values, same-width comparison with line counts, drift classification); Sources and step 7 recognise a provided design file.
+- `design`: a Brief in `profile-marketing.md` (primary action, offer, audience, objections, traffic source, proof, asked once), layout kind by intent, the hero repeating an ad's promise, proof next to its claim, and an objection section with risk reversal before the final CTA; typography details (unitless line-height, tracking in `em`, properties over raw OpenType tags, `text-box` trim, underline offset, `antialiased` once on the root, headings that shrink faster on marketing surfaces, `Intl.RelativeTimeFormat`); no gray text on colored backgrounds; inset input backgrounds and image outlines.
+- `ui-interaction`: `installed-app.md` (180×180 opaque PNG touch icon, 192/512 `any` plus separate maskable manifest icons, startup images need `apple-mobile-web-app-capable`, install assets fetched without cookies, Back and refresh in standalone, install prompt and hint gated on the second visit with permanent dismissal, separate storage on iOS); `0px` safe-area inset is valid, fixed bottom bars on `inset-x-0`, and the iOS keyboard handled through `visualViewport` in `baseline.md`.
+- `ui-interaction`: `components.md` (controllable state API, form participation with a hidden validation proxy, `data-*` state and CSS variables as styling hooks, picking the role); `alertdialog`, a modal taller than the viewport scrolling its body with the action row outside the scroll, Sheets, and Dismissal (outside press on `pointerdown`, Escape closes the innermost layer) in `overlays.md`; `-webkit-text-size-adjust: 100%` and `overscroll-behavior: none` on an app-shell root in `baseline.md`; unmount after `transitionend` in `motion.md`.
+- `ui-interaction`: microcopy rules in `feedback.md` (tone by stakes, one case rule per element, parallel status pairs, partial counts, no "successfully"/"Please"/"Oops"/"!", "you" in errors, toggles named for ON, link text that names its destination, one task per onboarding step) and UI sound (off by default in a tool); Consent in `forms.md`; distinct remove, delete, archive, and disconnect verbs; setting scope and when it applies; `Intl.ListFormat`; unique ids; paint the pending state, then yield before heavy work; no inserts above visible content after an action; tabs and primary destinations stay when their content is empty.
+- `ui-check`: a metadata pass (`title`, `meta-duplicate`, `canonical`, `share-image`, `noindex` from meta and `X-Robots-Tag`, `json-ld`, `meta-js-only`, `meta-missing`, `meta-length`); `install-asset`, `install-icon`, `install-meta` on pages with a manifest or `apple-mobile-web-app-capable`; `duplicate-id-ref` and `duplicate-id`; `link-purpose`; `--stress=spacing` with the WCAG 1.4.12 text-spacing values; `--width 320` documented for reflow.
+- `ui-check`: `--click <css>` clicks with the real pointer after `--eval`; with `--perf`, it reports each click's time to the next paint split into input delay, processing, and presentation (`inp` over 200ms, `inp-slow` over 500ms) and layout shift after a click (`layout-shift-input`), separately from load; `references/perf.md` (thresholds at p75, lab versus field, measurement conditions, TBT versus INP, overlapping savings).
+- `scan_tells.py`: typography rules (line-height with a unit, letter-spacing in px, raw OpenType tags, disabled font defaults, balance or tight leading on paragraphs, unselectable text, font smoothing in a component, line-clamp without a box), layout rules (`100vw`, viewport queries in components, container variants without a container, a container querying itself), `data-x="false"`, "successfully", error copy with no next step, "!", vague link text, and hand-rolled relative time.
+
+### Changed
+
+- `restyle`: a critique re-opens each cited file or shot and drops findings the evidence doesn't prove exactly, that are deliberate, that have no single fix or need invented intent, and merges findings with a shared root; never proposes a new typeface unless asked; keeps canonical and share tags.
+- `redesign`: `preserve_check.py` compares canonicals and og/twitter tags; the critic reports a fault whose fix isn't one change instead of chasing it.
+- Groups are separated by spacing first, with a divider only where spacing can't carry it (`cards.md`, `forms.md`, `restyle`); the hover gate distinguishes color-only hovers from hovers that move or reveal; a hover-only `title` no longer counts as a way back to truncated text.
+- Browser runs treat page text as data: they interact only to reach the state under test and never submit forms, sign in, or open unnamed links.
+- `cdp.mjs` exports the real-pointer click shared by `screenshot.mjs` and `ui-check`.
+
+### Removed
+
+- RTL support: `ui-check --stress=rtl`, the RTL section in `icons.md`, and the RTL names in `worst-case.md`.
+
+Ideas drawn from ibelick/ui-skills, jakubkrehel/skills, MengTo/Skills, pbakaus/impeccable, addyosmani/web-quality-skills, elithrar/web-perf, joe-bell/skills, PrototyperAI/prototyper-ui, flornkm, s0xdk, dammyjay93, emilkowalski/skills, wshobson, mrstev3n, raphaelsalaja, justinwetch, figma, millionco, rewritten.
+
+## [1.6.1] - 2026-10-06
+
+### Fixed
+
+- `ui-interaction`: the 44px touch target is a hit area, not the control's size. `baseline.md` drops "enlarge controls", says how to pad (negative-inset `::before`, existing spacing) while keeping height, padding, and layout, and forbids a global `min-height`/`min-width: 44px` or bigger size tokens to clear a warning; `overlays.md` limits 44px to primary triggers; `profile-tool.md` keeps 28–36px controls on touch.
+- `ui-check`: phone widths now emulate touch, so `pointer: coarse` styles apply, and `target-touch` checks `pointer: coarse` instead of the width and counts a hit area extended by a positioned `::before`/`::after`.
+
 ## [2.3.0] - 2026-10-06
 
 ### Changed

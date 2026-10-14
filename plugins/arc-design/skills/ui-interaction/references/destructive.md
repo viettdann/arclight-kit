@@ -16,6 +16,7 @@ A confirmation dialog on everything punishes every user for the rare mistake and
 - The danger color is spent only on destructive actions and errors, never on logout, decoration, or emphasis, so it keeps meaning something.
 - On regular screens a destructive action never sits in the primary-action slot; it goes to an overflow menu or the danger zone.
 - Labels name the action: "Delete project", "Remove member". Never Yes/No or OK.
+- Each verb means one thing across the product: remove takes an item out of this list, group, or project while it lives on elsewhere; delete destroys it for everyone (to trash when restorable, saying "permanently" when not); archive hides it from active views with data and links intact and restorable; disconnect ends a link to an external account or integration, stops syncing, and leaves the data on both sides; discard drops unsaved changes; revoke withdraws access or a token; leave takes yourself out. A "Remove" that deletes, or a "Delete" that only archives, makes every other button untrustworthy.
 - The confirmation body names the object, the scope, and who is affected: "This permanently removes Q3 Campaign and its 84 assets for everyone on the team.", not "This action cannot be undone."
 - When a dialog's primary action is safe and it also offers a destructive one (Save / Discard / Cancel), the destructive button moves to the opposite side, outlined rather than filled, so the habitual click on the primary slot never destroys. A dialog whose sole purpose is confirming a deletion keeps the destructive button as its primary.
 
@@ -39,3 +40,4 @@ Destructive endpoints are idempotent, and multi-row writes run in one transactio
 - [ ] Every destructive action is classified and uses the matching pattern.
 - [ ] No generic "Are you sure?" with Yes/No.
 - [ ] The undo path actually restores the data.
+- [ ] Remove, delete, archive, and disconnect each do what their word says, and the confirmation repeats the same verb.

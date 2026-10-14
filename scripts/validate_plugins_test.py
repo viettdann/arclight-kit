@@ -29,7 +29,7 @@ class PackageValidationTest(unittest.TestCase):
     def test_repository_packages(self):
         errors, count = validate(self.root)
         self.assertEqual(errors, [])
-        self.assertEqual(count, 20)
+        self.assertEqual(count, 25)
 
     def test_escaping_marketplace_path(self):
         self.change_json(".agents/plugins/marketplace.json", lambda d: d["plugins"][0]["source"].update(path="./../outside"))
@@ -73,7 +73,7 @@ class PackageValidationTest(unittest.TestCase):
 
     def test_empty_hook_handlers(self):
         self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["PostToolUse"][0].update(hooks=[]))
-        self.assert_error("requires one command handler")
+        self.assert_error("require the configured command handlers")
 
     def test_arc_reload_matcher(self):
         self.change_json("plugins/arc-kit/hooks/hooks.json", lambda d: d["hooks"]["SessionStart"][0].update(matcher="startup"))
@@ -90,6 +90,15 @@ class PackageValidationTest(unittest.TestCase):
     def test_missing_arc_reload_script(self):
         (self.root / "plugins/arc-kit/scripts/arc-compact.py").unlink()
         self.assert_error("missing or escaping path")
+
+    def test_missing_dotnet_guard_script(self):
+        (self.root / "plugins/mgi-kit/scripts/dotnet-guard.py").unlink()
+        self.assert_error("missing or escaping path")
+
+    def test_patch_parser_drift_between_independent_plugins(self):
+        path = self.root / "plugins/mgi-kit/scripts/patch_parser.py"
+        path.write_text(path.read_text() + "\nMAX_BYTES = 1\n")
+        self.assert_error("independently bundled patch helpers differ")
 
     def test_handoff_explicit_invocation(self):
         path = self.root / "plugins/arc-kit/skills/handoff/agents/openai.yaml"

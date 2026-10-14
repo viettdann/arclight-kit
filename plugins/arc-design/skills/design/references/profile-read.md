@@ -28,3 +28,4 @@ Newest first, each entry with a `<time datetime>` date and a version, grouped by
 - [ ] Section nav, current location, and previous/next present on every page; headings have anchors.
 - [ ] Prose column 60–75ch; no monospace running text; code blocks scroll and copy.
 - [ ] Brand only in the frame; no decoration inside the text column.
+- [ ] Metadata per `seo.md`; posts use `og:type` `article`, and each page of a paginated list canonicalizes to itself.

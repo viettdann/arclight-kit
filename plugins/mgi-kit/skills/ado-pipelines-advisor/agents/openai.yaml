@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ado Pipelines Advisor"
+  short_description: "Write, optimize, review, and preview Azure DevOps (Azure Pipelines) YAML from verified rules: templates, extends, parameters, ${{ }} / $[ ] / $( ) expressions, output variables, co"
+  default_prompt: "Use $ado-pipelines-advisor for this task."
