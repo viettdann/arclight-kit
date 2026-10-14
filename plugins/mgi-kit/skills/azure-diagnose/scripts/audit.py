@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Health audit of a tenant's workloads: what is failing now, what is at risk, and what has no logs; read-only.
 Covers App Service and Functions (and their plans), Container Apps and jobs, Container Instances, PostgreSQL flexible
-servers, Service Bus, App Insights exceptions, and VMs. Runtime support dates come from https://endoflife.date."""
+servers, Service Bus, Key Vault expiry, Resource Health, active Azure service issues, App Insights exceptions, and VMs.
+Runtime support dates come from https://endoflife.date."""
 
 import argparse
 import concurrent.futures
@@ -20,7 +21,7 @@ USAGE = """Usage:
 
 --tenant: a tenant ID or a domain/display-name fragment (default: every tenant with an enabled subscription).
 --days: metric and log window (default 7). --rg: only resource groups whose name contains FRAGMENT.
-Prints, per tenant: BROKEN (failing now), RISK (will fail or degrade), BLIND (no logs to investigate with), the top
+Prints, per tenant: active Azure service issues, BROKEN (failing now), RISK (will fail or degrade), BLIND (no logs to investigate with), the top
 exceptions per App Insights role, COST (30 days against the 30 before, idle candidates, Advisor cost recommendations;
 --no-cost skips it, Cost Management allows only a few queries a minute), then what was checked. App setting values are read only to find App Insights and are
 never printed."""
@@ -29,9 +30,11 @@ TYPES = ('microsoft.web/sites', 'microsoft.web/serverfarms', 'microsoft.app/cont
          'microsoft.app/managedenvironments', 'microsoft.containerinstance/containergroups',
          'microsoft.dbforpostgresql/flexibleservers', 'microsoft.servicebus/namespaces', 'microsoft.insights/components',
          'microsoft.operationalinsights/workspaces', 'microsoft.compute/virtualmachines', 'microsoft.compute/disks',
-         'microsoft.network/publicipaddresses')
+         'microsoft.network/publicipaddresses', 'microsoft.network/loadbalancers', 'microsoft.keyvault/vaults')
 STACKS = {'DOTNETCORE': 'dotnet', 'DOTNET-ISOLATED': 'dotnet', 'DOTNET': 'dotnet', 'NODE': 'nodejs', 'PYTHON': 'python', 'PHP': 'php'}
 TODAY = datetime.date.today()
+IN_PROCESS_END = datetime.date(2026, 11, 10)
+LINUX_CONSUMPTION_END = datetime.date(2028, 9, 30)
 
 
 ENVS = (('prod', {'prod', 'pro', 'production', 'prd', 'live'}), ('staging', {'staging', 'stg', 'stage'}),
@@ -127,6 +130,16 @@ def check_site(arm, rep, r, plans, eol, days):
     diag = arm.call('GET', f"{r['id']}/providers/Microsoft.Insights/diagnosticSettings?api-version=2021-05-01-preview").get('value')
     if not has_ai and not diag:
         rep.add('BLIND', r, 'no App Insights and no diagnostic setting: runtime logs are not kept anywhere')
+    if 'functionapp' in kind:
+        days_left = (IN_PROCESS_END - TODAY).days
+        if (settings.get('FUNCTIONS_WORKER_RUNTIME') or '').lower() == 'dotnet':
+            rep.add('RISK', r, '.NET in-process Functions model: support ' + (f'ends {IN_PROCESS_END} ({days_left} days)' if days_left >= 0
+                    else f'ended {IN_PROCESS_END}') + '; migrate to the isolated worker')
+        host = settings.get('FUNCTIONS_EXTENSION_VERSION') or ''
+        if host and not host.lstrip('~').startswith('4'):
+            rep.add('RISK', r, f'Functions host {host}: only 4.x is supported')
+        if sku == 'Y1' and 'linux' in kind:
+            rep.add('RISK', r, f'Linux Consumption plan retires {LINUX_CONSUMPTION_END}: move to Flex Consumption (az functionapp flex-migration)')
 
     m = arm.metrics(r['id'], ['Http5xx', 'Requests'], days, 'Total')
     errors, reqs = total(m.get('Http5xx')), total(m.get('Requests'))
@@ -239,6 +252,65 @@ def check_servicebus(arm, rep, r, days):
             rep.add('BROKEN', r, f'{name}: {dead} dead-lettered messages with traffic in the last {days}d (consumer failing or messages expiring)')
         if active >= 1000:
             rep.add('RISK', r, f'{name}: {active} messages waiting (consumer down or too slow)')
+
+
+def check_keyvault(arm, rep, r):
+    """Expired and soon-expiring secrets and keys from the ARM list, which Reader can call and which never returns values."""
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    found = {}
+    for kind in ('secrets', 'keys'):
+        found[kind], url = {}, f"{r['id']}/{kind}?api-version=2023-07-01"
+        while url:
+            d = arm.call('GET', url.removeprefix('https://management.azure.com'))
+            if 'error' in d:
+                rep.notes.append(f"key vault {r['name']}: {kind} not readable ({d['error'][:60]})")
+                break
+            for x in d.get('value') or []:
+                at = (x.get('properties') or {}).get('attributes') or {}
+                if at.get('enabled') is not False and at.get('exp'):
+                    found[kind][x['name']] = (at['exp'] - now) / 86400
+            url = d.get('nextLink')
+    # A certificate shows up as a secret and a key of the same name.
+    certs = {n: v for n, v in found['secrets'].items() if n in found['keys']}
+    for noun, items in (('certificate', certs), ('secret', {n: v for n, v in found['secrets'].items() if n not in certs}),
+                        ('key', {n: v for n, v in found['keys'].items() if n not in certs})):
+        expired = [(d, n) for n, d in items.items() if d < 0]
+        soon = [(d, n) for n, d in items.items() if 0 <= d <= 30]
+        if expired:
+            names = ', '.join(f'{n} ({-d:.0f}d ago)' for d, n in sorted(expired, reverse=True)[:5])
+            rep.add('RISK', r, f'{len(expired)} enabled {noun}(s) expired, readers of them fail: {names}')
+        if soon:
+            names = ', '.join(f'{n} (in {d:.0f}d)' for d, n in sorted(soon)[:5])
+            rep.add('RISK', r, f'{len(soon)} {noun}(s) expire within 30 days: {names}')
+
+
+def resource_health(arm, rep, t, index):
+    """Resource Health per resource in scope; a user stopping a resource is reported by its own check, not here."""
+    rows = arm.graph(t['subs'], "healthresources | where type =~ 'microsoft.resourcehealth/availabilitystatuses'"
+                     " and properties.availabilityState in ('Unavailable', 'Degraded')"
+                     " | project id=tolower(id), state=tostring(properties.availabilityState), reason=tostring(properties.reasonType),"
+                     " summary=tostring(properties.summary), since=tostring(properties.occuredTime)")
+    for h in rows:
+        r = index.get(h['id'].split('/providers/microsoft.resourcehealth/')[0])
+        if r is None or h['reason'] == 'UserInitiated':
+            continue
+        rep.add('BROKEN' if h['state'] == 'Unavailable' else 'RISK', r,
+                f"Resource Health {h['state']} since {h['since'][:16]} ({h['reason'] or 'no reason given'}): {h['summary'][:120]}")
+
+
+def service_issues(arm, t):
+    """Active Azure service incidents visible to the tenant's subscriptions, one line each."""
+    rows = arm.graph(t['subs'], "servicehealthresources | where type =~ 'microsoft.resourcehealth/events'"
+                     " and properties.Status == 'Active' and properties.EventType == 'ServiceIssue'"
+                     " | project trackingId=name, title=tostring(properties.Title), impact=properties.Impact")
+    lines = {}
+    for e in rows:
+        where = []
+        for i in e.get('impact') or []:
+            regions = ', '.join(x.get('ImpactedRegion', '') for x in i.get('ImpactedRegions') or [])
+            where.append(f"{i.get('ImpactedService', '?')} ({regions})" if regions else i.get('ImpactedService', '?'))
+        lines[e['trackingId']] = f"- {e['trackingId']}: {e['title']}" + (f": {'; '.join(where)}" if where else '')
+    return list(lines.values())
 
 
 def check_vm(rep, r):
@@ -375,6 +447,9 @@ def costs(arm, t, by, apps, rg):
         sku = (plan.get('sku') or {}).get('name') or ''
         if not apps.get(pid) and sku not in ('Y1', 'FC1', 'F1', 'D1'):
             idle.append((plan, f'{sku} App Service plan with no apps: billed while empty'))
+    for lb in by.get('microsoft.network/loadbalancers', []):
+        if (lb.get('sku') or {}).get('name') != 'Basic' and not (lb['properties'] or {}).get('backendAddressPools'):
+            idle.append((lb, 'Standard load balancer with no backend pool: billed for its rules, routes nothing'))
     if idle:
         lines.append('- idle candidates (confirm with the owner before removing; cost over the 30 days):')
         for r, why in idle:
@@ -446,6 +521,9 @@ def audit(tid, t, a, eol):
     jobs += [lambda j=j: check_job(arm, rep, j, a.days) for j in by.get('microsoft.app/jobs', [])]
     jobs += [lambda g=g: check_pg(arm, rep, g, eol, a.days) for g in by.get('microsoft.dbforpostgresql/flexibleservers', [])]
     jobs += [lambda n=n: check_servicebus(arm, rep, n, a.days) for n in by.get('microsoft.servicebus/namespaces', [])]
+    jobs += [lambda v=v: check_keyvault(arm, rep, v) for v in by.get('microsoft.keyvault/vaults', [])]
+    index = {r['id'].lower(): r for r in rows}
+    jobs.append(lambda: resource_health(arm, rep, t, index))
     for g in by.get('microsoft.containerinstance/containergroups', []):
         check_aci(rep, g)
     for v in by.get('microsoft.compute/virtualmachines', []):
@@ -454,6 +532,7 @@ def audit(tid, t, a, eol):
     jobs.append(lambda: aca_warnings(arm, rep, envs, aca, a.days))
     with concurrent.futures.ThreadPoolExecutor(8) as pool:
         top = pool.submit(exceptions, arm, ai_ws, a.days)
+        incidents = pool.submit(service_issues, arm, t)
         spend = pool.submit(costs, arm, t, by, apps, a.rg) if not a.no_cost else None
         for f in [pool.submit(j) for j in jobs]:
             try:
@@ -462,11 +541,18 @@ def audit(tid, t, a, eol):
                 rep.notes.append(f'check failed: {type(e).__name__}: {e}')
         top = top.result()
         try:
+            incidents = incidents.result()
+        except Exception as e:
+            incidents = [f'- service health not read: {type(e).__name__}: {e}']
+        try:
             spend = spend.result() if spend else []
         except Exception as e:
             spend = [f'## COST: failed: {type(e).__name__}: {e}']
 
     print(f'# {t["label"]} ({tid}), last {a.days} days' + (f', resource groups containing {a.rg!r}' if a.rg else ''))
+    if incidents:
+        print(f'\n## Azure service issues active now ({len(incidents)}): check them against the regions and services below first')
+        print('\n'.join(incidents))
     for level, title in (('BROKEN', 'failing now'), ('RISK', 'will fail or degrade'), ('BLIND', 'no logs to investigate with')):
         groups = {}
         for kind, name, rg, text, env in rep.items[level]:
@@ -475,7 +561,7 @@ def audit(tid, t, a, eol):
         rank = {e: i for i, (e, _) in enumerate(ENVS)}
         # Findings shared by several resources print once; the rest one per line, prod first.
         # Specific findings first, prod first; shared hygiene (health checks, always-on, plan sharing) last.
-        hygiene = ('no health check', 'always-on off', 'shared by')
+        hygiene = ('no health check', 'always-on off', 'shared by', 'Linux Consumption plan retires')
         for (kind, text), names in sorted(groups.items(), key=lambda g: (any(h in g[0][1] for h in hygiene), min(rank.get(e, 9) for e, _ in g[1]), g[0][0], sorted(g[1])[0])):
             if len(names) > 1:
                 print(f'- [{kind}] {text}: {", ".join(f"{n} [{e}]" for e, n in sorted(names, key=lambda x: (rank.get(x[0], 9), x[1])))}')

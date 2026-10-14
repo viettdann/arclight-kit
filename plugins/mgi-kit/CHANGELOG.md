@@ -2,6 +2,26 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-14
+
+### Added
+
+- `dotnet-upgrade`: Azure Functions in-process to isolated worker migration (`references/functions-isolated.md`). It detects in-process projects (support ends 2026-11-10) and migrates the model on the current TFM before the TFM change: project SDK, extensions, startup, bindings, logging, HTTP, System.Text.Json fixtures, `FUNCTIONS_WORKER_RUNTIME`, Linux Consumption and Flex limits. Workspace checks run on every Functions project: `host.json`, host version, deprecated and identity-based settings, Durable task hub, `local.settings.json` in git, retry, blocking calls, cancellation, per-call clients. Adapted from Azure/azure-functions-skills (MIT, Microsoft).
+- `azure-diagnose` Audit:
+  - Active Azure service issues printed first.
+  - Resource Health `Unavailable` and `Degraded`.
+  - In-process .NET Functions, Functions hosts older than 4.x, and Linux Consumption apps.
+  - Key Vault secrets, keys and certificates expired or expiring within 30 days, read through ARM with Reader, never values.
+  - Standard load balancers with no backend pool as idle candidates.
+- `azure-diagnose` Diagnose:
+  - Resource Health and the App Service and Functions deployment history in the timeline.
+  - Disabled Functions triggers and Flex Consumption metrics.
+  - Service Bus failure reasons, lock loss, client lifetime, AMQP ports and data roles.
+  - A telemetry coverage query, Resource Graph queries, and the Cost Management query limits.
+  - Reports mark the cause confirmed or suspected.
+  - Facts taken from microsoft/azure-skills and Azure/azure-functions-skills (MIT, Microsoft).
+- `ado-pipelines-advisor`: data-plane role check for app identities in deployed Bicep and Terraform (review rule S13), and .NET Functions packaging: publish the project not the solution, `local.settings.json` kept out of the artifact and git, `FUNCTIONS_WORKER_RUNTIME` matching the build.
+
 ## [0.5.0] - 2026-10-14
 
 ### Added

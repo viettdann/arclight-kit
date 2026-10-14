@@ -12,6 +12,8 @@ Each of these cost a wrong turn in a real investigation. Read the one that match
 | `Invalid jmespath query ... keys(): invalid type ... null` | A JMESPath function hit a field that is null on this resource (`identity.userAssignedIdentities` with no identity) | `-o json`, then parse with `python3 -I` |
 | `az webapp show --query appServicePlanId` returns null | The field is `serverFarmId` | `--query serverFarmId` |
 | `az monitor log-analytics query` says only `BadArgumentError: The request had some invalid properties` | The real reason (`SYN0002` parse error, `Failed to resolve table`) is in `Inner error` further down | Read the whole error; don't cut it with `tail` |
+| `sites/<app>/deployments` returns `HTTP 504 GatewayTimeout` from `Microsoft.Web` | The app's Kudu didn't answer in time (cold, or a busy plan) | Retry once after a minute; the activity log still shows the deploy's publishing-credential reads |
+| `az keyvault secret list` is denied but secret expiry is needed | Data-plane listing needs `secrets/readMetadata` | The ARM list works with Reader: `GET <vault id>/secrets?api-version=2023-07-01` returns names and `attributes.exp` (Unix seconds), never values; `audit.py` uses it |
 | A metric name is rejected | Names differ per resource type and SKU | `az monitor metrics list-definitions --subscription S --resource ID --query "[].name.value" -o tsv`; the rejection also lists the valid names |
 
 ## Signals that look like incidents but aren't

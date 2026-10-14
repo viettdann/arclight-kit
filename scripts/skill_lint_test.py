@@ -12,6 +12,14 @@ PATH_REF = re.compile(r"(?<![\w./-])((?:references|scripts|assets|examples)/[\w.
 ROOT_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]*\w)")
 SKILL_DIR_REF = re.compile(r"\$\{CLAUDE_SKILL_DIR\}/([\w./-]*\w)")
 NAME_REF = re.compile(r"(?<![\w-])(arc-kit|arc-design|mgi-kit):([a-z][a-z-]*[a-z])")
+REMOTE_EXEC = {
+    "curl or wget piped to a shell": re.compile(r"\b(?:curl|wget)\b[^|\n]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh|fish)\b", re.I),
+    "eval of command output": re.compile(r"(?<![\w-])eval\s+[\"']?\$\("),
+    "base64 decoded into an interpreter": re.compile(r"base64\s+(?:-d|--decode)[^|\n]*\|\s*(?:sh|bash|node|python3?)\b", re.I),
+    "Invoke-Expression on downloaded content": re.compile(r"\b(?:Invoke-Expression|iex)\b.*\b(?:DownloadString|Invoke-WebRequest|iwr|irm)\b", re.I),
+    "URL with a raw IP address": re.compile(r"https?://(?!127\.0\.0\.1\b|0\.0\.0\.0\b)(?:\d{1,3}\.){3}\d{1,3}\b"),
+}
+LINT_ALLOW = re.compile(r"skill-lint:\s*allow\s+\S")
 
 
 def parse_frontmatter(text):
@@ -51,6 +59,16 @@ def markdown_files():
         for file in files:
             if file.endswith(".md") and file != "CHANGELOG.md":
                 yield os.path.join(dirpath, file)
+
+
+def instruction_files():
+    for plugin in sorted(os.listdir(PLUGINS)):
+        for part in ("skills", "agents"):
+            for dirpath, dirs, files in os.walk(os.path.join(PLUGINS, plugin, part)):
+                dirs[:] = [d for d in dirs if d not in ("__pycache__", "node_modules")]
+                for file in files:
+                    if file.endswith((".md", ".py", ".sh", ".mjs", ".js", ".yml", ".yaml")) and not file.endswith("_test.py"):
+                        yield os.path.join(dirpath, file)
 
 
 class SkillLintTest(unittest.TestCase):
@@ -102,6 +120,14 @@ class SkillLintTest(unittest.TestCase):
             listed = f"{plugin}:{name}" if "/skills/" in path else f"`{name}`"
             self.assertTrue(listed in readme, f"skill-lint: README does not list {listed}")
             self.assertRegex(manifest["description"], rf"(?<![\w-]){re.escape(name)}(?![\w-])", f"skill-lint: {plugin} plugin.json description omits {name}")
+
+    def test_no_remote_code_execution(self):
+        for path in instruction_files():
+            for n, line in enumerate(read(path).splitlines(), 1):
+                if LINT_ALLOW.search(line):
+                    continue
+                for what, pattern in REMOTE_EXEC.items():
+                    self.assertIsNone(pattern.search(line), f"skill-lint: {path}:{n} has {what}; add `skill-lint: allow <reason>` on the line if intended")
 
     def test_version_matches_changelog(self):
         for plugin in sorted(os.listdir(PLUGINS)):

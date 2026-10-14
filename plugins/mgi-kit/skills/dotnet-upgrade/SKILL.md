@@ -1,6 +1,6 @@
 ---
 name: dotnet-upgrade
-description: "Upgrade a .NET solution to a newer target framework (for example net8.0 to net10.0) with its runtime-tied packages, SDK pin, Docker images, CI, and tools. Inventories every project and where its TFM is set, reads Microsoft's breaking-change pages for each version crossed, records a build and test baseline, upgrades in an order that keeps the solution building, and reports new warnings and what lives outside the repo. Use when moving to a new .NET version or off one that is losing support (\"upgrade .NET\", \"nâng .NET\", \"lên .NET 10\", \"net8 hết support\", \"migrate to net10\"). Not for porting .NET Framework apps (it inventories them and stops), or for bumping a single package."
+description: "Upgrade a .NET solution to a newer target framework (net8.0 to net10.0) with its runtime-tied packages, SDK pin, Docker images, CI, and tools, and move Azure Functions apps from in-process to the isolated worker. Inventories every project, reads Microsoft's breaking-change pages for each version crossed, records a build and test baseline, upgrades in an order that keeps the solution building, and reports what is outside the repo. Use when moving to a new .NET version or off one losing support (\"upgrade .NET\", \"nâng .NET\", \"lên .NET 10\", \"net8 hết support\", \"Functions isolated\"). Not for porting .NET Framework apps (it inventories them and stops), or for bumping a single package."
 argument-hint: "[target, e.g. net10.0]"
 ---
 
@@ -25,6 +25,7 @@ Read, don't edit:
   - `net4x` (.NET Framework): out of scope. Name its project type (ASP.NET MVC 5, Web Forms, WCF service, WinForms, WPF, class library) and stop for a separate plan; Web Forms and WCF server have no in-place path.
 - Central files: `global.json` (SDK version and `rollForward`), `Directory.Build.props` and `.targets`, `Directory.Packages.props`, `NuGet.config`.
 - Packages: `dotnet list package --outdated`, `--vulnerable --include-transitive`, `--deprecated`. Runtime-tied packages (`Microsoft.AspNetCore.*`, `Microsoft.EntityFrameworkCore.*`, `Microsoft.Extensions.*`, `System.*` packages that ship with the runtime) move with the TFM major; third-party packages move only when the new TFM requires it.
+- Azure Functions projects: in-process when they reference `Microsoft.NET.Sdk.Functions` or use `[FunctionName]`. In-process ends support on 2026-11-10 and runs only .NET 8, so it blocks any TFM change past net8.0. Migrate the model first, on the current TFM, with [functions-isolated.md](references/functions-isolated.md), then return to section 3 for the TFM. Run its workspace checks on every Functions project, isolated ones included.
 - Outside the projects: Dockerfiles (`mcr.microsoft.com/dotnet/sdk`, `aspnet`, `runtime` tags), CI (`actions/setup-dotnet` `dotnet-version`, Azure DevOps `UseDotNet@2`), `.config/dotnet-tools.json` (`dotnet-ef`), and hosting config kept in the repo (Bicep, Terraform, pipeline YAML runtime stacks).
 - More than about ten projects in scope: show the inventory and the step order (section 4), and wait for approval before editing.
 
@@ -57,13 +58,14 @@ Never add `<NoWarn>` or `#pragma warning disable` to clear a new warning, and ne
 - CI: the SDK version in `setup-dotnet` or `UseDotNet@2`, and cache keys that embed it.
 - `dotnet-tools.json`: `dotnet-ef` to the EF Core major in use.
 - After an EF Core major bump: `dotnet ef migrations has-pending-model-changes`. Pending changes from the upgrade alone mean a convention changed; report them, don't generate a migration silently.
-- Hosting configured outside the repo (App Service runtime stack, Functions version, the build agent image): list it for the user.
+- Hosting configured outside the repo (App Service runtime stack, Functions version, `FUNCTIONS_WORKER_RUNTIME`, the build agent image): list it for the user. A Functions app on Linux Consumption can't run .NET 10; say so before targeting it.
 
 ## 6. Report
 
 ```markdown
 **Target**: net8.0 → net10.0 (SDK 10.0.x)
 **Projects**: upgraded, in order; skipped (netstandard, .NET Framework) with the reason
+**Functions model**: in-process → isolated per project, with the `func start` and JSON fixture results
 **Packages**: from → to; left on the old version and why
 **Breaking changes hit**: entry → fix (file)
 **Outside the code**: global.json, Dockerfiles, CI, tools; for the user outside the repo: ...

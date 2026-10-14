@@ -103,6 +103,7 @@ All Critical. Preview reports them with the message shown, so quote it.
 | S10 | `AzureKeyVault@2` with `SecretsFilter: '*'` or `RunAsPreJob: true` without need | Medium | List the names | ([security.md](security.md#key-vault), [source](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-key-vault-v2?view=azure-pipelines)) |
 | S11 | Queue-time variable feeding a script | Medium | Typed runtime parameter with `values:` | ([security.md](security.md#secret-variables-and-masking), [source](https://learn.microsoft.com/en-us/azure/devops/pipelines/security/inputs?view=azure-devops)) |
 | S12 | Security enforced only by a YAML `condition` or `ManualValidation@1` | Medium | Checks on the resource (branch control, required template, approval) | YAML can be edited by the PR ([security.md](security.md#fork-pull-requests), [source](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals?view=azure-devops)) |
+| S13 | Deployed Bicep or Terraform gives an app identity `Contributor`/`Reader` for data access, or a data role at resource-group or subscription scope | High | Data-plane role (Storage Blob Data, Key Vault Secrets User, Service Bus Data Sender/Receiver) on the resource | Management roles carry no data access; the app fails with 403 after a green deploy ([security.md](security.md#data-plane-roles-in-iac), [source](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles)) |
 
 ## Deployment
 

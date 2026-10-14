@@ -12,6 +12,7 @@ Column aliases must not be KQL keywords: `first`, `last`, `count`, `max`, `min`,
 - [Container Apps](#container-apps)
 - [PostgreSQL flexible server](#postgresql-flexible-server)
 - [Metrics](#metrics)
+- [Resource Graph](#resource-graph)
 
 ## Which table
 
@@ -54,6 +55,14 @@ AppDependencies
 ```
 
 Error logs written through `ILogger`: `AppTraces | where SeverityLevel >= 3 | project TimeGenerated, AppRoleName, Message | order by TimeGenerated desc | take 50`.
+
+Which tables still receive data, to find telemetry that stopped (a broken connection string, a sampling change) before trusting an empty result:
+
+```kusto
+union withsource=TableName AppRequests, AppExceptions, AppTraces, AppDependencies
+| where TimeGenerated > ago(7d)
+| summarize n=count(), lastSeen=max(TimeGenerated) by TableName, AppRoleName
+```
 
 Request rate over time, to see when it started: `AppRequests | summarize total=count(), failed=countif(Success == false) by bin(TimeGenerated, 15m) | order by TimeGenerated asc`.
 
@@ -146,10 +155,35 @@ AzureDiagnostics
 |---|---|
 | App Service plan | `CpuPercentage MemoryPercentage HttpQueueLength` (the plan's, shared by every app on it) |
 | App Service app / Function app | `Http5xx Requests HttpResponseTime MemoryWorkingSet HealthCheckStatus InstanceCount` |
+| Function app on Flex Consumption | `OnDemandFunctionExecutionCount OnDemandFunctionExecutionUnits AlwaysReadyFunctionExecutionCount AlwaysReadyUnits InstanceCount` |
 | Container app | `Requests RestartCount Replicas CpuPercentage MemoryPercentage ResponseTime` |
 | PostgreSQL flexible | `cpu_percent memory_percent cpu_credits_remaining active_connections max_connections connections_failed storage_percent deadlocks longest_query_time_sec` |
-| Service Bus namespace | `IncomingMessages CompleteMessage ServerErrors` (counts: `Total`); `ActiveMessages DeadletteredMessages` are gauges: use `Maximum`, since `Total` adds one sample per minute (27 dead letters read as 38,880 a day) |
+| Service Bus namespace | `IncomingMessages CompleteMessage ServerErrors UserErrors ThrottledRequests` (counts: `Total`); `ActiveMessages DeadletteredMessages` are gauges: use `Maximum`, since `Total` adds one sample per minute (27 dead letters read as 38,880 a day) |
 
 Failed or server-error counts in `AppRequests` include 4xx; split by `ResultCode` first: `AppRequests | where Success == false | summarize n=count() by ResultCode, Name | top 15 by n`.
 
+Cost Management query limits (what `audit.py` COST works within): `Daily` granularity covers at most 31 days and silently truncates the start beyond that; `Monthly` and `None` 12 months; 37 months is a hard 400. Future dates are shifted without an error. At most 2 `grouping` dimensions; grouping by `ResourceId` works only at subscription or resource-group scope. Throttling allows a few queries a minute per scope.
+
 Settings that explain a metric: `az postgres flexible-server parameter show --subscription S -g RG -s SERVER --name max_connections --query value`; Service Bus backlog: `az servicebus queue list --subscription S -g RG --namespace-name NS --query "[].{q:name,active:countDetails.activeMessageCount,dead:countDetails.deadLetterMessageCount}" -o table` (topics: `az servicebus topic subscription list ... --topic-name T`).
+
+## Resource Graph
+
+Run through `find.py`/`audit.py`, or `POST /providers/Microsoft.ResourceGraph/resources` with the tenant's token ([pitfalls.md](pitfalls.md)); `az graph query` uses only the default tenant.
+
+Resources whose Resource Health isn't `Available` (the table holds only resources with a health signal; `Unknown` means no signal):
+
+```kusto
+healthresources
+| where type =~ 'microsoft.resourcehealth/availabilitystatuses' and properties.availabilityState != 'Available'
+| project id, state=tostring(properties.availabilityState), reason=tostring(properties.reasonType), summary=tostring(properties.summary), since=tostring(properties.occuredTime)
+```
+
+Active Azure incidents. `HealthAdvisory` and `PlannedMaintenance` events are usually active too and rarely explain a failure; filter to `ServiceIssue`:
+
+```kusto
+servicehealthresources
+| where type =~ 'microsoft.resourcehealth/events' and properties.Status == 'Active' and properties.EventType == 'ServiceIssue'
+| project trackingId=name, title=tostring(properties.Title), impact=properties.Impact
+```
+
+Resources stuck after a failed deploy: `resources | where tostring(properties.provisioningState) !in ('Succeeded', '') | project name, type, resourceGroup, state=tostring(properties.provisioningState)`.

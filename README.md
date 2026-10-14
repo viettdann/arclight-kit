@@ -30,7 +30,7 @@ Claude Code marketplace with three plugins:
 | Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `/arc-kit:conventions` (user-invoked only) |
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
-| Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI | `mgi-kit:dotnet-upgrade` |
+| Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI, or Azure Functions from in-process to isolated | `mgi-kit:dotnet-upgrade` |
 | Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion; why a run failed | `mgi-kit:ado-pipelines-advisor` |
 | Start work from an Azure DevOps work item: the current ask, repro, parent context, merged PRs, attachments | `mgi-kit:ado-work-item` |
 | An Azure app, function, container, or PostgreSQL server misbehaving live, or an audit of what is failing, at risk, unlogged, or costing more across a tenant | `mgi-kit:azure-diagnose` |

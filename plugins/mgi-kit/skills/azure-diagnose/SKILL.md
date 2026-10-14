@@ -16,7 +16,7 @@ When the user asks what is wrong or worth fixing across Azure rather than about 
 python3 ${CLAUDE_SKILL_DIR}/scripts/audit.py [--tenant TENANT] [--days 7] [--rg FRAGMENT] [--no-cost]
 ```
 
-It prints **BROKEN** (failing now: crashed containers, failed job runs, dead letters, a 5xx rate of 1% or more, exhausted CPU credits, connections at `max_connections`, not-ready revisions), **RISK** (runtimes past or near end of support, Basic plans shared by several apps, always-on off, no health check, sustained CPU or memory, Container Apps warnings, restarts, low 5xx rates), **BLIND** (apps and databases with no App Insights and no diagnostic setting), the top App Insights exceptions, and **COST**: spend per subscription and resource group over the last 30 days against the 30 before, resources whose cost rose, idle candidates (unattached disks, unattached public IPs, plans with no apps) with their cost, and open Advisor cost recommendations. It takes about 45 seconds for 70 resources; `--no-cost` skips the cost queries, which Cost Management throttles to a few a minute.
+It prints active Azure service issues first (an outage explains everything below it), then **BROKEN** (failing now: Resource Health `Unavailable`, crashed containers, failed job runs, dead letters, a 5xx rate of 1% or more, exhausted CPU credits, connections at `max_connections`, not-ready revisions), **RISK** (Resource Health `Degraded`, runtimes past or near end of support, in-process .NET Functions, Functions hosts older than 4.x, Key Vault secrets and keys expired or expiring within 30 days, Basic plans shared by several apps, always-on off, no health check, Linux Consumption apps, sustained CPU or memory, Container Apps warnings, restarts, low 5xx rates), **BLIND** (apps and databases with no App Insights and no diagnostic setting), the top App Insights exceptions, and **COST**: spend per subscription and resource group over the last 30 days against the 30 before, resources whose cost rose, idle candidates (unattached disks, unattached public IPs, plans with no apps, Standard load balancers with no backend pool) with their cost, and open Advisor cost recommendations. It takes about 45 seconds for 70 resources; `--no-cost` skips the cost queries, which Cost Management throttles to a few a minute.
 
 Then:
 
@@ -27,7 +27,7 @@ Each line carries a stage tag guessed from the name, then the resource group (`[
 3. **Rank** for the user: what breaks users or data now, then what will break by a date (support end dates, storage, credits), then what costs time in the next incident (BLIND), then hygiene. Report cost apart from health: a rise names the resource and the two amounts, so explain it (a new resource, a scale-up, data growth) from its metrics or the activity log before calling it waste. An idle candidate is a state, not proof nobody uses it; give the owner's call and the delete command. Commitment advice (reservations, savings plans) locks one to three years, so list it last and only for capacity that will stay. Mark dev, beta, staging and prod by resource group or name. A finding on dev is lower priority than the same on prod.
 4. **Report** each item as one line: resource, what is wrong, evidence, fix (a command or the change), effort. Group the same fix across many resources ("add a health check path to these 14 apps") instead of repeating it.
 
-The audit only reports. An item it doesn't flag isn't proven healthy: it doesn't read app code, Key Vault, networking, or backups. A subscription whose cost isn't readable is named at the end of COST.
+The audit only reports. An item it doesn't flag isn't proven healthy: it doesn't read app code, Key Vault access or secret values, networking, or backups. An expired secret breaks only the apps that still read it, so find its consumers (app settings with `@Microsoft.KeyVault(...)`, Container Apps secrets) before ranking it. A subscription whose cost isn't readable is named at the end of COST.
 
 ## 1. Locate
 
@@ -43,7 +43,9 @@ Every az command takes `--subscription <id from find.py>`. Never `az account set
 
 Before reading logs, establish when it started and what changed just before:
 
+- Platform first: `az rest --method get --url "https://management.azure.com<ID>/providers/Microsoft.ResourceHealth/availabilityStatuses/current?api-version=2022-10-01" --query "properties.{state:availabilityState,reason:reasonType,summary:summary,since:occuredTime}"`, and active Azure incidents (`audit.py --tenant T --no-cost` prints them first, or `servicehealthresources` in [queries.md](references/queries.md#resource-graph)). `Unavailable` or `Degraded` with reason `PlatformInitiated`, or an active issue on this service and region, is the lead before any app evidence.
 - `az monitor activity-log list --subscription S --resource-id ID --offset 3d --query "[].{t:eventTimestamp,op:operationName.localizedValue,st:status.value,by:caller}" -o table`: restarts, setting writes, scale changes. `ListPublishingCredentials` or `Get Web App Publishing Profile` from a GUID caller is a pipeline deploy; a new Container Apps revision is a deploy too. The activity log often misses Container Apps deploys made by a pipeline; their timeline is the revisions' `createdTime` and the `RevisionCreation` and `RevisionDeactivating` events in the system logs ([queries.md](references/queries.md#container-apps)).
+- App Service and Functions deploys with author and source: `az rest --method get --url "https://management.azure.com<ID>/deployments?api-version=2023-12-01" --query "value[].properties.{start:start_time,status:status,author:author,by:deployer}" -o table`. Status 4 is success, 3 failed; deployer `VSTS` is Azure Pipelines.
 - The user's "since when" beats a guess. A change within minutes before the first error is the lead suspect until evidence says otherwise.
 - Deploys come from Azure Pipelines. When the timeline points to one, `mgi-kit:ado-pipelines-advisor` (Diagnose mode) can read that run.
 
@@ -59,7 +61,7 @@ Pick the section for the resource type, collect the evidence, and stop when one 
 - **When it started**: hours with 5xx, to line up with deploys and restarts in the timeline: `az monitor metrics list --subscription S --resource ID --metric Http5xx --offset 2d --interval PT1H --aggregation Total --query 'value[0].timeseries[0].data[?total > \`0\`].{hour:timeStamp,n:total}' -o table`.
 - **5xx with app errors**: group exceptions or console errors by type and path. Then see whether the dependency the stack points to (database, HTTP API, Service Bus) failed at the same minutes.
 - **.NET specifics**: `MemoryWorkingSet` climbing until a restart is a leak or an unbounded cache. Many `Npgsql` timeouts together point to the database (next section). `TaskCanceledException` on outbound HTTP is the remote side or `HttpClient` timeout.
-- **Functions (.NET isolated)**: `FunctionAppLogs` by `FunctionName` and `ExceptionType`. For triggers that stop firing, check the host started (`Host started`, `Worker process started`) and whether the trigger's connection setting name exists: `az functionapp config appsettings list --subscription S -g RG -n APP --query "[].name"`. List names only; never print setting values.
+- **Functions (.NET isolated)**: `FunctionAppLogs` by `FunctionName` and `ExceptionType`. For triggers that stop firing, check the host started (`Host started`, `Worker process started`) and whether the trigger's connection setting name exists: `az functionapp config appsettings list --subscription S -g RG -n APP --query "[].name"`. List names only; never print setting values. A disabled trigger is silent: `az functionapp function list --subscription S -g RG -n APP --query "[].{f:name,disabled:isDisabled}" -o table`. `FUNCTIONS_WORKER_RUNTIME=dotnet` is the in-process model (support ends 2026-11-10); its migration is `mgi-kit:dotnet-upgrade`. On Flex Consumption (`FC1`), `OnDemandFunctionExecutionCount` and `AlwaysReadyFunctionExecutionCount` show whether anything ran at all.
 
 ### Container Apps, jobs, and Container Instances
 
@@ -82,7 +84,16 @@ Pick the section for the resource type, collect the evidence, and stop when one 
 ### Service Bus
 
 - Queue or subscription counts: active messages growing means the consumer is down or slow. Dead-letter count growing means the consumer receives and fails (max delivery count reached) or messages expire. Read the consumer's logs for the failure; the namespace is rarely the cause.
-- The consumer's errors (`ServiceBusException`, lock lost, `MessageLockLost`) are in that app's logs, not the namespace's.
+- The consumer's errors are in that app's logs, not the namespace's. `ServiceBusException.Reason` names the cause:
+  - `MessageLockLost`: processing outlived the lock (`lockDuration`, default 1 minute) without renewal, or the AMQP link dropped (a network blip or the 10-minute idle timeout) even within it. The message is redelivered, so the handler must be idempotent; each loss counts toward max delivery and ends in dead letters. Fix with lock auto-renewal (`MaxAutoLockRenewalDuration`, or `maxAutoLockRenewalDuration` in `host.json` for Functions) or shorter processing.
+  - `SessionLockLost`: the same for a session; the receiver must accept the session again.
+  - `ServiceBusy`: throttled; the SDK retries after 10 seconds. Steady throttling is a tier limit (`ThrottledRequests` metric).
+  - `QuotaExceeded`: too many concurrent receivers on an entity, or the entity is full (`maxSizeInMegabytes`).
+  - `MessageSizeExceeded`: a message or batch over the limit (256 KB Standard). A batch over 1 MB fails even on Premium.
+  - `ServiceTimeout`: transient, retried; on session accept it means no session is free.
+- Many connection errors with growing memory or ports: a `ServiceBusClient` created per message or request instead of one singleton.
+- Can't connect at all: AMQP needs outbound 5671 and 5672; behind a firewall that blocks them, set `TransportType = ServiceBusTransportType.AmqpWebSockets` (443). `UnauthorizedAccessException` with a managed identity is a missing *Azure Service Bus Data Sender* or *Data Receiver* role on the namespace or entity; Contributor isn't enough.
+- Functions Service Bus triggers: `maxConcurrentCalls` (or `maxConcurrentSessions`) in `host.json` multiplied by instance count is the load the consumer's dependencies take; a slow database behind a high value turns into lock losses and dead letters.
 
 ### Static Web Apps and VMs
 
@@ -93,10 +104,10 @@ App Insights masks the client IP (`0.0.0.0`); to find who sends a burst of faili
 
 ## 4. Report
 
-1. **Cause**: one sentence, with the evidence lines or numbers and their timestamps (UTC, and local time when the user gave theirs).
-2. **Confidence**: what would prove it wrong, and anything not checked.
-3. **Fix**: in code (hand off to `arc-kit:debug` with the stack and request), in config (the exact az command or portal setting, for the user to run), or capacity (current SKU and numbers against the limit).
-4. **Gaps**: a log source this resource lacks, if it would have shortened the investigation, as one line on what to enable.
+1. **Cause**: one sentence, marked **confirmed** (the evidence explains every symptom and its timing) or **suspected**, with the evidence lines or numbers, their timestamps (UTC, and local time when the user gave theirs), and the time window searched.
+2. **Confidence**: what would prove it wrong, other explanations still open, and anything not checked (Resource Health, metrics, logs, activity log, deploys).
+3. **Fix**: in code (hand off to `arc-kit:debug` with the stack and request), in config (the exact az command or portal setting, for the user to run), or capacity (current SKU and numbers against the limit). Say how the user will know it worked.
+4. **Gaps**: a log source this resource lacks, if it would have shortened the investigation, as one line on what to enable. For a .NET app without App Insights: `Azure.Monitor.OpenTelemetry.AspNetCore` with `builder.Services.AddOpenTelemetry().UseAzureMonitor()`, and `APPLICATIONINSIGHTS_CONNECTION_STRING` as an app setting rather than in `appsettings.json`.
 
 Notes:
 

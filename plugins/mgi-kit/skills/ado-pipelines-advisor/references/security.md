@@ -12,6 +12,7 @@ Secrets, identities, tokens, org/project pipeline settings and protected-resourc
 - [Fork pull requests](#fork-pull-requests)
 - [Templates, checks and step restrictions](#templates-checks-and-step-restrictions)
 - [Container jobs](#container-jobs)
+- [Data-plane roles in IaC](#data-plane-roles-in-iac)
 - [Checklist](#checklist)
 
 ## Secret variables and masking
@@ -231,6 +232,24 @@ resources:
         tools: true
 ```
 
+## Data-plane roles in IaC
+
+A pipeline that deploys Bicep or Terraform also deploys the app identities' role assignments. Find them with `Microsoft.Authorization/roleAssignments` (Bicep) or `azurerm_role_assignment` (Terraform), and check each principal, role and scope against what the app code does. `Owner`, `Contributor` and `Reader` are management-plane roles: they grant no access to blobs, queues, secrets or messages, and the app fails at runtime with 403 even though the deploy succeeded ([source](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles)).
+
+| The app | Role | Common mistake |
+|---|---|---|
+| Reads blobs | Storage Blob Data Reader | Reader |
+| Reads and writes blobs | Storage Blob Data Contributor | Contributor |
+| Issues user-delegation SAS | Storage Blob Delegator plus a Blob Data role | The Data role alone |
+| Uses queues | Storage Queue Data Contributor | A Blob role |
+| Functions host storage (identity-based `AzureWebJobsStorage`) | Storage Blob Data Owner; plus Storage Queue Data Contributor for blob triggers, Queue and Table Data Contributor for Durable | Storage Blob Data Contributor |
+| Reads Key Vault secrets | Key Vault Secrets User | Key Vault Reader (metadata only) |
+| Sends or receives Service Bus messages | Azure Service Bus Data Sender / Data Receiver | Contributor |
+| Pulls from ACR | AcrPull | Contributor or the admin user |
+| Grants roles itself (the deploy identity) | Role Based Access Control Administrator, conditioned to the roles it assigns | Owner or User Access Administrator |
+
+Scope the assignment to the resource, not the resource group or subscription. A developer running the app locally needs the same data roles on their own identity.
+
 ## Checklist
 
 | Detect | Severity | Fix |
@@ -260,3 +279,4 @@ resources:
 | Step printing untrusted text without `target.commands: restricted` | Medium | Add `commands: restricted` and `settableVariables` |
 | Linux container job running `docker` without `mapDockerSocket: true` | High (fails from 5.279.0) | Add it, or build outside the container |
 | `mapDockerSocket: true` on a job that doesn't need Docker | Medium | Remove |
+| App identity given Contributor or Reader for data access in deployed IaC | High (403 at runtime) | The data-plane role, scoped to the resource |
