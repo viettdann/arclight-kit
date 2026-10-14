@@ -42,16 +42,40 @@ def org_url(org):
     return org
 
 
-def auth_header():
+def org_tenant(org):
+    """The org's Entra tenant from the X-VSS-ResourceTenant header of an anonymous request, so an `az login` whose default
+    subscription sits in another tenant still gets a token the org accepts. ADO_TENANT overrides."""
+    if os.environ.get('ADO_TENANT'):
+        return os.environ['ADO_TENANT']
+    if not org:
+        return None
+    req = urllib.request.Request(f'{org}/_apis/connectionData', headers={'X-TFS-FedAuthRedirect': 'Suppress'})
+    try:
+        with _opener.open(req, timeout=15) as r:
+            headers = r.headers
+    except urllib.error.HTTPError as e:
+        headers = e.headers
+    except urllib.error.URLError:
+        return None
+    tenant = (headers.get('X-VSS-ResourceTenant') or '').split(',')[0].strip()
+    return tenant if tenant and tenant != '00000000-0000-0000-0000-000000000000' else None
+
+
+def auth_header(org=None):
     """PAT wins over az so a CI job with both behaves predictably."""
     pat = os.environ.get('AZURE_DEVOPS_EXT_PAT')
     if pat:
         return 'Basic ' + base64.b64encode(f':{pat}'.encode()).decode()
     if shutil.which('az'):
-        r = subprocess.run(['az', 'account', 'get-access-token', '--resource', ADO_RESOURCE_ID, '--query', 'accessToken', '-o', 'tsv'],
-                           capture_output=True, text=True)
+        cmd = ['az', 'account', 'get-access-token', '--resource', ADO_RESOURCE_ID, '--query', 'accessToken', '-o', 'tsv']
+        tenant = org_tenant(org)
+        if tenant:
+            cmd += ['--tenant', tenant]
+        r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode == 0 and r.stdout.strip():
             return 'Bearer ' + r.stdout.strip()
+        if tenant:
+            print(f'az has no token for tenant {tenant} (the organization\'s tenant): az login --tenant {tenant}', file=sys.stderr)
     print(SETUP_HELP, file=sys.stderr)
     sys.exit(2)
 
@@ -65,8 +89,9 @@ _opener = urllib.request.build_opener(_NoRedirect)
 
 
 class Client:
-    def __init__(self):
-        self.header = auth_header()
+    def __init__(self, org=None):
+        """org: the org URL from org_url(), used to pick the tenant for an az token."""
+        self.header = auth_header(org)
 
     def request(self, method, url, body=None):
         """Returns (status, raw body). X-TFS-FedAuthRedirect: Suppress turns a rejected credential into a 401 instead of a sign-in redirect."""

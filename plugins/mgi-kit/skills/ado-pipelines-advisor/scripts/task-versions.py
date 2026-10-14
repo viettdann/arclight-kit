@@ -209,8 +209,9 @@ def tsv(v):
 
 
 def cmd_org(args):
-    client = ado.Client()
-    data = client.get_json(f'{ado.org_url(args.org or os.environ.get("ADO_ORG"))}/_apis/distributedtask/tasks?api-version={ado.API_VERSION}',
+    org = ado.org_url(args.org or os.environ.get("ADO_ORG"))
+    client = ado.Client(org)
+    data = client.get_json(f'{org}/_apis/distributedtask/tasks?api-version={ado.API_VERSION}',
                            'vso.agentpools (Agent Pools: Read)')
     groups = {}
     for t in data['value']:

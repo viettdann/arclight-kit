@@ -64,7 +64,7 @@ def main():
     if not a.project:
         usage_exit()
     base = f'{ado.org_url(a.org)}/{ado.uri(a.project)}'
-    client = ado.Client()
+    client = ado.Client(ado.org_url(a.org))
 
     if a.list:
         defs = client.get_json(f'{base}/_apis/build/definitions?includeAllProperties=true&api-version={ado.API_VERSION}', 'vso.build (Build: Read)')

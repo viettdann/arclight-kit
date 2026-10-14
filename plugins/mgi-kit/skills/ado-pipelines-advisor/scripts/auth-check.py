@@ -15,7 +15,7 @@ def main():
     p = argparse.ArgumentParser(description='Exit 0 when AZURE_DEVOPS_EXT_PAT (else az login) authenticates to ORG, 1 otherwise.')
     p.add_argument('--org', default=os.environ.get('ADO_ORG'))
     a = p.parse_args()
-    code, raw = ado.Client().request('GET', f'{ado.org_url(a.org)}/_apis/connectionData')
+    code, raw = ado.Client(ado.org_url(a.org)).request('GET', f'{ado.org_url(a.org)}/_apis/connectionData')
     if code != 200:
         ado.die(f'HTTP {code}: credential rejected by {ado.org_url(a.org)}')
     user = json.loads(raw).get('authenticatedUser') or {}

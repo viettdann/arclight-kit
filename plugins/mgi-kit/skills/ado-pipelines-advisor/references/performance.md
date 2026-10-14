@@ -30,6 +30,7 @@ Rules:
 - Count every step the change adds, including `Post-job: Cache ...` (the save) and `Initialize job` of any added job.
 - Queue wait is not in task records: compare the build's `queueTime` with the first job's `startTime` from `GET _apis/build/builds/{id}`.
 - To tell a cache hit from a miss, read the Cache step log (`GET _apis/build/builds/{id}/logs/{logId}`, [source](https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/get-build-log?view=azure-devops-rest-7.1)): it prints `There is a cache miss.` or `There is a cache hit: <key>` followed by `Used scope: <pipeline>;<project>;<ref>;<repo>` and `Missed on the following scopes: ...`, which shows which branch scope served the hit; the restore also prints `Expected size to be downloaded`. The post-job step prints `Uploaded N out of M bytes` on a save and `Cache with fingerprint ... already exists.` after a hit.
+- A `Post-job: Cache` step failing after `There is a cache miss.` with `tar: <path>: Cannot open: No such file or directory` means the cached `path` was never created by the job; it fails on every miss, so it is not transient. Fix the `path` or create it before the step that fills it.
 - A checkout log shows the exact `git fetch` flags (`--depth=1`, `--tags`/`--no-tags`) and `Receiving objects: ... MiB`: use it to confirm what the checkout really did.
 
 ## 2. Cache@2: measure before adding

@@ -76,7 +76,7 @@ def main():
     if not a.project or not (a.pipeline_id or a.builds):
         usage_exit()
     base = f'{ado.org_url(a.org)}/{ado.uri(a.project)}/_apis/build/builds'
-    client = ado.Client()
+    client = ado.Client(ado.org_url(a.org))
 
     if a.builds:
         ids = [i for i in a.builds.split(',') if i]

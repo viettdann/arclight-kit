@@ -4,7 +4,7 @@ Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
 - `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
-- `mgi-kit`: MGI .NET and TypeScript stack skills (API breaking change detection, .NET version upgrades, Azure Pipelines YAML).
+- `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics).
 
 ## Which skill
 
@@ -31,7 +31,9 @@ Claude Code marketplace with three plugins:
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI | `mgi-kit:dotnet-upgrade` |
-| Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion | `mgi-kit:ado-pipelines-advisor` |
+| Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion; why a run failed | `mgi-kit:ado-pipelines-advisor` |
+| Start work from an Azure DevOps work item: the current ask, repro, parent context, merged PRs, attachments | `mgi-kit:ado-work-item` |
+| An Azure app, function, container, or PostgreSQL server misbehaving live, or an audit of what is failing, at risk, unlogged, or costing more across a tenant | `mgi-kit:azure-diagnose` |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 
