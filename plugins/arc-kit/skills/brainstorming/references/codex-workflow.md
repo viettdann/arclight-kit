@@ -23,6 +23,7 @@ Start from a high-level description of what the user wants to build and the curr
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
+  - **Would every answer lead to the same build?** → Don't ask; take the default and state it in the design
 - **Surface what nobody asked.** The frontier holds only decisions someone knew to make. When the feature enters a domain the codebase hasn't handled yet (money, time zones, i18n, file uploads, permissions, offline sync), list the domain's decisions that usually bite later, each glossed in a few words, and put the ones that apply on the frontier
 - **Check the premise.** Before choosing an approach, ask yourself: is this the right problem, what does doing nothing cost, and does the request fix the pain or a proxy for it. Raise a doubtful premise in the first round; when the premise is sound, don't invent doubt
 - **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier with the available user-question tool, for preference/judgment questions only:
@@ -32,6 +33,7 @@ Start from a high-level description of what the user wants to build and the curr
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
   - A fact still being looked up (codebase search, research) blocks only the decisions that depend on it; ask the rest of the frontier meanwhile
 - Focus on: purpose, constraints, success criteria
+- For a feature with UI, settle the user's steps, the inputs and their validation, and each screen's loading, empty, failure, and success states; `arc-design:ui-interaction`, when installed, holds the rules for each state
 - For performance work, record the current measurement and a target number before designing; "faster" is not a success criterion
 - **Done when** the frontier is empty: the purpose and success criterion are stated, every judgment call is answered or defaulted (see Handling Disagreement), and every fact the design relies on is Verified or listed as Assumed. Then present the design.
 
@@ -71,7 +73,7 @@ Research covers external dependencies only: whether a library exists, its API su
 
 - After the user confirms the design, present a concrete implementation plan:
   - List every file the plan touches. Do not summarize multiple files into one line
-  - Each line: file path + what changes + the check that proves it (test name, command, or observable state). Add why only when it is not obvious from the change, in a few words
+  - Each line: file path + the exact change (names, signatures, fields, types) + the check that proves it (test name, command, or observable state). Add a why only when an implementer would otherwise get the change wrong, in a few words inside the line
   - Highlight assumptions that need validation
 - For discussion-only requests, present the plan and wait for an implementation request. For an existing implementation request, proceed once consequential unresolved decisions are settled.
 - **Authorization carries forward.** If implementation is already requested, save the design and continue into execution in the same turn. Discussion-only requests stop at the design; approval of a design alone does not invent implementation scope.
@@ -79,9 +81,11 @@ Research covers external dependencies only: whether a library exists, its API su
 
 ### Design Doc Wording
 
-The saved design doc describes the target state only. When a draft element is dropped, omit it; the doc never records history or removals ("Removed X", "There is no X"). Deltas and removal notes belong in chat (Scope Creep Rule, YAGNI flags), not in the doc.
+The saved design doc holds only what gets done, stated as the target state. Everything the implementer won't do stays out: no exclusions, deferrals, removals, or history ("Removed X", "There is no X", "Not in this change: Y"), no rationale, alternatives considered, or background, and nothing the code already shows. Deltas, YAGNI flags, and trade-offs belong in chat, not in the doc.
 - *Incorrect:* "There is no header subtitle. Removed the subtitle text."
 - *Correct:* "The header contains a primary title."
+
+The doc is self-contained: a reader with only the doc and the repo can carry out every line without asking. Every file and symbol carries its path, every command is written out, and every decision settled in the conversation is restated as fact. Never point back at the conversation ("as discussed", "see above", "option B", "the approach we chose").
 
 ## After the Design
 
@@ -91,20 +95,19 @@ The saved design doc describes the target state only. When a draft element is dr
   - Truncate the slug to 60 characters after normalization. Fall back to `untitled` if empty
   - Never interpolate the raw topic into a shell command; only pass the validated slug to the available file-edit tool as part of the fixed `docs/plans/` path
   - **If `docs/plans/` does not exist**, create it (`mkdir -p docs/plans`) and note its creation in your reply. If the current working directory is not a writable project root (e.g., outside a repo, or user is in a path like `/tmp`), ask the user where to save the design instead of silently creating directories
-- The doc must stand alone after a new session, since the next session only has the doc. Use these sections, in this order:
+- The doc must stand alone after a new session, since the next session only has the doc (Design Doc Wording). Use these sections, in this order:
 
   ```markdown
   # <Topic>
-  ## Goal                 what it achieves and how success is measured (a target number for performance work)
-  ## Design               architecture, components, data flow, error handling
-  ## Implementation Plan  one line per file: path + what changes + the check that proves it
-  ## Assumptions          what the plan relies on that is not verified yet, and how to verify each
-  ## Verification         tests to write or run, what counts as done, and the inputs and failure modes a user would hit that the goal doesn't name (empty, huge, malformed, duplicate, concurrent), each with the Implementation Plan line whose check covers it
-  ## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
+  ## Goal          one or two lines: the outcome and the check that proves it (a target number for performance work)
+  ## Decisions     every decision settled in the conversation, one line each, stated as fact; contracts between files and data flow go here
+  ## Plan          ordered, one line per file: path + exact change (names, signatures, fields, types) + the check that proves it; a UI file's line names its loading, empty, failure, and success states
+  ## Assumptions   only unverified facts the plan relies on, each with the command or read that verifies it
+  ## Verification  `- [ ]` items, each a command or an observable result of something the Plan does, including each input or failure mode the Plan handles
   ```
 
-  Omit `Assumptions` or `Out of scope` when empty; the other four are always present.
-- **Fresh-context review.** After writing the doc and before replying with its path, when delegation is authorized and available, use one fresh reviewer with no conversation context: give it only the doc path and the repo root, and ask whether the doc contradicts itself, whether someone could implement it without asking, whether anything in scope is missing, and whether a simpler approach fits. Fix factual issues in the doc yourself; bring judgment calls to the user in the reply. Run at most 2 rounds; stop early when a round returns the same issues. Otherwise review inline and report that independent review was unavailable
+  Omit `Assumptions` when empty; the other four are always present. A line where a line does; no restating the request. See the doc at the end of `examples/happy-path.md`.
+- **Fresh-reader check.** After writing the doc and before replying with its path, when delegation is authorized and available, use one fresh reviewer with no conversation context and the inherited session model: give it only the doc path and repo root. Ask it to read the doc and the code it names, then return, for each Plan line, what it would change and how it would check it in its own words; every question it would ask before starting; every file, symbol, or command it could not find; and every line that narrates, justifies, or describes something not being done. Rewrite lines it read differently, answer questions the doc should settle, and bring user-only decisions to the user. Flagged wording follows Design Doc Wording. Run at most two rounds; stop when a round raises nothing new. Otherwise perform the same check inline and report that independent review was unavailable.
 - In the reply with the doc path, suggest an optional audit: "Run `$plan-auditor docs/plans/<filename>` to stress-test before execution."
 
 ## Key Principles

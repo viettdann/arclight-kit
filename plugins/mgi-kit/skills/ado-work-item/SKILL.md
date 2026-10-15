@@ -16,7 +16,7 @@ python3 ./scripts/work-item.py --org ORG --id ID_OR_URL [--comments N] [--parent
 ```
 
 - Org: from the URL, the repo remote (`https://dev.azure.com/{org}/...`), or `ADO_ORG`. IDs are unique per organization, so the project is not needed.
-- Credentials as in `ado-pipelines-advisor`: `AZURE_DEVOPS_EXT_PAT`, else `az login`, with the token taken in the organization's tenant. On exit 2, ask the user to `az login --tenant <tenant in the message>` or export a PAT with Work Items (Read) and Code (Read); never ask for the PAT in chat.
+- Credentials as in `ado-pipelines-advisor`: `AZURE_DEVOPS_EXT_PAT`, else `az login`, with the token taken in the organization's tenant. On exit 2 with an authentication message, ask the user to `az login --tenant <tenant in the message>` or export a PAT with Work Items (Read) and Code (Read); never ask for the PAT in chat.
 - Screenshots, recordings, junit or report files matter for a bug: rerun with `--download` to a new directory under `/tmp`, then Read the images and text files. Skip videos.
 - The output covers fields, rich-text fields (Description, ReproSteps, AcceptanceCriteria, SystemInfo, custom fields), test steps, up to three ancestors with a description excerpt, linked items, the latest 10 pull requests, attachments, and the newest comments.
 
@@ -30,7 +30,7 @@ python3 ./scripts/work-item.py --org ORG --id ID_OR_URL [--comments N] [--parent
 
 ## 3. Brief
 
-Give the user, in this order and briefly:
+Give the user, in this order, about 15 to 25 lines in all (omit a section that has nothing):
 
 1. **Ask**: one or two sentences of what has to change, in the item's own terms.
 2. **Done when**: the acceptance criteria, or the expected result for a bug, each marked stated or inferred.

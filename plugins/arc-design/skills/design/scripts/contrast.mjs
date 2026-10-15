@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WCAG 2.x contrast checker. Usage: node contrast.mjs "#fff|#6366f1" "hsl(222 47% 11%)|#fff" "oklch(0.93 0.005 250)|#131316|large" "#0f766e|#fff|ui" ...
+// WCAG 2.x contrast checker with an APCA (Lc) column. Usage: node contrast.mjs "#fff|#6366f1" "hsl(222 47% 11%)|#fff" "oklch(0.93 0.005 250)|#131316|large" "#0f766e|#fff|ui" ...
 // Pairs are split on "|" because oklch() values contain spaces; a translucent fg is composited over bg first, since that is what the eye sees.
 // A bg written as "<tint> over <backdrop>" (glass) is composited the same way, top layer first.
 
@@ -73,6 +73,25 @@ const luminance = ({ r, g, b }) => {
 
 const THRESHOLDS = { text: 4.5, large: 3, ui: 3 };
 
+// APCA 0.0.98G-4g (the model proposed for WCAG 3). WCAG 2 decides pass and fail; Lc catches pairs it overrates,
+// such as dark text on a mid-tone orange or blue. Minimums are APCA's simple levels: content text, large text, non-text.
+const APCA_MIN = { text: 60, large: 45, ui: 30 };
+const apcaY = ({ r, g, b }) => {
+  const y = 0.2126729 * (r / 255) ** 2.4 + 0.7151522 * (g / 255) ** 2.4 + 0.072175 * (b / 255) ** 2.4;
+  return y > 0.022 ? y : y + (0.022 - y) ** 1.414;
+};
+const apcaLc = (txt, bg) => {
+  const [yt, yb] = [apcaY(txt), apcaY(bg)];
+  if (Math.abs(yb - yt) < 0.0005) return 0;
+  // Dark text on light (positive Lc) and light text on dark (negative Lc) use different exponents.
+  if (yb > yt) {
+    const s = (yb ** 0.56 - yt ** 0.57) * 1.14;
+    return s < 0.1 ? 0 : (s - 0.027) * 100;
+  }
+  const s = (yb ** 0.65 - yt ** 0.62) * 1.14;
+  return s > -0.1 ? 0 : (s + 0.027) * 100;
+};
+
 const pairs = process.argv.slice(2);
 if (pairs.length === 0) {
   console.error('Usage: node contrast.mjs "<fg>|<bg>[|text|large|ui]" [...]  (colors: #hex, oklch(...), rgb(...), hsl(...), white, black; bg may be "<translucent> over <opaque>")');
@@ -80,6 +99,7 @@ if (pairs.length === 0) {
 }
 
 let failed = false;
+let warned = false;
 for (const pair of pairs) {
   const [fgHex, bgHex, rawKind = "text"] = pair.split("|");
   const kind = rawKind.trim().toLowerCase();
@@ -102,7 +122,12 @@ for (const pair of pairs) {
   const ok = ratio >= min;
   // A failing ratio never prints as the threshold itself: 4.495 shows 4.49, not 4.50.
   const shown = (!ok && +ratio.toFixed(2) >= min ? Math.floor(ratio * 100) / 100 : ratio).toFixed(2);
+  const lc = apcaLc(composite(fg, bg), bg);
+  const lcOk = Math.abs(lc) >= APCA_MIN[kind];
   if (!ok) failed = true;
-  console.log(`${ok ? "pass" : "FAIL"}  ${shown.padStart(5)}:1  (${kind} needs ${min}:1)  ${fgHex} on ${bgHex}`);
+  if (ok && !lcOk) warned = true;
+  const status = !ok ? "FAIL" : lcOk ? "pass" : "warn";
+  console.log(`${status}  ${shown.padStart(5)}:1  Lc ${Math.round(lc).toString().padStart(4)}  (${kind} needs ${min}:1, Lc ${APCA_MIN[kind]})  ${fgHex} on ${bgHex}`);
 }
+if (warned) console.log("warn: passes WCAG 2 but reads weak by APCA; try the other text polarity or a darker fill (color.md, Brand color).");
 process.exit(failed ? 1 : 0);

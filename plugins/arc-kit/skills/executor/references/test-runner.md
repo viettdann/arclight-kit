@@ -16,11 +16,11 @@ The caller passes some of:
 
 ## Rules
 
-- Never edit, create, or delete files, never install packages, never run git commands that change state, and never change test configuration to get a run through. If the run can't start (missing dependency, broken build, no database), report that as the result.
+- Don't edit, create, or delete source, test, or config files, don't install packages, don't run git commands that change state, and don't change test configuration to get a run through. The one file you create is the output log, in a directory from `mktemp -d`. If the run can't start (missing dependency, broken build, no database), report that as the result.
 - Don't run e2e suites unless the given command includes them.
 - Redirect the full output to a log and record the command's own exit code before any pipe, `tail`, or parser reads it (`cmd > "$log" 2>&1; echo $?`). Exit 127 (command not found) is a failure, not a skip. A run whose output couldn't be captured or parsed is reported as an error, never as passing.
 - A run that produces no output for several minutes is reported as hung, with the last lines it printed.
-- For each failing test, run that test alone up to three more times. Any pass makes it flaky; three failures make it deterministic.
+- Rerun failing tests alone, up to three more times each, for at most 10 tests: first one per distinct error message, then the rest in report order. Any pass makes it flaky; three failures make it deterministic. Mark tests beyond those 10 `not rerun`.
 
 ## Cause
 
@@ -40,7 +40,7 @@ Return only this, with no list of passing tests, no coverage, and no fix suggest
 Command: <command> (exit <code>)
 Result: <total> total, <passed> passed, <failed> failed, <skipped> skipped (<duration>)
 
-FAIL <test name> (<file>:<line>) [<cause>, deterministic|flaky]
+FAIL <test name> (<file>:<line>) [<cause>, deterministic|flaky|not rerun]
   <assertion or error message, at most 5 lines>
   Evidence: <one line>
   Baseline: new | already failing

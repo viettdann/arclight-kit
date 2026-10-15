@@ -2,6 +2,46 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] - 2026-10-15
+
+- Sync main through `debfef9` (upstream 1.16.0); retain inherited Codex models and authorized delegation with inline fallback.
+- Add small-task guidance, self-contained design plans, fresh-reader checks, and worker validation rules.
+- Include accepted workers in review scope and React performance references in relevant reviews; cap test reruns at ten failures.
+- Continue authorized work through completion while respecting runtime approval and progress requirements.
+
+## [1.16.0] - 2026-10-15
+
+Tuned for Claude Opus 5.5 as the session model and Sonnet 5.5 and Haiku 5.5 as workers.
+
+### Changed
+
+- `executor`, `supervise`, `arc`: a turn ends only on a question only the user can answer, before an irreversible action, or with the final report; mid-run notes ride with the next tool call.
+- `arc`: corrections only when they change the user's code, conclusions, or decisions; a mistaken-looking request is flagged in one sentence and done as asked; subagents only for big independent work, never to double-check your own.
+- `executor`: sub-agents deliver only their tasks; an unnecessary-looking plan step is done and noted, scope creep is deferred; a direction change deletes dropped tasks from the plan file instead of marking them; the summary omits empty sections.
+- `supervise`: every Haiku call (worker and Lookup) at effort `high` (no longer `max`); a packet's verify commands include the tests of the owned files' direct callers; the verifier gets the accepted groups' files in scope and the stopped groups' tasks as not done; a worker blocked on a verify command that couldn't start goes to the user.
+- `worker`: never runs the project-wide build, type-check, or full test suite; keeps working until every task is done, then stops without unrequested features, files, docs, or refactors (Suggestions instead); a verify command that didn't start or only checked syntax isn't a pass, packages aren't installed to run it, and the narrowest real check runs when the packet's don't exercise the change.
+- `test-runner`: effort `high`; the output log is the one file it writes; reruns capped at 10 failing tests.
+- `verifier`: files edited by sub-agents and workers are in scope; `react-performance.md` goes to Agents 3 and 5 on React diffs.
+- `brainstorming`: the design doc is self-contained and holds only what gets done (Goal, Decisions, Plan, Assumptions, Verification; no Design or Out of scope section, no rationale, exclusions, or pointers back at the conversation); the fresh-context review becomes a fresh-reader check on Sonnet that explains each Plan line back and lists its questions, missing references, and narrating lines; `examples/happy-path.md` shows a full doc; examples follow the one-choice-per-question rule.
+- `plan-auditor`: reads the new doc sections; flags lines that depend on the conversation or narrate what isn't done; rewrites add no rationale or exclusions; sub-agents get every claim in their area.
+- `refactor`, `debug`, `research`: concrete approval threshold and no progress stops in refactor; debug records its test baseline; research subagents get the full rules and every criterion.
+- `writing`: edit mode drops the re-read; the rebuild rule applies to write mode only.
+- `conventions`: layer files are named `conventions-<layer>.md` so Update finds them.
+- `handoff`: effort `medium`; the example carries the evidence markers the template requires.
+- `fresh-air`: `--model haiku --effort high` instead of a pinned id; no settings re-read step.
+
+## [1.15.0] - 2026-10-15
+
+### Added
+
+- `arc`: a Small tasks section for work that doesn't need the full skill: spec an idea (at most three questions that change the build, user steps, inputs, success criterion, UI states, an acceptance checklist, in chat), build a scoped feature (existing structure and tools, UI states, changed files, dependencies, steps to verify by hand), and diagnose an error (shown apart from inferred, ask for the exact missing log, smallest fix and why it works, repro and verify steps).
+
+### Changed
+
+- `brainstorming`: a question whose every answer leads to the same build isn't asked; a UI feature settles the user's steps, inputs, and each screen's loading, empty, failure, and success states; Verification opens with an acceptance checklist.
+- `executor`: the summary lists the files changed, any dependency added and why, and the steps to verify by hand.
+- `debug`: the fix is the smallest change that removes the cause; the report adds what is still unconfirmed, why the fix works, and the repro.
+
 ## [2.4.0] - 2026-10-14
 
 - Sync main through `5fe23ac`; preserve Codex packaging, runtime adaptation, and patch hooks.

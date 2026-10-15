@@ -24,6 +24,10 @@ Worker brief: `../executor/references/worker.md`. Reviewer brief: `../executor/r
 - [ ] Phase 6: commit proposed
 ```
 
+## Turn endings
+
+A message with no tool call ends your turn, and the run stops until the user writes again. Put a finding, a plan, or a change of direction in the same message as your next tool call and keep going. Don't end a turn on a summary that announces the next step, an offer to continue unless the user objects, or a list of decisions none of which blocks the remaining groups. Stop only for required user input, a runtime approval, or the Phase 5 report and commit proposal. For irreversible actions, check existing authorization and runtime policy; ask only when authorization or the target is missing. While workers or reviewers run, use available wait tools and keep required progress updates; do not assume reports resume an ended turn.
+
 ## Phase 0: Load the plan
 
 Use arguments and constraints from the current user request; do not assume host variable substitution.
@@ -86,7 +90,7 @@ Read for context: <files and symbols worth reading first, with line numbers when
 Use, don't recreate: <shared pieces another group created, with paths; or "none">
 Constraints: <conventions, APIs to reuse, things not to touch, decisions already made in the plan, the plan's project-wide constraints verbatim>
 Out of scope: <the plan's Out of scope lines, verbatim; or "none">
-Verify with: <lint and test commands that cover the owned files>
+Verify with: <lint and test commands that cover the owned files and the tests of their direct callers>
 TDD: on | off
 ```
 
@@ -110,7 +114,7 @@ Before trusting any report, run `snapshot check <run>`. It ignores every file a 
 
 ### Report status
 
-- `blocked`: the worker stopped on a question, a file it needs but doesn't own, or a git command it was denied. Answer from the plan or the codebase when you can, else ask the user. A file another running group owns waits for that group; otherwise back it up into this group with `snapshot backup`, which also adds it to the group's owned files. A denied git command usually has a read-only route (reading the backup or `git show HEAD:<file>` instead of stashing to see an old state); give the worker that route rather than running the command for it. Continue the worker (below). A blocked report isn't a failed attempt.
+- `blocked`: the worker stopped on a question, a file it needs but doesn't own, a git command it was denied, or a verify command that couldn't start. Answer from the plan or the codebase when you can, else ask the user. A verify command that couldn't start (missing dependency, no database) goes to the user unless another command covers the same files. A file another running group owns waits for that group; otherwise back it up into this group with `snapshot backup`, which also adds it to the group's owned files. A denied git command usually has a read-only route (reading the backup or `git show HEAD:<file>` instead of stashing to see an old state); give the worker that route rather than running the command for it. Continue the worker (below). A blocked report isn't a failed attempt.
 - `failed`: the worker couldn't get its verify commands to pass. A failed attempt.
 - `done`: go on to the gate.
 
@@ -133,7 +137,7 @@ A worker that disagreed with a finding gets a ruling from you: accept its reason
 
 Before sending a `fix` back, run `snapshot mark <run> <group>`. The next review of the group is then a fix round: the reviewer gets the earlier findings and `snapshot diff <run> <group> --since-review`, rules on each finding, and looks for new problems only in that fix diff (the fix round in `reviewer.md`). Problems it lists outside the fix go back to the same worker with the next message, or to the verifier, and never count as a failed attempt. The review after an escalation or a `rewrite` is a full review again.
 
-`accept` closes the group. Keep its backup until Phase 5: the verifier may still send the group's files back. `fix` and `rewrite` are failed attempts.
+`accept` closes the group. Keep its backup until Phase 5 ends; verifier fixes can still touch its files. `fix` and `rewrite` are failed attempts.
 
 ### Continuing a worker
 
@@ -156,7 +160,7 @@ Once every group is accepted or stopped:
 1. Build and test what the change can break: nothing for a change that can't alter behavior (docs, comments, Markdown, formatting only); otherwise the full build and type-check, plus the tests covering the touched files, or the full suite through the test runner brief (`../executor/references/test-runner.md`) when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named.
 2. A failing test whose file and the code it runs the final diff doesn't touch is reported as not from this run, with that evidence, and fixed only when the plan covers it.
 3. Cross-check every plan task against the final diff; tasks in stopped groups are listed as not done.
-4. Read and follow the installed skill `arc-kit:verifier`; it reviews the change across groups, which per-group reviews can't see.
+4. Read and follow the installed skill `arc-kit:verifier`, with accepted groups' owned files in scope and stopped groups' tasks marked not done, not to complete inline; it sees across groups.
 5. Delete `<run>` when no group was stopped; otherwise keep it and name it in the report.
 
 Then report:

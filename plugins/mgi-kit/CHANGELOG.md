@@ -2,6 +2,23 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-15
+
+- Sync main through `debfef9` (upstream 0.8.0); retain Codex packaging, paths, and patch guards.
+- Tighten upgrade scope, sequential EF fixes, API consumer discovery, and Azure Pipelines evidence and secret checks.
+- Preserve explicit authorization for external Azure operations.
+
+## [0.8.0] - 2026-10-15
+
+### Changed
+
+- `dotnet-upgrade`: runs sections 1 to 6 without progress stops and delivers only the upgrade; CI templates from other repos go in the report.
+- `efcore-review`: picked fixes run in sequence without stopping, each changing only what its finding names; suspicions on paths not shown hot are listed, not dropped.
+- `api-contract`: looks for the frontend repo before reporting endpoints unmatched; whole-surface scope only without a diff; one or two lines per finding.
+- `ado-pipelines-advisor`: editing YAML in the working tree is allowed, Azure DevOps side effects aren't; fetch facts the references lack even when sure; `@alias` templates are read at their ref or listed as unchecked; secret without `env:` is High in both checklists; example scripts start with `set -euo pipefail`.
+- `ado-work-item`: brief of about 15 to 25 lines; login prompt only on an authentication exit.
+- Tables of contents on reference files over 100 lines.
+
 ## [1.3.0] - 2026-10-14
 
 - Sync main through `5fe23ac`; preserve Codex packaging, runtime adaptation, and patch hooks.

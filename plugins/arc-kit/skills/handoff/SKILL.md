@@ -31,4 +31,4 @@ State the current goal and next action briefly, then continue the user's authori
 
 ## Retention
 
-When the task is closed, mention archiving or deleting its handoff if useful. Do not delete saved context without authorization.
+When resuming a handoff whose task is closed (merged or shipped), suggest archiving or deleting it. Do not delete saved context without authorization.

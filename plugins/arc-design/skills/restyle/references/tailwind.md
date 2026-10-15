@@ -169,4 +169,4 @@ function Sparkline({ data, className = "h-8 w-32 text-accent" }: { data: number[
 
 - Secondary chart: neutral stroke (`stroke-zinc-300` / `#d4d4d8`), 1.5px, no gradient fill, faint horizontal gridlines (`stroke-white/5`), muted axis labels.
 - Only the hero series gets the accent.
-- Range toggles (7d/30d/90d): segmented control, `rounded-md`, active item `bg-white/10 text-zinc-50`, others `text-zinc-400`.
+- Range toggles (7d/30d/90d): segmented control, track `rounded-md p-0.5` with no border, items `rounded`. Dark: track `bg-white/5`, active item `bg-white/10 text-zinc-50`, others `text-zinc-400`. Light: track `bg-zinc-100`, active item `bg-white shadow-sm text-zinc-900 font-semibold`, others `text-zinc-500`. A border on the track or the active item is a tell; remove it.

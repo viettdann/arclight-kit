@@ -25,7 +25,7 @@ Tag each task with its origin (`plan` or `conversation`).
 
 The worktree is shared: uncommitted changes in files this session never edited belong to the user or another session. Leave them out of the diff and never edit them.
 
-The in-scope paths are the files the user named or this session edited in this conversation. In a fresh session (after a new session, or resuming from a handoff) that list is empty: use the files the plan names, and when it names none, show `git status --short` and ask which files are in scope. Outside git, past 10 files, ask which ones to review.
+The in-scope paths are the files the user named, the files this session edited in this conversation, and the files its sub-agents or workers edited (under `arc-kit:supervise`, every file an accepted group owns). In a fresh session (after a new session, or resuming from a handoff) that list is empty: use the files the plan names, and when it names none, show `git status --short` and ask which files are in scope. Outside git, past 10 files, ask which ones to review.
 
 When this session committed any of its work, find its base: read `git log -10 --format='%h %ar %s'`, identify the oldest commit belonging to this session, and ask the user to confirm that boundary rather than guessing how many commits are yours; commits from an earlier session look identical from here.
 
@@ -80,7 +80,7 @@ Otherwise, when delegation is authorized and available, run the five review area
 | 4. Comments and docs | `./references/review-comments-docs.md` |
 | 5. Correctness, security, and tests | `./references/review-correctness.md` |
 
-When the diff touches UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, or Tailwind classes), Agent 5 also gets `./references/review-ui.md`.
+When the diff touches UI files (`.tsx`, `.jsx`, `.vue`, `.svelte`, `.html`, `.css`, `.scss`, or Tailwind classes), Agent 5 also gets `./references/review-ui.md`. When it touches React components, hooks, or stores, Agents 3 and 5 also get `./references/react-performance.md`. Apply these references inline when delegation is unavailable.
 
 **Reviewer prompt.** Each agent's prompt carries:
 

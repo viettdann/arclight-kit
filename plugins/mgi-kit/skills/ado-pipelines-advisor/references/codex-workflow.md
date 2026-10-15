@@ -25,7 +25,7 @@ These beat doc examples and the user's existing pipelines, whose comments can be
 
 1. **Native task first.** Deployments use the deploy task for their target. Fall back to the CLI (`AzureCLI@3` when it needs the service connection, else `Bash@3`) when no task exists or the task is wrong or fails for the case.
 2. **Shell steps are `Bash@3` with `targetType: inline`** (`CmdLine@2` only to match an existing pipeline using it), never the `script:`/`bash:`/`pwsh:`/`powershell:` shortcuts. Every inline script starts with `set -euo pipefail`; neither task enables errexit.
-3. **Toolchains are installed explicitly.** Node: `UseNode@1`, `version: '24.x'` (its default is `10.x`). .NET: `UseDotNet@2`, `version` from the project's `TargetFramework` (`net10.0` → `10.0.x`). A pin in the repo (`.nvmrc`, `engines`, `packageManager`, `global.json`) wins.
+3. **Toolchains are installed explicitly.** Node: `UseNode@1`, `version: '24.x'` (Active LTS when written, 2026-10; check https://nodejs.org/en/about/previous-releases when writing new YAML; the task's default is `10.x`). .NET: `UseDotNet@2`, `version` from the project's `TargetFramework` (`net10.0` → `10.0.x`). A pin in the repo (`.nvmrc`, `engines`, `packageManager`, `global.json`) wins.
 4. **`Cache@2` only with a before/after measurement showing a gain** ([performance.md](references/performance.md#2-cache2-measure-before-adding)); `node_modules` caches lost to plain `npm ci` when measured.
 5. **Task majors come from [task-versions.md](references/task-versions.md).** A task missing there is looked up on its reference page before use.
 6. **New YAML uses `vmImage: ubuntu-26.04`**; leave `ubuntu-latest`/`ubuntu-24.04` unflagged, flag other Linux images (`ubuntu-22.04` is deprecated).
@@ -36,7 +36,7 @@ These beat doc examples and the user's existing pipelines, whose comments can be
 
 Frequent silent failures; details and sources in the linked reference.
 
-- **No side effects unless asked**: never queue a run, push, or change pipelines, policies or settings.
+- **No side effects in Azure DevOps unless asked**: never queue a run, push, or change pipeline definitions, branch policies or settings. Editing YAML files in the working tree is the job when the user asks for it.
 - **Never expose a credential**: no `cat`, `source`, `echo` or `Read` of `.env`, no PAT asked in chat, no token picked for the user ([security.md](references/security.md#script-credentials)).
 - **Compile time vs runtime.** `${{ }}` runs at template expansion with parameters, literal variables and a subset of predefined variables; `$[ ]` runs before a stage/job with `variables`, `dependencies`, `stageDependencies`; `$( )` is expanded before each task. Variable-group values, `setvariable` values and runtime-only predefined variables (`Build.BuildId`, `System.PullRequest.*`, `System.AccessToken`) are empty inside `${{ }}` ([execution-model.md](references/execution-model.md#availability-matrix)).
 - **Macros do not expand in** `trigger`, `pr`, `schedules`, `resources` (including repository `ref:`), `- group:` names, `checkout: git://...@ref`, template paths, or service connection/environment/pool names taken from groups. Use `${{ parameters.x }}` ([execution-model.md](references/execution-model.md#where-macros-and-runtime-expressions-are-not-expanded)).
@@ -55,7 +55,7 @@ Frequent silent failures; details and sources in the linked reference.
 
 ## Mode routing
 
-Load only what the task needs: read the section listed in the file's Contents, never `cat` a whole reference.
+Load only what the task needs: the anchored section when the table gives one, otherwise the sections of that file the task touches, found through its Contents. Use available file-reading tools or bounded shell reads for those sections.
 
 | Mode | Load | Output |
 |---|---|---|
@@ -87,4 +87,4 @@ Before any live script, read [Script credentials](references/security.md#script-
 
 ## Live docs
 
-Fetch only what the references lack, as in [doc-map.md](references/doc-map.md#how-to-fetch). On a failed fetch, answer from the references, marked "not verified against live docs".
+When the answer depends on a fact the references don't hold (a task input, an image label, a limit, a recent behavior change), fetch it as in [doc-map.md](references/doc-map.md#how-to-fetch) even when you feel sure: Azure Pipelines changes every sprint. Don't re-fetch what the references already state. On a failed fetch, answer from the references, marked "not verified against live docs".

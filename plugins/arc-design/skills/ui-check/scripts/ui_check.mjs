@@ -48,13 +48,21 @@ const MESSAGE_CHECKS = ['js-error', 'console'];
 const SEVERITY = { overflow: 1, contrast: 1, focus: 1, name: 1, 'broken-image': 1, 'js-error': 1, 'request-asset': 1,
   clipped: 2, overlap: 2, target: 2, distorted: 2, 'placeholder-label': 2, console: 2, request: 2, lang: 2, 'zoom-blocked': 2, 'lcp-lazy': 2,
   'layout-shift': 2, clickable: 1, 'broken-link': 2, 'perf-regression': 2, favicon: 3, alt: 3, heading: 3, viewport: 3, 'contrast-unmeasured': 3, lcp: 3,
-  'text-over-media-contrast': 1, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'input-zoom': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
+  'text-over-media-contrast': 1, 'contrast-apca': 2, 'content-hidden-at-rest': 2, 'clipped-popover': 2, 'tiny-text': 2, 'input-zoom': 2, 'line-length': 3, 'tight-leading': 3, 'all-caps-body': 3,
   'wide-tracking': 3, 'edge-flush-text': 3, 'nested-card': 3, 'icon-tile': 3, 'heading-rhythm': 3,
   title: 2, 'meta-duplicate': 2, canonical: 2, 'share-image': 2, noindex: 2, 'json-ld': 2, 'meta-js-only': 2, 'meta-missing': 3, 'meta-length': 3,
   'install-asset': 2, 'install-icon': 3, 'install-meta': 3, 'inp-slow': 2, inp: 3, 'layout-shift-input': 2, 'duplicate-id-ref': 2, 'duplicate-id': 3, 'link-purpose': 3 };
 
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 const lum = (rgb) => { const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+// APCA 0.0.98G-4g Lc beside the WCAG 2 ratio: WCAG 2 decides a contrast failure, Lc flags passing text that still reads weak (dark text on mid-tones, muted text in dark themes).
+const apcaLc = (txt, bg) => {
+  const y = ([r, g, b]) => { const v = 0.2126729 * (r / 255) ** 2.4 + 0.7151522 * (g / 255) ** 2.4 + 0.072175 * (b / 255) ** 2.4; return v > 0.022 ? v : v + (0.022 - v) ** 1.414; };
+  const [yt, yb] = [y(txt), y(bg)];
+  if (Math.abs(yb - yt) < 0.0005) return 0;
+  const sc = yb > yt ? (yb ** 0.56 - yt ** 0.57) * 1.14 : (yb ** 0.65 - yt ** 0.62) * 1.14;
+  return Math.abs(sc) < 0.1 ? 0 : (sc - Math.sign(sc) * 0.027) * 100;
+};
 
 // Chrome's screenshots are 8-bit RGB or RGBA, non-interlaced; anything else returns null and the text stays unmeasured.
 const decodePng = (b64) => {
@@ -147,6 +155,13 @@ function audit({ mobile, phone, spacing }) {
     return [r, g, b];
   };
   const lum = (rgb) => { const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const apcaLc = (txt, bg) => {
+    const y = ([r, g, b]) => { const v = 0.2126729 * (r / 255) ** 2.4 + 0.7151522 * (g / 255) ** 2.4 + 0.072175 * (b / 255) ** 2.4; return v > 0.022 ? v : v + (0.022 - v) ** 1.414; };
+    const [yt, yb] = [y(txt), y(bg)];
+    if (Math.abs(yb - yt) < 0.0005) return 0;
+    const sc = yb > yt ? (yb ** 0.56 - yt ** 0.57) * 1.14 : (yb ** 0.65 - yt ** 0.62) * 1.14;
+    return Math.abs(sc) < 0.1 ? 0 : (sc - Math.sign(sc) * 0.027) * 100;
+  };
   const hex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
   // The page's own canvas color (dark under color-scheme: dark), read from a probe since a canvas can't parse system colors.
   const probe = document.createElement('div');
@@ -182,9 +197,10 @@ function audit({ mobile, phone, spacing }) {
     const [l1, l2] = [lum(fg), lum(bg)].sort((a, b) => b - a);
     const ratio = (l1 + 0.05) / (l2 + 0.05);
     const size = parseFloat(s.fontSize), weight = Number(s.fontWeight) || 400;
-    const min = size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5;
-    if (ratio < min) add('contrast', el, `${(Math.floor(ratio * 100) / 100).toFixed(2)}:1, needs ${min}:1 (${hex(fg)} on ${hex(bg)})`
-      + (positioned ? '; positioned text, the real background may be a sibling' : ''), positioned);
+    const large = size >= 24 || (size >= 18.66 && weight >= 700), min = large ? 3 : 4.5, lcMin = large ? 45 : 60, lc = Math.round(apcaLc(fg, bg));
+    const where = positioned ? '; positioned text, the real background may be a sibling' : '';
+    if (ratio < min) add('contrast', el, `${(Math.floor(ratio * 100) / 100).toFixed(2)}:1, needs ${min}:1, Lc ${lc} (${hex(fg)} on ${hex(bg)})` + where, positioned);
+    else if (Math.abs(lc) < lcMin) add('contrast-apca', el, `Lc ${lc}, needs ${lcMin}; passes WCAG 2 at ${(Math.floor(ratio * 100) / 100).toFixed(2)}:1 (${hex(fg)} on ${hex(bg)})` + where, positioned);
   }
   // Measured from screenshots by the caller, which reaches the page only through this list.
   window.__uiMedia = unmeasured;
@@ -806,14 +822,19 @@ function prepareFocus() {
   for (const el of document.querySelectorAll('*')) window.__uiCheck.before.set(el, sig(el) + '#' + sig(el.parentElement));
 }
 
-// Text over an image, gradient, or glass: glyph pixels are those that change when the text is hidden, each compared with the same pixel behind it.
+// Text over an image, gradient, or glass: glyph pixels are those that change when the text is hidden. Each is scored as the text's own fill color
+// over the backdrop pixel behind it, since a captured glyph pixel at body sizes is mostly an antialiased blend that reads as half the real contrast.
 const mediaContrast = async (i) => {
   const m = await evaluate(`(() => { const el = window.__uiMedia[${i}]; el.scrollIntoView({ block: 'center', behavior: 'instant' });
     const b = el.getBoundingClientRect(), s = getComputedStyle(el), t = el.innerText.trim().replace(/\\s+/g, ' '), x = Math.max(0, b.left), y = Math.max(0, b.top);
     const size = parseFloat(s.fontSize), weight = Number(s.fontWeight) || 400;
-    return { selector: window.__cssPath(el), text: t ? '"' + (t.length > 40 ? t.slice(0, 40) + '…' : t) + '"' : '', min: size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5,
+    // The fill resolved to sRGB through a canvas, which parses any CSS color; transparent (gradient text) falls back to the captured pixels.
+    const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = s.webkitTextFillColor; ctx.fillRect(0, 0, 1, 1);
+    const [fr, fg, fb, fa] = ctx.getImageData(0, 0, 1, 1).data;
+    return { fill: [fr, fg, fb, fa / 255], selector: window.__cssPath(el), text: t ? '"' + (t.length > 40 ? t.slice(0, 40) + '…' : t) + '"' : '', min: size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5, lcMin: size >= 24 || (size >= 18.66 && weight >= 700) ? 45 : 60,
       clip: { x: x + scrollX, y: y + scrollY, width: Math.min(innerWidth, b.right) - x, height: Math.min(innerHeight, b.bottom) - y, scale: 1 } }; })()`);
-  const { clip, ...found } = m;
+  const { clip, fill, ...found } = m;
   if (!(clip.width >= 1 && clip.height >= 1)) return found;
   const shot = async () => decodePng((await send('Page.captureScreenshot', { format: 'png', clip })).data);
   const shown = await shot();
@@ -823,15 +844,18 @@ const mediaContrast = async (i) => {
   await evaluate(`(() => { const el = window.__uiMedia[${i}], s = window.__uiStyle; if (s === null) el.removeAttribute('style'); else el.setAttribute('style', s); })()`);
   if (!shown || !bare || shown.px.length !== bare.px.length) return found;
   const glyph = [];
+  const solid = fill[3] > 0;
   for (let p = 0; p < shown.px.length; p += shown.ch) {
-    const fg = [...shown.px.subarray(p, p + 3)], bg = [...bare.px.subarray(p, p + 3)], diff = Math.max(...fg.map((v, k) => Math.abs(v - bg[k])));
+    const px = [...shown.px.subarray(p, p + 3)], bg = [...bare.px.subarray(p, p + 3)], diff = Math.max(...px.map((v, k) => Math.abs(v - bg[k])));
+    const fg = solid ? bg.map((v, k) => fill[k] * fill[3] + v * (1 - fill[3])) : px;
     const [l1, l2] = [lum(fg), lum(bg)].sort((a, b) => b - a);
-    if (diff >= 10) glyph.push({ diff, ratio: (l1 + 0.05) / (l2 + 0.05) });
+    if (diff >= 10) glyph.push({ diff, ratio: (l1 + 0.05) / (l2 + 0.05), lc: Math.abs(apcaLc(fg, bg)) });
   }
-  // Antialiased edges blend into the backdrop and would pass for low contrast; only pixels at least half as changed as the strongest count.
-  const peak = Math.max(0, ...glyph.map((g) => g.diff)), ratios = glyph.filter((g) => g.diff >= peak / 2).map((g) => g.ratio).sort((a, b) => a - b);
-  if (ratios.length < 8) return found;
-  return { ...found, pixels: ratios.length, ratio: Math.floor(ratios[Math.floor(ratios.length * 0.1)] * 100) / 100 };
+  // Faint antialiased edges sit over backdrop the glyph barely covers; only pixels at least half as changed as the strongest count.
+  const peak = Math.max(0, ...glyph.map((g) => g.diff)), strong = glyph.filter((g) => g.diff >= peak / 2);
+  if (strong.length < 8) return found;
+  const p10 = (key) => strong.map((g) => g[key]).sort((a, b) => a - b)[Math.floor(strong.length * 0.1)];
+  return { ...found, pixels: strong.length, ratio: Math.floor(p10('ratio') * 100) / 100, lc: Math.round(p10('lc')) };
 };
 
 const url = await resolveTarget(pos[0], opt.root);
@@ -940,7 +964,8 @@ for (const width of widths) for (const scheme of schemes) {
   for (let i = 0; i < media; i++) {
     const m = i < 20 ? await mediaContrast(i) : await evaluate(`window.__cssPath(window.__uiMedia[${i}])`).then((selector) => ({ selector, text: '' }));
     const { selector, text } = m;
-    if (m.ratio < m.min) record({ check: 'text-over-media-contrast', selector, text, review: true, detail: `${m.ratio.toFixed(2)}:1 at the 10th percentile of ${m.pixels} glyph pixels, needs ${m.min}:1` }, where);
+    if (m.ratio < m.min) record({ check: 'text-over-media-contrast', selector, text, review: true, detail: `${m.ratio.toFixed(2)}:1 at the 10th percentile of ${m.pixels} glyph pixels, needs ${m.min}:1, Lc ${m.lc}` }, where);
+    else if (m.lc < m.lcMin) record({ check: 'contrast-apca', selector, text, review: true, detail: `Lc ${m.lc} at the 10th percentile of ${m.pixels} glyph pixels over media, needs ${m.lcMin}; passes WCAG 2 at ${m.ratio.toFixed(2)}:1` }, where);
     else if (m.ratio === undefined && unmeasured++ < 3) record({ check: 'contrast-unmeasured', selector, text, review: true, detail: 'text over an image, gradient, or glass; check it in the screenshot' }, where);
   }
   await evaluate("scrollTo({ top: 0, behavior: 'instant' })");

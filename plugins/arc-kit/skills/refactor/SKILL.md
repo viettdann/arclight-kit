@@ -13,7 +13,7 @@ Change structure, never behavior. Behavior is everything a caller, user, or othe
 
 - State the goal in one line (what becomes easier to change) and the files in scope. Infer both from the request; ask only when the target is unclear.
 - Keep feature work and bug fixes out. A bug found mid-refactor goes in the report, not in the diff; mixing the two makes the "behavior unchanged" claim unverifiable.
-- If the scope spans several packages or more than a handful of files, show the step-2 contract map and the move sequence, and wait for approval before editing. For larger efforts, plan through `brainstorming` and run through `executor`; this skill's rules still apply to each step.
+- If the scope spans several packages or more than 5 files, show the step-2 contract map and the move sequence, and wait for approval before editing. After that, run steps 2 to 5 through without stopping to report progress or offer to continue; stop early only for a frozen surface the goal needs changed (step 2), a red step you can't make smaller, or the final report. For larger efforts, plan through `brainstorming` and run through `executor`; this skill's rules still apply to each step.
 
 ## 2. Map the contract surface
 

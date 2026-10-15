@@ -1,6 +1,6 @@
 {
   "name": "mgi-kit",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Audit ASP.NET API contracts, upgrade .NET, review EF Core queries, inspect Azure Pipelines and work items, and diagnose live Azure resources.",
   "author": {
     "name": "viettdann"

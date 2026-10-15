@@ -2,6 +2,23 @@
 
 One section per row of the review table. Each says when the finding holds, the fix, and what the fix must not break.
 
+## Contents
+
+- [Materialization and repeated enumeration](#materialization-and-repeated-enumeration)
+- [N+1 and lazy loading](#n1-and-lazy-loading)
+- [Include explosion and split queries](#include-explosion-and-split-queries)
+- [Index-compatible predicates](#index-compatible-predicates)
+- [Paging](#paging)
+- [Persistence in loops](#persistence-in-loops)
+- [Change detection in long imports](#change-detection-in-long-imports)
+- [Bulk updates and deletes](#bulk-updates-and-deletes)
+- [DbContext lifetime and concurrency](#dbcontext-lifetime-and-concurrency)
+- [Raw SQL](#raw-sql)
+- [Dynamic query shapes](#dynamic-query-shapes)
+- [Parameters, constants, compiled queries](#parameters-constants-compiled-queries)
+- [`.Contains()` on a local list](#contains-on-a-local-list)
+- [Index coverage](#index-coverage)
+
 ## Materialization and repeated enumeration
 
 A helper that returns `List<T>` has already run its query; everything the caller does afterwards is in memory. A helper that returns `IEnumerable<T>` over a query runs it again each time it is enumerated (`Count()` then `foreach` is two queries).

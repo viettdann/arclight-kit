@@ -1,6 +1,14 @@
 # Known upgrade traps
 
-Changes that the fetched breaking-change pages miss, bury, or describe without the fix. Read the section for each major version crossed and each area the inventory shows in use. The fetched pages stay the source of truth: when an entry here disagrees with them, the page wins. The net11.0 entries were collected from previews; confirm each against the GA page.
+Changes that the fetched breaking-change pages miss, bury, or describe without the fix. Read the section for each major version crossed and each area the inventory shows in use. The fetched pages stay the source of truth: when an entry here disagrees with them, the page wins. Collected up to 2026-10-14; the net11.0 entries come from previews, so confirm each against the GA page.
+
+## Contents
+
+- [Grep first](#grep-first)
+- [net8.0 → net9.0](#net80--net90)
+- [net9.0 → net10.0](#net90--net100)
+- [net10.0 → net11.0](#net100--net110)
+- [Smoke checks for the report](#smoke-checks-for-the-report)
 
 ## Grep first
 

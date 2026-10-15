@@ -268,7 +268,7 @@ For the skill's live scripts (`auth-check.py`, `preview.py`, `step-durations.py`
 |---|---|---|
 | Secret value, PAT or connection string literal in YAML | Critical | Move to a Key Vault-linked group; rotate the value |
 | Secret passed as a CLI argument or `$(secret)` inside an inline script | High | Map with `env:` and read the env var |
-| Secret variable expected in the environment without `env:` mapping | Medium (silent empty value) | Add `env: NAME: $(secret)` on the step |
+| Secret variable expected in the environment without `env:` mapping | High (silent empty value) | Add `env: NAME: $(secret)` on the step |
 | Derived secret (base64 header, JSON with a token) printed or traced | High | `##vso[task.setsecret]` before use; no `set -x`/`curl -v` |
 | JSON/YAML blob stored as one secret | Medium | One secret per value |
 | `AzureKeyVault@2` with `SecretsFilter: '*'` | Medium | List the needed names |

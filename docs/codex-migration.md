@@ -27,6 +27,8 @@ Paths in the last column are under `plugins/` unless otherwise stated. Historica
 
 ## Sync with the Claude line
 
+The 2026-10-15 sync integrates `main` through `debfef9` (upstream arc-kit 1.16.0, arc-design 1.10.0, mgi-kit 0.8.0). Codex releases are arc-kit and arc-design 2.5.0, mgi-kit 1.4.0. APCA and text-over-media changes retain the Codex hit-area and authentication fixes. New workflow guidance lives in bundled references, including the small-task brief, to preserve the 8,000-byte entrypoint limit. Models remain inherited unless user-requested routing is supported; delegation, approvals, and progress follow the active runtime. Upstream Claude model/effort settings and Claude configuration changes are not imported.
+
 The 2026-10-14 merge `16b9828` integrates `main` through `5fe23ac`. The Codex catalog now contains 25 skills: arc-design and arc-kit 2.4.0, mgi-kit 1.3.0. It adds technical style, UI fidelity/SEO/installed-app checks, supervised execution, EF Core review, Azure Pipelines diagnostics, work-item briefs, and live Azure diagnostics.
 
 Supervise packages worker/reviewer briefs as references, not custom Claude agents. It inherits the session model by default; alternative models require user-requested routing and runtime support. Without permitted delegation it runs inline and reports missing independent review. The worker-specific agent-git-guard remains an unregistered standalone helper: Codex tool hooks do not provide the Claude worker identity contract needed to enforce it.
@@ -66,6 +68,8 @@ The comment hook receives completed `apply_patch` calls, maps added lines to fin
 - Keep source and runtime configuration portable: no dependency on a particular user's Codex cache, agent model, or installed connector.
 
 ## Verification
+
+The 2026-10-15 sync passed 263 checks: 250 Python tests and 13 Node tests, including APCA CLI behavior, CSS-fill sampling over media, authentication redaction, and 24px hit targets. The media regression also failed against the pre-merge sampler as expected. Package validation, syntax checks for the changed JavaScript helpers, and `git diff --check` passed. Live Codex installation and browser rendering were not exercised.
 
 The 2026-10-06 sync passed 164 tests across package and skill lint, browser authentication, comment lint, arc reload, destructive guard, diff collection, fresh-air, and the tell scanner. Package validation, Python, JavaScript, and shell syntax checks, and `git diff --check` also passed. Live browser rendering and host installation were not exercised.
 

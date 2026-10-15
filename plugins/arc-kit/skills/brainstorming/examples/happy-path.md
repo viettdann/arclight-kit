@@ -38,4 +38,27 @@ Use a sliding window keyed by the existing trusted client identity, with bounded
 | `server/src/middleware/rateLimit.test.ts` | Cover limits, expiry, cleanup, and client isolation | Run the relevant test file |
 | `server/tests/rateLimit.integration.test.ts` | Exercise the registered middleware | Existing integration test command passes |
 
-Save a durable design if the work needs one, then implement and verify. If the original request was only to discuss a design, finish with the design and plan instead.
+Save a durable design if the work needs one, using Goal, Decisions, Plan, optional Assumptions, and Verification. Each Plan line names the file, symbols or signatures to change, and a command or observable check. Verification uses `- [ ]` items. Run the fresh-reader check when delegation is authorized and available; otherwise check inline and report the missing independent review. Then implement and verify. If the original request was only to discuss a design, finish with the design and plan instead.
+
+
+Illustrative saved doc (verify the fictional symbols and commands against the real repo before use):
+
+```markdown
+# IP rate limiter
+## Goal
+Request 31 from one client IP within 60 seconds returns 429; the middleware and integration tests pass.
+## Decisions
+- Sliding window, 30 requests per IP per 60 seconds, bounded in-memory storage with expiry cleanup.
+- `server/src/middleware/clientIp.ts` exports the existing trusted identity helper `getTrustedClientIp()`.
+- Register on every API endpoint in `server/src/main.ts`; send `Retry-After` with 429 responses.
+- The verified single-process deployment resets the window on restart.
+## Plan
+1. `server/src/middleware/rateLimit.ts`: export `rateLimitMiddleware({ limit, windowMs, now })` using the trusted identity helper; bound storage and expire old entries. Check: `bun test server/src/middleware/rateLimit.test.ts`.
+2. `server/src/middleware/rateLimit.test.ts`: use a fake clock to cover requests 1–30, request 31, the 60-second boundary, expiry cleanup, and client isolation. Check: `bun test server/src/middleware/rateLimit.test.ts`.
+3. `server/src/main.ts`: register `rateLimitMiddleware({ limit: 30, windowMs: 60_000 })` before API routes. Check: `bun test server/tests/rateLimit.integration.test.ts`.
+4. `server/tests/rateLimit.integration.test.ts`: exercise registered middleware, 429 and Retry-After, and independent client limits. Check: `bun test server/tests/rateLimit.integration.test.ts`.
+## Verification
+- [ ] `bun test server/src/middleware/rateLimit.test.ts` passes.
+- [ ] `bun test server/tests/rateLimit.integration.test.ts` passes.
+- [ ] Requests 1–30 pass, request 31 returns 429 with Retry-After, and a request after expiry passes.
+```

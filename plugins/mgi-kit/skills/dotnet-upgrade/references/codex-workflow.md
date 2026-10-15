@@ -4,6 +4,8 @@ Resolve bundled paths from the parent skill directory containing SKILL.md, inclu
 
 Move the solution to the target framework with the build and tests green at every step, changing only what the upgrade requires. Facts about versions, support dates, and breaking changes are fetched, not recalled.
 
+Work through sections 1 to 6 in one run. Pause only for required input or approval where a section calls for it, honoring existing authorization; otherwise continue through the final report without ending a turn on progress or asking whether to continue.
+
 ## 1. Target and baseline
 
 - Target: the one the user named; otherwise the latest GA LTS, checked on `https://dotnet.microsoft.com/platform/support/policy/dotnet-core`. STS or preview only when asked.
@@ -24,7 +26,7 @@ Read, don't edit:
 - Central files: `global.json` (SDK version and `rollForward`), `Directory.Build.props` and `.targets`, `Directory.Packages.props`, `NuGet.config`. Note `TreatWarningsAsErrors` and `WarningsAsErrors` wherever they are set; they turn new obsolete warnings into build errors (section 4).
 - Packages: `dotnet list package --outdated`, `--vulnerable --include-transitive`, `--deprecated`. Runtime-tied packages (`Microsoft.AspNetCore.*`, `Microsoft.EntityFrameworkCore.*`, `Microsoft.Extensions.*`, `System.*` packages that ship with the runtime) move with the TFM major; third-party packages move only when the new TFM requires it.
 - Azure Functions projects: in-process when they reference `Microsoft.NET.Sdk.Functions` or use `[FunctionName]`. In-process ends support on 2026-11-10 and runs only .NET 8, so it blocks any TFM change past net8.0. Migrate the model first, on the current TFM, with [functions-isolated.md](references/functions-isolated.md), then return to section 3 for the TFM. Run its workspace checks on every Functions project, isolated ones included.
-- Outside the projects: Dockerfiles (`mcr.microsoft.com/dotnet/sdk`, `aspnet`, `runtime` tags), CI (`actions/setup-dotnet` `dotnet-version`, Azure DevOps `UseDotNet@2`), `.config/dotnet-tools.json` (`dotnet-ef`), and hosting config kept in the repo (Bicep, Terraform, pipeline YAML runtime stacks).
+- Outside the projects: Dockerfiles (`mcr.microsoft.com/dotnet/sdk`, `aspnet`, `runtime` tags), CI (`actions/setup-dotnet` `dotnet-version`, Azure DevOps `UseDotNet@2`, including templates pulled from another repo through `resources.repositories`, which go in the report for the user), `.config/dotnet-tools.json` (`dotnet-ef`), and hosting config kept in the repo (Bicep, Terraform, pipeline YAML runtime stacks).
 - More than about ten projects in scope: show the inventory and the step order (section 4), and wait for approval before editing.
 
 ## 3. Read the breaking changes
@@ -56,6 +58,8 @@ Each step:
 5. Fix errors with the smallest change that matches the breaking-change entry. A behavioral change from section 3 that hits this code gets a test, or a line in the report when no test can observe it.
 
 Never add `<NoWarn>` or `#pragma warning disable` to clear a new warning, and never pin a package to an older version to dodge a break without saying so. New obsolete warnings (`SYSLIB*`, `CS0618`, `ASPDEPR*`) go in the report; fix them only when trivial or asked. Under `TreatWarningsAsErrors` they fail the build instead: fix the ones with a one-line replacement named in the obsoletion message, and ask before adding the remaining ids to `WarningsNotAsErrors`, listing each with its count.
+
+Deliver the upgrade and nothing beside it: no README, docs or changelog edits, no refactors or new APIs the build doesn't need, no tests beyond those step 5 calls for. Put anything worth doing later under **Not done** in the report.
 
 ## 5. Outside the code
 

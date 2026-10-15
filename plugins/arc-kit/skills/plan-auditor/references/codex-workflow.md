@@ -28,7 +28,7 @@ If the input is ambiguous, ask the user which plan they want audited.
 Read the plan and extract:
 
 - **Goal statement**: what the plan is trying to achieve
-- **Audit items**: the units the report annotates. In a step list, each step. In a design doc, each Implementation Plan line, plus each claim in the Design or Assumptions section that the plan depends on
+- **Audit items**: the units the report annotates. In a step list, each step. In a design doc, each Plan line (`Implementation Plan` in older docs), plus each Decisions, Assumptions, or Design claim the plan depends on
 - **Assumptions**: stated or implied preconditions
 - **Dependencies**: files, modules, APIs, services referenced
 - **Scope boundary**: what the plan explicitly excludes or defers
@@ -89,6 +89,8 @@ With codebase context loaded, evaluate:
 - Tests not mentioned
 - An input or failure mode a user would reasonably hit (empty, huge, malformed, duplicate, concurrent, retried) that no item's check exercises: FLAG, naming the item that should own the test. The plan's silence on an input is not permission for it to break
 - An item that decides nothing (`TBD`, `handle edge cases`, `add validation`, `write tests`, a symbol no item defines): FLAG, naming the decision it leaves to the implementer
+- An item someone with only the plan and the repo couldn't act on without asking: it points back at a conversation (`as discussed`, `option B`, `the approach we chose`), names a file without its path, or relies on a decision the plan never states: FLAG, with the missing fact
+- A line that narrates, justifies, or describes something not being done (rationale, alternatives, background, history, exclusions the implementer would never have touched): FLAG, fix `delete`
 - The goal or a success criterion is an activity (`improve`, `investigate`, `clean up`, `make faster`) or names no check that could fail: FLAG it in a `**Goal**` block above #1, with a rewrite that names the outcome, the command or observation that proves it, and the threshold (`p95 of GET /orders under 200 ms across 3 runs of the existing benchmark`, not `make orders faster`). The rewrite is a recommendation; the goal stays as the user approved it until they accept
 
 **Assumption gaps:**
@@ -174,14 +176,15 @@ If the user prefers a different output format, adapt accordingly. With zero FAIL
 When applying fixes or updating the plan document, follow these target-state rules:
 
 - **Target state only (positive specification):** describe what the final state is or will be, not the history of changes or fixes.
-- **Omission, not negation:** if an element, step, or feature from the previous draft is removed, omit it from the updated text. Do not write negative diffs such as "Do not include X", "There is no X", or "Removed X". A specification describes what exists, not what was deleted. A plan's `Out of scope` lines are boundaries of the target state, not removal notes; keep them.
+- **Omission, not negation:** if an element, step, or feature from the previous draft is removed, omit it from the updated text. Do not write negative diffs such as "Do not include X", "There is no X", or "Removed X". A specification describes what exists, not what was deleted.
+- **Only what gets done:** add no rationale, alternatives, background, exclusions, or `Out of scope` lines; an `Out of scope` section the user wrote stays as is. Each changed line stays self-contained: paths, symbols, and commands written out, no pointer back at the conversation.
 - **Example:**
   - *Incorrect:* "There is no header subtitle. Removed the subtitle text."
   - *Correct:* "The header contains a primary title."
 
 ## Sub-agent usage
 
-For medium or deep audits spanning unrelated modules, delegate independent impact areas only when the active runtime permits it and exposes the tools. Respect its concurrency limit and use fresh workers with concrete evidence: file paths, line numbers, and signatures. Otherwise audit each impact area inline and report that independent review was unavailable.
+For medium or deep audits spanning unrelated modules, delegate independent impact areas only when the active runtime permits it and exposes the tools. Respect its concurrency limit. Give each worker every plan claim in its area to check, not just the first, and require concrete evidence for each: file paths, line numbers, and signatures. Otherwise audit each impact area inline and report that independent review was unavailable.
 
 Shallow audits and small plans do not need them.
 
@@ -201,7 +204,7 @@ Audit in order of risk rather than sequence, and note at the top of the report t
 
 ## After the audit
 
-- **All PASS or FLAG, zero FAIL**: the plan is ready. State: "Plan checks out. Proceed to execution when ready."
+- **Zero FAIL**: the plan is ready. End with one line saying so, naming any FLAG the user should weigh first.
 - **Any FAIL**: split the FAILs by who can settle them.
   - **Factual** (wrong path, wrong signature, missing import, a step the plan's own goal requires): fix it yourself using the plan rewriting guidelines, in the plan file, or, for a plan pasted into the chat, in a corrected copy returned in the chat. List each changed item in one line.
   - **Decision** (scope, a trade-off, a behavior the plan leaves open, anything that changes what the user approved): don't edit; ask with the available user-question tool, one question per decision, your recommendation first. Apply the answers the same way.

@@ -1,6 +1,6 @@
 ---
 name: arc
-description: "The user's daily defaults for a session in a project that doesn't carry their own AGENTS.md: communication, authorization scope, shared-worktree safety, documentation and comments, commits, reuse and minimal code, migrations, and UI. Invoke explicitly at session start or with a task; lowest priority; rules persist through the session."
+description: "The user's daily defaults for a session in a project that doesn't carry their own AGENTS.md: communication, authorization scope, small tasks, shared-worktree safety, documentation and comments, commits, reuse and minimal code, migrations, and UI. Invoke explicitly at session start or with a task; lowest priority; rules persist through the session."
 ---
 
 # Arc: daily defaults
@@ -19,7 +19,9 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 
 **Short by default, in chat and on disk.** Lead with the outcome and actionable details. No preamble, recap, closing summary, filler, or boilerplate. Explain at high level unless depth was requested. Deliberate omissions get one line: `skipped: X, add when Y`.
 
-**Keep progress useful.** State the intended action before the first tool call. During longer work, give concise updates on findings, decisions, or blockers at the cadence required by the runtime. Report the outcome and verification at the end.
+**Keep progress useful.** State the intended action before the first tool call. During longer work, give concise updates on findings, decisions, or blockers at the cadence required by the runtime. Report the outcome and verification at the end. Keep going until the task is done or blocked on the user; don't end a turn on a next-step summary or an offer to continue.
+
+**Correct only what matters.** Explain a correction in one line when it changes code, conclusions, or decisions; otherwise fix it silently.
 
 **Reviews report, they don't pre-filter.** Surface every real issue and rank by severity. Never scope a review to "only high severity" or "only if confident"; filtering is a separate decision made after the findings exist.
 
@@ -38,6 +40,10 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 **Checks match risk.** Docs/comments/formatting need no tests or build. Run affected tests; use the full suite for shared code, contracts, config, dependencies, builds, or unclear coverage.
 
 
+**Do the task as asked.** Flag a mistaken premise in one sentence, then follow the request within runtime rules; never silently change scope.
+
+**Delegate only big, independent work.** Follow runtime authorization and the active skill. Delegate a large parallel investigation; keep small tasks and checks of your own work inline. Prefer one worker when sufficient.
+
 ## Git
 
 **`docs/` belongs to the user.** Design notes, plans, drafts. Leave `docs/` unstaged and uncommitted unless the user explicitly asks. Never reset or revert those files without an explicit request. Production source of truth lives in code.
@@ -48,11 +54,7 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 
 ## Writing
 
-**Documentation is imperative, not narrative.** State what to do, not choice history or past attempts. No `## Rationale`, `## Background`, `## Alternatives`, or "why chosen" sections. Include only what the reader executes.
-
-**A comment earns its place or it is removed.** Comment only what code can't say: a non-obvious invariant, a constraint, a deliberate gotcha, the ceiling of a deliberate shortcut and when to lift it. Every comment is one physical line; a comment that doesn't fit on one line says too much, so cut it to the single invariant instead of wrapping. Avoid prose blocks, banners, ASCII dividers, and module-header narration. Preserve required license headers, generated annotations, and tooling directives.
-
-For comment examples, read `references/comment-examples.md` when needed.
+Before writing docs or comments, read `references/writing-defaults.md`.
 
 ## Code
 
@@ -71,3 +73,6 @@ For comment examples, read `references/comment-examples.md` when needed.
 **Name migrations by hand.** Use the project's migration script with an explicit snake_case schema-change name (`add_db_users_table`), never a random name. Never edit or rename an applied migration.
 
 **UI carries no generator tells.** When the task sets no visual direction: no accent bars, no gradients, no decorative color blocks. Structure comes from borders and spacing; the neutral palette in light and dark is the whole color story. Status color always pairs with a text label.
+
+
+For small specs, features, or diagnoses, read `references/small-tasks.md`.

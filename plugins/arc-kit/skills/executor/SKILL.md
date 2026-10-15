@@ -5,7 +5,7 @@ description: "Execute an existing implementation plan or task list with scoped e
 
 # Executor
 
-Implement plans with discipline. Scan for blockers, explore per-task, verify everything.
+Implement plans with discipline. Scan for blockers, explore per-task, run the build and tests before reporting done.
 
 Before starting, read `references/codex-workflow.md` for the complete workflow, checks, and report format. Load its other references only when the relevant step calls for them.
 

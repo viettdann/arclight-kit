@@ -75,7 +75,7 @@ Use `$` autocomplete to select an installed skill, or name the plugin and skill 
 | `playful` | Saturated palette, chunky type, spring motion |
 | `technical` | Dark layered surfaces, one warm accent, sourced metrics, and real code |
 
-The current Codex releases are arc-design 2.4.0, arc-kit 2.4.0, and mgi-kit 1.3.0, synchronized with `main` through `5fe23ac`. Design references cover color ramps, icons, canvas effects, and interaction motion; UI checks include phone input zoom and worst-case data. The verifier also reviews UI regressions and shared-component consumers.
+The current Codex releases are arc-design 2.5.0, arc-kit 2.5.0, and mgi-kit 1.4.0, synchronized with `main` through `debfef9`. Design references cover color ramps, icons, canvas effects, and interaction motion; UI checks include phone input zoom and worst-case data. Contrast helpers now include APCA warnings alongside WCAG 2 ratios, and interaction guidance covers switches and segmented controls. The verifier also reviews UI regressions, React performance, shared-component consumers, and accepted workers' files.
 
 Only load references needed by the task. Bundled script paths resolve from the installed skill's directory, while target project paths resolve from the project's working directory.
 
@@ -138,6 +138,7 @@ Project `AGENTS.md` instructions, plugins, MCP servers, and hooks remain active.
 python3 scripts/validate_plugins.py
 node --test scripts/cdp_auth_test.mjs
 node --test scripts/ui_targets_test.mjs
+node --test scripts/contrast_test.mjs
 python3 -m unittest discover -s scripts -p '*_test.py'
 python3 plugins/arc-kit/scripts/comment_lint_test.py
 python3 plugins/arc-kit/scripts/test_guard_test.py

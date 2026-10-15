@@ -2,6 +2,43 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] - 2026-10-15
+
+- Sync main through `debfef9` (upstream 1.10.0); retain Codex entrypoints, bundled paths, and runtime permissions.
+- Add APCA contrast warnings and correct text-over-media sampling; preserve the 24px target checks.
+- Add switch and segmented-control specifications, continuous workflows, and complete severity reporting.
+
+## [1.10.0] - 2026-10-15
+
+### Changed
+
+- `design`, `redesign`: run the workflow in one turn without progress stops; the design summary is about 15 lines.
+- `state-check`: fan-out from about five pages, with the sub-agent scope stated; `ui-check`, `state-check`: findings past the cap are counted, not dropped.
+- `ui-interaction`: segmented control at weight 600, sliding with `transform` instead of `width`; `restyle/references/tailwind.md`: active segment `font-semibold`.
+- `design`: the technical style's palette token is `text`, not `ink`.
+- Tables of contents on reference files over 100 lines.
+
+## [1.9.0] - 2026-10-15
+
+### Added
+
+- `ui-interaction`: switch look (pill track, round knob, off track filled to 3:1, no border, label beside the track instead of ON/OFF inside it) and switch motion (knob on `translateX`, track color crossfade, 150–200ms transitions, press stretch, no animation on first render or under reduced motion, mirrored in RTL) in `forms.md`; segmented control spec: sunken track, raised selected option, no border on either, reserved bold width, sliding selection outside high-frequency tool filters.
+
+- `design`: `contrast.mjs` prints APCA Lc (0.0.98G-4g) next to the WCAG 2 ratio and marks `warn` a pair that passes WCAG 2 below Lc 60 (text), 45 (large), or 30 (ui). WCAG 2 still decides pass and fail and the exit code.
+
+- `ui-check`: `ui_check.mjs` computes APCA Lc for text on solid backgrounds and over media (10th percentile of glyph pixels). A WCAG 2 failure stays P1 `contrast` with the Lc in its detail; text that passes WCAG 2 below Lc 60 (45 for large text) is the new P2 `contrast-apca` check, listed in the fix table and severity in `SKILL.md`.
+
+### Fixed
+
+- `ui-check`: text over an image, gradient, or glass is scored with its CSS fill color over each backdrop pixel instead of the captured glyph pixel, which at body sizes is mostly an antialiased blend: 16px black text on a flat orange gradient measured 2.46:1 instead of 4.88:1. The screenshots now only locate the glyphs; gradient text with a transparent fill keeps the pixel comparison.
+
+### Changed
+
+- `design`: `color.md` drops dark text on a mid-tone brand as an equal option (it passes WCAG 2 at Lc 39 where white on the next darker step reaches Lc 77–80), states why WCAG 2 stays the pass line, and makes a `warn` pair unfinished; `SKILL.md` step 6 mentions the Lc column.
+- `design`: a rule for every profile and style in `SKILL.md`: numbers are floors, not the goal; when the measure and the eye disagree, change the design until both agree, never push a color to a muddy extreme to clear a threshold, and treat a pass by a hair as a reason to move a step. `color.md` applies it to contrast (pick the option that reads at a glance and keeps the color itself, size and weight shift the need, contrast can be too high).
+- `design`: `materials.md` exempts segmented controls and switches from the 3:1 input boundary, so they no longer get borders.
+- `restyle`: segmented control in `tailwind.md` gains light-theme classes and treats a border on the track or the active item as a tell.
+
 ## [2.4.0] - 2026-10-14
 
 - Sync main through `5fe23ac`; preserve Codex packaging, runtime adaptation, and patch hooks.
