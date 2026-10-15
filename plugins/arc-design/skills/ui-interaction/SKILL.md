@@ -13,7 +13,7 @@ Generated UI tends to render only the happy path: every column in the table, a d
 
 | Surface you create or change | Load |
 | --- | --- |
-| Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle, inline edit, file upload, consent and cookie choices, browser permission prompts | `references/forms.md` |
+| Forms, inputs, validation, password, OTP, masked fields, date, slider, toggle and switch, segmented control, inline edit, file upload, consent and cookie choices, browser permission prompts | `references/forms.md` |
 | Custom components the platform and library don't provide: controlled and uncontrolled props, form submission and `required`, `data-*` and CSS-variable styling hooks, role choice (slider, meter, progressbar, toolbar, tree) | `references/components.md` |
 | Tables (including tables on phones and in narrow panels), lists, clickable cards, selection, bulk actions, pagination, search, filters, command palette | `references/data.md` |
 | Modals, sheets, drawers, popovers, menus, dropdowns, right-click and context menus, submenus, tooltips | `references/overlays.md` |

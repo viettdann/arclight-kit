@@ -42,7 +42,7 @@ Generate the steps the roles call for. Radix numbers steps by role, so `9` is th
 
 - Pin the brand on the solid-fill step, so the primary button shows the real brand and not an approximation, and build the ramp outward from it; that one step may sit slightly off the even spacing.
 - Never darken the brand quietly to make a pair pass: the client sees a different color on every button and nobody decided it.
-- If white text on the brand fails, keep the brand exact and change where it is used. White on Tailwind blue-500 `#3b82f6` measures 3.68:1: it passes for large text and UI (3:1) but not for body text. Either move fills (buttons, badges with text) to the next darker step (`#2563eb`, 5.17:1) and keep the brand step for large marks, icons, and the logo, or keep the brand as the fill with dark text on it (`#0f172a` on `#3b82f6`, 4.85:1).
+- If white text on the brand fails, keep the brand exact and change where it is used. White on Tailwind blue-500 `#3b82f6` measures 3.68:1: it passes for large text and UI (3:1) but not for body text. Move fills (buttons, badges with text) to the next darker step (`#2563eb`, 5.17:1, Lc −80) and keep the brand step for large marks, icons, and the logo. Dark text on a mid-tone brand passes WCAG 2 but reads worse than the white it replaced: `#0f172a` on `#3b82f6` is 4.85:1 yet Lc 39, against white's Lc −69; `#141413` on orange `#E35336` is 4.88:1 and Lc 39, where white on the darker `#CC4329` is 4.77:1 and Lc −77. `contrast.mjs` marks such pairs `warn`. Dark text belongs on light fills only, where it also clears Lc 60.
 - Check every pair with `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/contrast.mjs "#ffffff|<fill>|text"` before writing a number down.
 
 ## Several hues
@@ -119,7 +119,9 @@ For restyle and redesign of an existing product, before proposing any new color.
 4. **Assign each survivor a role** from the step table. A color with no role is either a missing token or a mistake; say which.
 5. **Report the mapping** (old value, use count, kept value, role, token) before changing anything. Consolidating changes rendered output on screens nobody asked to touch, so it stays a proposal until the user accepts it.
 
-APCA (Lc) is a useful lens on dark themes and thin text, but contrast here is checked and reported as WCAG 2 ratios with `contrast.mjs`.
+Contrast passes or fails on WCAG 2 ratios, because audits and law (ADA, EN 301 549, the European Accessibility Act) still cite WCAG 2.x, and WCAG 3 is a draft without a settled contrast method. `contrast.mjs` also prints APCA Lc, which models perception better, and marks a pair `warn` when it passes WCAG 2 below Lc 60 (text), 45 (large), or 30 (ui). A `warn` pair is not done: switch the text polarity or the fill step until it passes both, and list any pair left at `warn` in the summary. Dark themes produce most of them, since WCAG 2 overrates light-on-dark muted text.
+
+Both numbers are a floor for reading, not a recipe for color. Between two passing options, pick the one that reads at a glance and keeps the color looking like itself: white on a deeper orange beats black on a bright one that turns the brand muddy. Thin, small, or long text needs more than the minimum; a short bold label needs less. Contrast can also be too high: pure black on pure white across long passages glares, which is why ramps end short of both. If fixing a number makes the screen look worse, the fix is wrong; find another (`SKILL.md`, Rules for every profile and style).
 
 ## Checks
 
