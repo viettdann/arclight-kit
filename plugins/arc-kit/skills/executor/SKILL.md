@@ -12,7 +12,7 @@ description: >
 
 # Executor
 
-Implement plans with discipline. Scan for blockers, explore per-task, verify everything.
+Implement plans with discipline. Scan for blockers, explore per-task, run the build and tests before reporting done.
 
 ## Core Principles
 
@@ -33,6 +33,7 @@ Other sessions and your own sub-agents write to the same checkout. These rules b
 - Sub-agents never stage or commit; commits happen only in Phase 5.
 - Sub-agents never take an irreversible action (data deletion, external publish, schema drop, force operations); report it for the orchestrator to escalate.
 - If a foreign change blocks the task, say what it blocks and stop.
+- Deliver the assigned tasks and stop. Don't add features, files, docs, or refactors the tasks don't ask for (tests follow the TDD mode rules); name a useful extra under Issues encountered instead.
 
 ## Progress Checklist
 
@@ -46,6 +47,10 @@ Copy and track as you execute:
 - [ ] Phase 4: Build pass, tests pass, all plan items cross-checked
 - [ ] Phase 5: Commit proposed, created after user approval
 ```
+
+## Turn Endings
+
+A message with no tool call ends your turn, and the run stops until the user writes again. Put anything you need to say mid-run (the printed plan, a finding, a change of direction) in the same message as your next tool call and keep going. Don't end a turn on a summary that announces the next step, an offer to continue unless the user objects, or a list of decisions none of which blocks the remaining work. Stop only on a question only the user can answer, before an irreversible action, or with the final report. Ending a turn while sub-agents run in the background is fine: their results resume you.
 
 ## Workflow
 
@@ -155,13 +160,13 @@ Spawn every group that passed the Phase 2 Step 4 check in one message with multi
 - One sub-agent per task group (from Phase 2), not per individual task
 - Tasks within a group run sequentially (shared files)
 - Groups run in parallel (no file overlap between groups)
-- A sub-agent cannot see this skill. Its prompt carries the plan file path (if any), its group's tasks and file list, relevant blocker findings, and, verbatim: the plan's project-wide constraints and Out of scope lines, the Shared Worktree rules, Phase 3 steps 1-3, the TDD mode section with whether it is on, the Decision Framework's "Judgment call resolved without asking" and "Irreversible action" rules (for a sub-agent, asking means stopping and reporting it), and the Agent Report template
+- A sub-agent cannot see this skill. Its prompt carries the plan file path (if any), its group's tasks and file list, relevant blocker findings, and, verbatim: the plan's project-wide constraints and Out of scope lines, the Shared Worktree rules, Phase 3 steps 1-3, the TDD mode section through the "Test by necessity" paragraph, with whether TDD is on, the Decision Framework's "Judgment call resolved without asking" and "Irreversible action" rules (for a sub-agent, asking means stopping and reporting it), and the Agent Report template
 
 **User changes direction mid-execution:**
 
 - Stop queued and running groups the change touches; let unaffected groups finish.
 - Show the delta before touching code: tasks added, dropped, or changed, and already-written code the change makes wrong.
-- After the user confirms, edit the plan file in place so a fresh session can execute from it alone: mark dropped tasks as dropped (keep them visible), add new tasks, rewrite changed ones. Each new or changed task names its files and functions and a checkable done criterion. Keep the file's existing format and change only the affected lines; update a status field only if the plan already has one. Never stage it; `docs/` belongs to the user.
+- After the user confirms, edit the plan file in place so a fresh session can execute from it alone: delete dropped tasks (the delta stays in chat), add new tasks, rewrite changed ones. Each new or changed task names its files and functions and a checkable done criterion. Keep the file's existing format and change only the affected lines; update a status field only if the plan already has one. Never stage it; `docs/` belongs to the user.
 - Re-run the Phase 1 blocker scan on the changed tasks only, then continue.
 
 **TDD mode:**
@@ -227,7 +232,7 @@ Final gate after all tasks executed:
 3. Cross-check every plan item against actual changes
 4. Call the Skill tool with `arc-kit:verifier` for review
 
-**Report format:**
+**Report format** (omit a section with nothing in it, one line per item):
 
 ```
 ## Execution Summary
@@ -277,9 +282,9 @@ Default to a single cohesive commit per plan. If the plan spans logically separa
 
 ## Decision Framework
 
-When encountering choices during execution, **self-verify before escalating to user:**
+When encountering choices during execution, **check the codebase and plan before escalating to the user:**
 
-- **Can you resolve it from codebase or plan context?** (grep, read files, check existing deps, re-read plan) → Resolve it yourself, state your reasoning, move on.
+- **Can you resolve it from codebase or plan context?** (grep, read files, check existing deps, re-read plan) → Resolve it yourself, say in one line what you decided, move on.
 - **Is it a judgment call, trade-off, or scope decision?** → Ask the user.
 
 Decision types:
@@ -287,9 +292,9 @@ Decision types:
 - **Multiple valid approaches**: Pick the one most consistent with existing codebase patterns. Only AskUserQuestion if trade-offs are genuinely ambiguous.
 - **Quick fix vs proper fix**: Never apply a workaround silently. Take the proper fix without asking when it is small or obvious. Ask with AskUserQuestion only when it costs far more than the workaround (a large refactor, or changes outside the plan's files) or the trade-off is genuinely ambiguous, and then show both: `Proper fix: X (effort). Workaround: Y (debt it creates).`
 - **Missing requirement detail**: Check if the plan, design doc, or codebase answers it first. AskUserQuestion only if genuinely unresolvable.
-- **Plan step seems unnecessary**: Flag to user, don't skip silently
+- **Plan step seems unnecessary**: implement it anyway and note it in the Execution Summary; ask with AskUserQuestion only when doing it would be wasted or harmful work. Never skip it silently.
 - **New dependency needed**: Check if an existing dep already covers the need. If so, use it. If truly new, check with user before adding.
-- **Scope creep detected**: Flag, let user decide to include or defer
+- **Scope creep detected**: leave it out, keep going, and list it under Remaining / Deferred for the user to include or defer.
 - **Judgment call resolved without asking**: list it under "Decided for you" in the Execution Summary, with the alternative not taken, so the user can reverse it. Sub-agent reports carry theirs up.
 - **Irreversible action** (data deletion, external publish, schema drop, force operations): always ask with AskUserQuestion, even when the plan or codebase seems to settle it; never self-decide.
 

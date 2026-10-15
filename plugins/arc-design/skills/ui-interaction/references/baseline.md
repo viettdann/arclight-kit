@@ -1,5 +1,7 @@
 # Baseline (always applies)
 
+Contents: semantics · keyboard and focus · pointer and touch · unavailable actions · color and text · announcements, images, and decoration · layout stability · mobile web and locale · server side · motion · platform CSS · checks
+
 ## Semantics
 
 - Interactive elements are real elements: `<button>` for actions, `<a href>` for navigation, native inputs for input. No `div` or `span` with a click handler acting as a button.

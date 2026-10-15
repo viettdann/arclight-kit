@@ -1,5 +1,19 @@
 URL map for live lookups: where each Azure Pipelines fact lives, what to look up there, and how to fetch it.
 
+## Contents
+
+- [How to fetch](#how-to-fetch)
+- [Hosted agents and images](#hosted-agents-and-images)
+- [Scripts, variables, logging](#scripts-variables-logging)
+- [Repositories and checkout](#repositories-and-checkout)
+- [Tests and coverage](#tests-and-coverage)
+- [YAML schema](#yaml-schema)
+- [Process concepts](#process-concepts)
+- [Service connections, environments, approvals](#service-connections-environments-approvals)
+- [Tasks](#tasks)
+- [REST API (read-only use)](#rest-api-read-only-use)
+- [Release notes and announcements](#release-notes-and-announcements)
+
 ## How to fetch
 
 - Fetch the page from this map or a task's `docs` link in [task-versions.md](task-versions.md), with a WebFetch prompt that extracts just the input or key needed from the `azure-pipelines` moniker block.

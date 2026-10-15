@@ -36,7 +36,7 @@ Find the cause before changing code, then fix it once, with a test that failed b
 - Searching an error externally: strip hosts, IPs, internal paths, SQL, tokens, and customer data first; search only the error class or message template and the library name.
 - Log the value that actually reaches the failing line; don't infer it from reading code.
 - Temporary log lines start with `DEBUG-<slug>` so one grep removes them all.
-- Asked only why: report the diagnosis (section 5 without Fix and Test) and stop.
+- Asked only why: report section 5's Symptom, Cause, Evidence, Unconfirmed, Ruled out, and Repro, then stop.
 
 ## 4. Fix
 
@@ -49,7 +49,7 @@ Find the cause before changing code, then fix it once, with a test that failed b
 
 ## 5. Verify and report
 
-- The repro passes, the tests of every touched package pass against the baseline, and `grep -rn "DEBUG-<slug>"` finds nothing.
+- The repro passes, and the tests of every touched package pass, or fail only where they already failed before the fix (run them once before editing to record that baseline), and `grep -rn "DEBUG-<slug>"` finds nothing.
 
 ```markdown
 **Symptom**: Under X, it does Y; expected Z

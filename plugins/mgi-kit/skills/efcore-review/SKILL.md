@@ -60,14 +60,14 @@ Fix patterns, provider differences, and the edge cases for each row: [fixes.md](
 ## Gate findings on evidence
 
 - **Proven by source**: the code path does it regardless of data: a query per row, a filter after `ToList()`, a `SaveChanges` per item, overlapping calls on one context, concatenated SQL, a predicate wrapped in a function. Report as a defect.
-- **Needs runtime evidence**: anything whose cost depends on data volume, the deployed indexes, or the plan: a missing index, split vs single query, `AsNoTracking` on a small result, `EF.Constant` vs a parameter, compiling a query. Report it only when the code shows the query is hot (a list endpoint, a loop, a job over a table) and say what would confirm it: the SQL from `LogTo` or `Microsoft.EntityFrameworkCore.Database.Command` at `Information`, the plan, Query Store or `pg_stat_statements`.
+- **Needs runtime evidence**: anything whose cost depends on data volume, the deployed indexes, or the plan: a missing index, split vs single query, `AsNoTracking` on a small result, `EF.Constant` vs a parameter, compiling a query. Report it with what would confirm it, and mark whether the code shows the query is hot (a list endpoint, a loop, a job over a table); suspicions on paths not shown hot go in one line at the end of **Needs runtime evidence**: the SQL from `LogTo` or `Microsoft.EntityFrameworkCore.Database.Command` at `Information`, the plan, Query Store or `pg_stat_statements`.
 - No `HasIndex` in one file doesn't mean no index. Check `OnModelCreating`, every `IEntityTypeConfiguration`, the migrations, and the FK convention (EF creates an index on each dependent foreign key unless a key or index already covers it) before saying an index is missing. When EF doesn't own the schema (no migrations, `ExcludeFromMigrations`, a database-first scaffold), say the database may still have it.
 - A load, mutate, then one `SaveChanges` after the loop is a single save, not a per-row round-trip. Don't report it unless the batch is unbounded.
 - When every reviewed path is sound, say "no actionable findings" with what was reviewed. Don't fill the report with general EF advice.
 
 ## Fixing
 
-Only when the user asks, and one finding at a time:
+Only when the user asks. Fix the findings they picked in sequence, each as its own change: edit, run its tests, show its SQL, then move to the next without stopping, unless a fix changes behavior (Process step 4). Change only the query, model or configuration the finding names; mention nearby improvements instead of making them.
 
 - Show the SQL before and after when the app can run: `LogTo(Console.WriteLine, LogLevel.Information)` or the `Microsoft.EntityFrameworkCore.Database.Command` category, with `.TagWith("...")` on the query to find it. Report the statement count and rows before and after. Without a run, say the fix is unmeasured.
 - Run the tests that cover the changed path. A behavior change listed in Process step 4 needs the user's agreement first.

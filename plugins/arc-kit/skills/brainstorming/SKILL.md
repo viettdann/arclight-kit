@@ -76,7 +76,7 @@ Research covers external dependencies only: whether a library exists, its API su
 
 - After the user confirms the design, present a concrete implementation plan:
   - List every file the plan touches. Do not summarize multiple files into one line
-  - Each line: file path + what changes + the check that proves it (test name, command, or observable state). Add why only when it is not obvious from the change, in a few words
+  - Each line: file path + the exact change (names, signatures, fields, types) + the check that proves it (test name, command, or observable state). Add a why only when an implementer would otherwise get the change wrong, in a few words inside the line
   - Highlight assumptions that need validation
 - **Stop here. Do not proceed until the user explicitly approves the plan.**
   Approval is an unambiguous yes to the plan, in whatever language the user writes it (`approved`, `proceed`, `go ahead`, `implement it`, `tiến hành`, `làm đi`). Judge it by intent, not by matching those words.
@@ -86,9 +86,11 @@ Research covers external dependencies only: whether a library exists, its API su
 
 ### Design Doc Wording
 
-The saved design doc describes the target state only. When a draft element is dropped, omit it; the doc never records history or removals ("Removed X", "There is no X"). Deltas and removal notes belong in chat (Scope Creep Rule, YAGNI flags), not in the doc.
+The saved design doc holds only what gets done, stated as the target state. Everything the implementer won't do stays out: no exclusions, deferrals, removals, or history ("Removed X", "There is no X", "Not in this change: Y"), no rationale, alternatives considered, or background, and nothing the code already shows. Deltas, YAGNI flags, and trade-offs belong in chat, not in the doc.
 - *Incorrect:* "There is no header subtitle. Removed the subtitle text."
 - *Correct:* "The header contains a primary title."
+
+The doc is self-contained: a reader with only the doc and the repo can carry out every line without asking. Every file and symbol carries its path, every command is written out, and every decision settled in the conversation is restated as fact. Never point back at the conversation ("as discussed", "see above", "option B", "the approach we chose").
 
 ## After the Design
 
@@ -97,21 +99,20 @@ The saved design doc describes the target state only. When a draft element is dr
   - Derive the slug by lowercasing, replacing spaces/underscores with hyphens, and stripping invalid characters. Example: `Input: My Feature/Design v2 → Output: my-feature-design-v2`
   - Truncate the slug to 60 characters after normalization. Fall back to `untitled` if empty
   - Never interpolate the raw topic into a shell command; only pass the validated slug to the `Write` tool as part of the fixed `docs/plans/` path
-  - **If `docs/plans/` does not exist**, create it (`mkdir -p docs/plans`) and note its creation in your reply. If the current working directory is not a writable project root (e.g., outside a repo, or user is in a path like `/tmp`), ask the user where to save the design instead of silently creating directories
-- The doc must stand alone after `/clear`, since the next session only has the doc. Use these sections, in this order:
+  - **If `docs/plans/` does not exist**, create it (`mkdir -p "${CLAUDE_PROJECT_DIR}/docs/plans"`) and note its creation in your reply. If the current working directory is not a writable project root (e.g., outside a repo, or user is in a path like `/tmp`), ask the user where to save the design instead of silently creating directories
+- The doc must stand alone after `/clear`, since the next session only has the doc (Design Doc Wording). Use these sections, in this order:
 
   ```markdown
   # <Topic>
-  ## Goal                 what it achieves and how success is measured (a target number for performance work)
-  ## Design               architecture, components, data flow, error handling
-  ## Implementation Plan  one line per file: path + what changes + the check that proves it
-  ## Assumptions          what the plan relies on that is not verified yet, and how to verify each
-  ## Verification         an acceptance checklist of `- [ ]` items, each observable by running or using the result; tests to write or run; the UI states named in Design; and the inputs and failure modes a user would hit that the goal doesn't name (empty, huge, malformed, duplicate, concurrent), each with the Implementation Plan line whose check covers it
-  ## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
+  ## Goal          one or two lines: the outcome and the check that proves it (a target number for performance work)
+  ## Decisions     every decision settled in the conversation, one line each, stated as fact; contracts between files and data flow go here
+  ## Plan          ordered, one line per file: path + exact change (names, signatures, fields, types) + the check that proves it; a UI file's line names its loading, empty, failure, and success states
+  ## Assumptions   only unverified facts the plan relies on, each with the command or read that verifies it
+  ## Verification  `- [ ]` items, each a command or an observable result of something the Plan does, including each input or failure mode the Plan handles
   ```
 
-  Omit `Assumptions` or `Out of scope` when empty; the other four are always present.
-- **Fresh-context review.** After writing the doc and before replying with its path, spawn one subagent with the Agent tool and no conversation context: give it only the doc path and the repo root, and ask whether the doc contradicts itself, whether someone could implement it without asking, whether anything in scope is missing, and whether a simpler approach fits. Fix factual issues in the doc yourself; bring judgment calls to the user in the reply. Run at most 2 rounds; stop early when a round returns the same issues
+  Omit `Assumptions` when empty; the other four are always present. A line where a line does; no restating the request. See the doc at the end of `examples/happy-path.md`.
+- **Fresh-reader check.** After writing the doc and before replying with its path, spawn one subagent with the Agent tool, `model: sonnet`, and no conversation context (never `subagent_type: "fork"`): give it only the doc path and the repo root. Ask it to read the doc and the code it names, then return, for each Plan line, what it would change and how it would check it, in its own words; every question it would have to ask before starting; every file, symbol, or command in the doc it couldn't find; and every line that narrates, justifies, or describes something not being done. Compare its explanation with what was decided: a line it read differently is ambiguous, so rewrite it; a question the doc should answer gets its answer in the doc; a question only the user can settle goes in your reply; flagged lines follow Design Doc Wording. Run at most 2 rounds; stop when a round raises nothing new
 - In the reply with the doc path, suggest an optional audit: "Run `/arc-kit:plan-auditor docs/plans/<filename>` to stress-test before execution."
 
 ## Key Principles

@@ -44,7 +44,7 @@ Ask with AskUserQuestion, one conflict per question and up to four questions per
 
 ## 5. Write the rules
 
-One file per layer, plus `conventions.md` without `paths` only for rules that hold across all layers:
+One file per layer, named `.claude/rules/conventions-<layer>.md` (Update finds them by that prefix), plus `conventions.md` without `paths` only for rules that hold across all layers:
 
 ```markdown
 ---

@@ -28,13 +28,12 @@ Map plain-language requests the same way ("chỉ khi tôi gọi" → `user-only`
 
 1. `python3 ${CLAUDE_SKILL_DIR}/scripts/fresh_air.py scan [DIR]`. Tell the user the count, the flagged skills, and any names that shadow a user skill, in 2–4 lines.
 2. `python3 ${CLAUDE_SKILL_DIR}/scripts/fresh_air.py apply [DIR] [--mode ...] [--claude-md ...]`, or `restore [DIR]`. Use `--dry-run` to preview.
-3. Read `DIR/.claude/settings.local.json` once to confirm it has the entries the script printed. That is the whole check. Don't start sessions or invoke skills to test it.
-4. Report what changed, the backup path the script printed, and any `SKIP` lines. A skipped name matches one of the user's personal skills, which already wins, so blocking it would hide theirs. End with one line: the change applies from the next message, but `/clear` or restarting Claude Code makes sure it fully takes effect; or say "kiểm tra" and you will list what a fresh session loads.
+3. Report what changed, the backup path the script printed, and any `SKIP` lines. A skipped name matches one of the user's personal skills, which already wins, so blocking it would hide theirs. End with one line: the change applies from the next message, but `/clear` or restarting Claude Code makes sure it fully takes effect; or say "kiểm tra" and you will list what a fresh session loads.
 
 ## Live check (only when the user asks)
 
 ```bash
-cd DIR && claude -p "reply ok" --output-format stream-json --verbose --model claude-haiku-4-5-20251001 | head -1 \
+cd DIR && claude -p "reply ok" --output-format stream-json --verbose --model haiku --effort high | head -1 \
   | python3 -c 'import json,sys; d=json.loads(sys.stdin.readline()); print("skills:", d["skills"]); print("slash:", d["slash_commands"])'
 ```
 

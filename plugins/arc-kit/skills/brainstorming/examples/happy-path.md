@@ -4,6 +4,8 @@
 
 Shows the full workflow when the user engages cooperatively, answers clarifying questions, and approves the plan without pivoting.
 
+Steps: 1 Grasp and discovery · 2 Self-verify and clarify · 3 Present design · 4 Implementation plan · 5 Write the doc and stop
+
 ## User prompt
 
 > I want to add a rate limiter to our Hono API server. Each IP should be capped at some reasonable amount per minute across all endpoints.
@@ -47,13 +49,15 @@ The assistant resolves factual constraints from codebase discovery instead of as
 >
 > I recommend sliding window. Which do you prefer, and what cap per IP per minute? (60/min is a common starting point if you have no number in mind.)
 
-Note: the assistant did NOT ask "how should state be stored?". With no shared store installed, in-memory follows; the single-node premise it rests on is an inference, so it goes under Assumed with its reason instead of Verified. Two algorithms genuinely fit, so it offered both; with one clear fit it would have stated it in one line.
+Asked with AskUserQuestion as two questions in one call: algorithm (sliding window recommended) and cap per IP per minute (60 recommended as the default).
+
+Note: the assistant did not ask "how should state be stored?". With no shared store installed, in-memory follows; the single-node premise it rests on is an inference, so it goes under Assumed with its reason instead of Verified. Two algorithms genuinely fit, so it offered both; with one clear fit it would have stated it in one line.
 
 User: "Sliding window, 30 a minute."
 
 ## Step 3: Present full design in one message
 
-The assistant presents the entire design as a single coherent message, NOT section-by-section:
+The assistant presents the entire design as a single coherent message, not section-by-section:
 
 > **Goal:**
 > Cap each client IP at 30 requests per rolling minute across all endpoints; success is request 31 within 60s getting `429`.
@@ -75,7 +79,7 @@ The assistant presents the entire design as a single coherent message, NOT secti
 >
 > Does this design look right?
 
-Note: ONE confirmation ask at the end of the full design, not after each section.
+Note: one confirmation ask at the end of the full design, not after each section.
 
 User: "Yes."
 
@@ -102,7 +106,29 @@ User: "Làm đi."
 
 ## Step 5: Write the doc and stop
 
-Approval ends the skill. The assistant writes `docs/plans/2026-03-14-ip-rate-limiter-design.md` with Goal, Design, Implementation Plan, Assumptions, Verification, and Out of scope, then replies:
+Approval ends the skill. The assistant writes `docs/plans/2026-03-14-ip-rate-limiter-design.md`:
+
+```markdown
+# IP rate limiter
+## Goal
+Over 30 requests per IP in 60s get 429; `bun test rateLimit` and `bun test rateLimit.integration` pass.
+## Decisions
+- Sliding window, 30 requests per IP per 60s, in-memory `Map<string, number[]>` (single node).
+- Client IP: first value of `x-forwarded-for`, else `c.env.remoteAddr`.
+- Applies to every route, registered before routes in `server/src/main.ts`.
+## Plan
+1. `server/src/middleware/rateLimit.ts` (new): export `rateLimitMiddleware({ limit, windowMs, now })` returning Hono middleware. Check: `bun test rateLimit`
+2. `server/src/middleware/rateLimit.test.ts` (new): fake clock; requests 1-30 pass, 31 gets 429, window rolls after 60s. Check: `bun test rateLimit`
+3. `server/src/main.ts`: `app.use(rateLimitMiddleware({ limit: 30, windowMs: 60_000 }))` before route registration. Check: item 4
+4. `server/tests/rateLimit.integration.test.ts` (new): 31 real requests in 60s, 31st is 429. Check: `bun test rateLimit.integration`
+## Assumptions
+- Single-node deployment: confirm no load balancer in the deploy config.
+## Verification
+- [ ] Both test commands pass; `tsc --noEmit` and `biome check` pass
+- [ ] The 31st request from one IP inside 60s returns 429; a request after the window passes
+```
+
+It runs the fresh-reader check on the doc, fixes what the reader misread, then replies:
 
 > Saved the design to `docs/plans/2026-03-14-ip-rate-limiter-design.md`. Optional: run `/arc-kit:plan-auditor docs/plans/2026-03-14-ip-rate-limiter-design.md` to stress-test it before execution.
 

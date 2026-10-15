@@ -48,8 +48,9 @@ refresh request is in flight) is unhandled.
 
 Wire `onUnauthorized` in `src/auth/token.ts` to call `refreshToken()` and replay
 the original request once, hooking into the `fetch` wrapper in
-`src/api/client.ts:request()`. Alternative if that wrapper is hard to intercept:
-catch the 401 in `request()` directly.
+`src/api/client.ts:request()` (`src/api/client.ts` read). The refresh itself
+already works (`npx vitest run src/auth/token.test.ts` run, exit 0). Alternative
+if that wrapper is hard to intercept: catch the 401 in `request()` directly (assumed).
 
 ## Open questions / unverified
 

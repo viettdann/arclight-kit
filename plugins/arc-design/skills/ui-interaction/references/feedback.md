@@ -1,5 +1,7 @@
 # Feedback: Loading, Errors, Success, Notifications
 
+Contents: loading · generated content · optimistic updates · errors · success · empty states · notifications (badges, sound) · copy to clipboard · autosave · microcopy · checks
+
 ## Loading by what you know about the wait
 
 | Situation | Pattern |

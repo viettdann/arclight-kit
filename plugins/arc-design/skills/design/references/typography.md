@@ -2,6 +2,8 @@
 
 One family (plus a monospace where useful) used as a system: every size, weight, ink, line-height, and tracking comes from a small set, so hierarchy reads the same on every screen. The profile sets the base size and ratio; a style may override rows and says which.
 
+Contents: size scale · ink · weight · line-height and tracking · space around headings · loading fonts · measure · characters and case · details · long text · numbers · checks
+
 ## Size scale
 
 - Build the scale from the base size and one ratio, not hand-picked values: tool 1.2–1.25, marketing 1.25–1.333. At 1.25 from 13px: 13, 16, 20, 25, 32.

@@ -15,14 +15,14 @@ Workers are interns, you are the senior. They edit only what you hand them, run 
 
 | Tier | Agent call | Use for |
 |---|---|---|
-| Haiku | `arc-kit:worker`, `model: haiku`, `effort: max` | Mechanical work with a tight spec in one or two files: rename, add a field through existing layers, a test for a named regression, written in the file's existing style, config, docs, a pattern already shown elsewhere in the repo |
+| Haiku | `arc-kit:worker`, `model: haiku`, `effort: high` | Mechanical work with a tight spec in one or two files: rename, add a field through existing layers, a test for a named regression, written in the file's existing style, config, docs, a pattern already shown elsewhere in the repo |
 | Sonnet | `arc-kit:worker`, `model: sonnet`, `effort: high` | The default: implementing a plan task, a change across several files in one module, a bug with a repro, terminal-heavy work |
 | Opus | `arc-kit:worker`, `model: opus`, `effort: medium` | Changes across modules or layers, a task the plan leaves open, security, auth, concurrency, money, data migrations, anything where a subtle mistake passes tests |
 | Opus high | `arc-kit:worker`, `model: opus`, `effort: high` | Escalations and rewrites only (Escalation, below) |
 | Reviewer | `arc-kit:reviewer`, `model: opus`, `effort: medium` | Diffs too large to review inline (Phase 4) |
-| Lookup | `Explore`, `model: haiku`, `effort: max` | Read-only codebase questions while writing packets |
+| Lookup | `Explore`, `model: haiku`, `effort: high` | Read-only codebase questions while writing packets |
 
-Pass `model` and `effort` on every Agent call; the agent files' defaults only cover the Sonnet worker and the reviewer, and the call is what puts a group on its tier. Opus never goes above `high`. If an Agent call rejects `effort: max` for Haiku, use `xhigh`.
+Pass `model` and `effort` on every Agent call; the agent files' defaults only cover the Sonnet worker and the reviewer, and the call is what puts a group on its tier. Opus never goes above `high`; every Haiku call runs at `high`, as lower levels can skip checks.
 
 When you hesitate between Haiku and Sonnet, ask whether you can write the packet so tightly that no decision is left to the worker. If you can't, it is Sonnet work: Haiku fails on loose specs, not on the amount of code.
 
@@ -37,6 +37,10 @@ When you hesitate between Haiku and Sonnet, ask whether you can write the packet
 - [ ] Phase 5: build and tests, plan cross-check, verifier
 - [ ] Phase 6: commit proposed
 ```
+
+## Turn endings
+
+A message with no tool call ends your turn, and the run stops until the user writes again. Put a finding, a plan, or a change of direction in the same message as your next tool call and keep going. Don't end a turn on a summary that announces the next step, an offer to continue unless the user objects, or a list of decisions none of which blocks the remaining groups. Stop only on a question only the user can answer, before an irreversible action, or with the Phase 5 report and commit proposal. Ending a turn while workers or reviewers run in the background is fine: their reports resume you.
 
 ## Phase 0: Load the plan
 
@@ -78,7 +82,7 @@ Print the execution plan and start without a confirmation gate:
 
 ```
 Group A  sonnet/high   Task 1 → Task 3   [src/orders/api.ts, src/orders/api.test.ts]
-Group B  haiku/max     Task 2            [src/config/flags.ts]
+Group B  haiku/high    Task 2            [src/config/flags.ts]
 Group C  opus/medium   Task 4            [src/billing/charge.ts, db/migrations/0042_add_charge.sql]
 ```
 
@@ -104,7 +108,7 @@ Read for context: <files and symbols worth reading first, with line numbers when
 Use, don't recreate: <shared pieces another group created, with paths; or "none">
 Constraints: <conventions, APIs to reuse, things not to touch, decisions already made in the plan, the plan's project-wide constraints verbatim>
 Out of scope: <the plan's Out of scope lines, verbatim; or "none">
-Verify with: <lint and test commands that cover the owned files>
+Verify with: <lint and test commands that cover the owned files and the tests of their direct callers>
 TDD: on | off
 ```
 
@@ -128,7 +132,7 @@ Before trusting any report, run `snapshot check <run>`. It ignores every file a 
 
 ### Report status
 
-- `blocked`: the worker stopped on a question, a file it needs but doesn't own, or a git command it was denied. Answer from the plan or the codebase when you can, else ask the user. A file another running group owns waits for that group; otherwise back it up into this group with `snapshot backup`, which also adds it to the group's owned files. A denied git command usually has a read-only route (reading the backup or `git show HEAD:<file>` instead of stashing to see an old state); give the worker that route rather than running the command for it. Continue the worker (below). A blocked report isn't a failed attempt.
+- `blocked`: the worker stopped on a question, a file it needs but doesn't own, a git command it was denied, or a verify command that couldn't start. Answer from the plan or the codebase when you can, else ask the user. A verify command that couldn't start (missing dependency, no database) goes to the user unless another command covers the same files. A file another running group owns waits for that group; otherwise back it up into this group with `snapshot backup`, which also adds it to the group's owned files. A denied git command usually has a read-only route (reading the backup or `git show HEAD:<file>` instead of stashing to see an old state); give the worker that route rather than running the command for it. Continue the worker (below). A blocked report isn't a failed attempt.
 - `failed`: the worker couldn't get its verify commands to pass. A failed attempt.
 - `done`: go on to the gate.
 
@@ -151,7 +155,7 @@ A worker that disagreed with a finding gets a ruling from you: accept its reason
 
 Before sending a `fix` back, run `snapshot mark <run> <group>`. The next review of the group is then a fix round: the reviewer gets the earlier findings and `snapshot diff <run> <group> --since-review`, rules on each finding, and looks for new problems only in that fix diff (the fix round in `reviewer.md`). Problems it lists outside the fix go back to the same worker with the next message, or to the verifier, and never count as a failed attempt. The review after an escalation or a `rewrite` is a full review again.
 
-`accept` closes the group. Keep its backup until Phase 5: the verifier may still send the group's files back. `fix` and `rewrite` are failed attempts.
+`accept` closes the group. Keep its backup until Phase 5 ends; verifier fixes can still touch its files. `fix` and `rewrite` are failed attempts.
 
 ### Continuing a worker
 
@@ -175,7 +179,7 @@ Once every group is accepted or stopped:
 1. Build and test what the change can break: nothing for a change that can't alter behavior (docs, comments, Markdown, formatting only); otherwise the full build and type-check, plus the tests covering the touched files, or the full suite through `arc-kit:test-runner` when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named.
 2. A failing test whose file and the code it runs the final diff doesn't touch is reported as not from this run, with that evidence, and fixed only when the plan covers it.
 3. Cross-check every plan task against the final diff; tasks in stopped groups are listed as not done.
-4. Call the Skill tool with `arc-kit:verifier`; it reviews the change across groups, which per-group reviews can't see.
+4. Call the Skill tool with `arc-kit:verifier`, with the accepted groups' owned files in scope and stopped groups' tasks marked not done, not to complete inline; it sees across groups.
 5. Delete `<run>` when no group was stopped; otherwise keep it and name it in the report.
 
 Then report:
@@ -198,7 +202,7 @@ Build: PASS / FAIL    Tests: PASS / FAIL / N/A
 - Group or task: reason, last findings, backup path
 ```
 
-The tier path column is how routing gets tuned: Haiku groups that keep escalating mean its share should shrink.
+Haiku groups that keep escalating in the tier path column mean its share should shrink.
 
 ## Phase 6: Commit
 

@@ -167,17 +167,23 @@ steps:
       - task: Bash@3
         inputs:
           targetType: inline
-          script: echo dev
+          script: |
+            set -euo pipefail
+            echo dev
   - ${{ elseif eq(parameters.target, 'staging') }}:
       - task: Bash@3
         inputs:
           targetType: inline
-          script: echo staging
+          script: |
+            set -euo pipefail
+            echo staging
   - ${{ else }}:
       - task: Bash@3
         inputs:
           targetType: inline
-          script: echo prod
+          script: |
+            set -euo pipefail
+            echo prod
 ```
 
 - `${{ insert }}: ${{ parameters.obj }}` merges a mapping into a mapping next to literal keys (works in `variables:` and `env:`). A whole mapping can also be assigned, `env: ${{ parameters.testEnv }}`, which keeps secret mappings identical across steps.

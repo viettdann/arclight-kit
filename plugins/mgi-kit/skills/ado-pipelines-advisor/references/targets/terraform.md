@@ -2,6 +2,8 @@
 
 Every example below is the `steps:` of a `runOnce.deploy` hook unless it says otherwise. Service connections are Azure Resource Manager connections with workload identity federation. Deployment jobs, environments, approvals and output variables are in [deployment.md](../deployment.md).
 
+Contents: auth methods table, step template `/templates/steps/terraform.yaml`, Plan/Apply pipeline, lock file note.
+
 No built-in task: `TerraformTaskV4@4` comes from the Microsoft DevLabs Marketplace extension. Terraform is not preinstalled on hosted Ubuntu images, so install a pinned version ([source](https://github.com/actions/runner-images/tree/main/images/ubuntu)). Run the CLI from `AzureCLI@3` so the job references the service connection, which OIDC requires ([source](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc)).
 
 Workload identity auth, two ways:

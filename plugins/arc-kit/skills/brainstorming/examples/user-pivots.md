@@ -7,7 +7,7 @@ Shows how to handle a user who contradicts an earlier decision or introduces new
 ## Setup
 
 Same rate-limiter scenario as `happy-path.md`. User has already:
-- Picked **in-memory** storage
+- Accepted the **in-memory** storage default
 - Received the full design in one message: Section A (architecture), Section B (components), Section C (error handling + tests)
 
 ## Pivot event
@@ -18,7 +18,7 @@ Before confirming the design, the user says:
 
 ## Response: surface the contradiction explicitly
 
-Do NOT silently revise the earlier design. Name what changed:
+Don't silently revise the earlier design. Name what changed:
 
 > This changes the Section A assumption (single-node, in-memory store). A multi-node deploy makes in-memory incorrect because each node tracks its own counters and an attacker gets `N * limit` throughput.
 >

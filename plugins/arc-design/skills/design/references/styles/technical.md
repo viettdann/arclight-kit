@@ -33,7 +33,7 @@ Differs from cinematic dark tech: no light source, no glow, no viewport-scale ty
   | input border | `oklch(0.58 0.014 264)` | (3.81:1 on surface, 3.39:1 on raised) |
   | accent | `oklch(0.584 0.189 32)` | `#D44027` |
   | on-accent | white | `#FFFFFF` (4.60:1) |
-  | ink | white at the `dark-mode.md` alphas | `#FDFDFD` base |
+  | text | white at the `dark-mode.md` alphas | `#FDFDFD` base |
   | light band canvas | `oklch(0.985 0.002 264)` | |
   | light band border | `oklch(0.904 0.007 269)` | `#DDDFE4` |
 

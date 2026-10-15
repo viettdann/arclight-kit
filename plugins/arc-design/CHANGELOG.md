@@ -2,6 +2,16 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] - 2026-10-15
+
+### Changed
+
+- `design`, `redesign`: run the workflow in one turn without progress stops; the design summary is about 15 lines.
+- `state-check`: fan-out from about five pages, with the sub-agent scope stated; `ui-check`, `state-check`: findings past the cap are counted, not dropped.
+- `ui-interaction`: segmented control at weight 600, sliding with `transform` instead of `width`; `restyle/references/tailwind.md`: active segment `font-semibold`.
+- `design`: the technical style's palette token is `text`, not `ink`.
+- Tables of contents on reference files over 100 lines.
+
 ## [1.9.0] - 2026-10-15
 
 ### Added

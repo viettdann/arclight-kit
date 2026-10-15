@@ -11,7 +11,7 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
 ## Scope
 
 - **After a change** (default when the working tree or branch has changes): audit only the endpoints and DTOs the diff touches, plus every endpoint that uses a touched DTO. Get the diff with `git diff HEAD` for uncommitted work or `git diff <base>...HEAD` for a branch.
-- **Whole surface**: when the user asks for a full audit or names no change.
+- **Whole surface**: when the user asks for a full audit, or there is no diff to scope by.
 
 ## Process
 
@@ -42,6 +42,7 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
    - **Pagination**: offset (`page`/`skip`/`take`) or cursor (`cursor`/`after`), and the response envelope fields.
 
 3. **Find the consumer.** Label every finding with the method used:
+   - When no TypeScript/JavaScript client is in this repo, find where it lives (README, `docker-compose`, CORS origins, the solution's sibling folders) and ask the user for its local path before reporting endpoints as unmatched. Don't clone or search the whole disk.
    - **Generated client** (high confidence): NSwag or OpenAPI Generator output, matched by generated method or interface name. A generated client that disagrees with the backend means the client is stale: say "regenerate", not "edit by hand".
    - **Hand-written client** (medium confidence): `fetch`, `axios`, Angular `HttpClient`, `ky`, etc. Normalize URLs before matching: strip query strings, turn `${this.apiUrl}/users/${id}`, `baseUrl + '/users/' + userId`, and `:id` into `/users/{id}`, then match against the C# route regardless of variable names.
    - **No consumer located**: report it as such. Never pair by loosely similar class names, and never conclude an endpoint is unused from a failed static search.
@@ -73,4 +74,4 @@ Cross-reference the C# API's actual contract (routes, DTOs, status codes) agains
 4. **No consumer found**: endpoints and DTOs that need manual confirmation.
 5. **Match confidence**: counts of findings from generated clients, hand-written route matches, and unmatched endpoints.
 
-Every finding names the C# file:line and the client file:line it rests on. When nothing breaks, say so in one line after the scope; don't fill the report with general API advice.
+Every finding is one or two lines and names the C# file:line and the client file:line it rests on. When nothing breaks, say so in one line after the scope; don't fill the report with general API advice.

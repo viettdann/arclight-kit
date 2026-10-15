@@ -1,5 +1,7 @@
 # Tables, Lists, Cards, Search, Filters
 
+Contents: tables · tables on narrow widths · clickable cards · selection and bulk actions · pagination · search · filters · command palette · empty states for collections · checks
+
 ## Tables
 
 - Width follows content: short fixed-format columns (status, date, amount) get room for their longest value plus padding, and spare width is spread across columns (table-auto, or proportional widths) rather than handed to a single name column that ends in empty space.

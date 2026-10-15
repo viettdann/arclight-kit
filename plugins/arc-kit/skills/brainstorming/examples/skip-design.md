@@ -10,7 +10,7 @@ Shows how to handle "just do it" / "skip the questions" requests without either 
 
 ## Response: confirm the trade-off, then request the minimum viable anchor
 
-Do NOT dive into implementation blind. Do NOT force a full design either. Middle path:
+Don't dive into implementation blind. Don't force a full design either. Middle path:
 
 > Understood. Skipping design means I'll make these choices on your behalf:
 >
@@ -39,7 +39,7 @@ Acknowledge, update the assumption list, present the plan:
 
 ### Case C: "Just write the code already"
 
-This is NOT approval to skip the plan gate. Respond:
+This is not approval to skip the plan gate. Respond:
 
 > The plan step costs one message and protects us from rewriting the feature. Here it is:
 > [plan...]

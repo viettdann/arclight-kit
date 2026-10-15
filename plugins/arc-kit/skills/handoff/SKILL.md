@@ -3,7 +3,7 @@ name: handoff
 description: Write a verified handoff file so work can continue in a fresh session, another repo or harness, or with a colleague; with `resume`, pick up from the latest one.
 argument-hint: "[resume]"
 disable-model-invocation: true
-effort: high
+effort: medium
 ---
 
 # Handoff
@@ -60,7 +60,7 @@ Keep the file to a screen or two - density beats length. Omit empty sections rat
 
 ### Retention
 
-Handoff files accumulate. Recommend deleting or archiving a handoff once its task is closed (merged/shipped), so the dir stays current.
+When resuming from a handoff whose task is closed (merged or shipped), suggest deleting or archiving it.
 
 ## Resuming
 
