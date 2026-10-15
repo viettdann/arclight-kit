@@ -239,6 +239,15 @@ Final gate after all tasks executed:
 ### Build: PASS / FAIL
 ### Tests: PASS / FAIL / N/A
 
+### Files changed
+- path: what changed
+
+### Dependencies added
+- package@version: why no installed one covers it (omit section when none)
+
+### How to verify
+1. Steps a person runs or clicks to see the change work, including its failure and empty states
+
 ### Issues Found & Fixed
 - Issue description → fix applied
 

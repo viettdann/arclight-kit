@@ -40,6 +40,7 @@ Find the cause before changing code, then fix it once, with a test that failed b
 
 ## 4. Fix
 
+- Make the smallest change that removes the cause; cleanups noticed on the way are listed, not done.
 - Fix the cause, not the symptom. Not a fix: a try/catch that swallows, a null check or default for a value that should never be missing, a retry, sleep, or longer timeout for a race, a widened type, a skipped or loosened test. When the cause is outside the codebase (library bug, external API), a guard is acceptable with a one-line comment naming the cause and the upstream issue.
 - Grep every caller of the function you change and put the fix in the shared path. Search for the same pattern in sibling code; fix the instances in scope and list the rest.
 - The repro becomes the regression test. If it was a script and the project has a test harness, turn it into a test. Run it before applying the fix and see it fail for the bug's reason; a test that never failed proves nothing. Put it where it exercises the bug the way the call site does; when the only reachable level can't (the bug needs two callers or the full chain, and a unit test can't build that), don't write a shallow test that passes either way: report the missing seam as a finding.
@@ -54,8 +55,10 @@ Find the cause before changing code, then fix it once, with a test that failed b
 **Symptom**: Under X, it does Y; expected Z
 **Cause**: file and symbol, one line on the mechanism
 **Evidence**: the experiment that confirmed it
+**Unconfirmed**: what is still inferred, not shown by an experiment (omit when none)
 **Ruled out**: hypothesis: why
-**Fix**: what changed, where
+**Fix**: what changed, where, and why it removes the cause
+**Repro**: the command, or steps, that failed before and passes now
 **Test**: path and name; failed before the fix, passes after (or the missing seam)
 **Same pattern elsewhere**: fixed, or left with locations
 ```

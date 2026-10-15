@@ -1,6 +1,6 @@
 ---
 name: arc
-description: The user's daily defaults for a session in a project that doesn't carry their own CLAUDE.md (communication, scope of a go-ahead, git safety in a shared worktree, docs and comment style, commits, reuse and minimal code, migrations, UI). Invoked by the user at session start; lowest priority.
+description: The user's daily defaults for a session in a project that doesn't carry their own CLAUDE.md (communication, scope of a go-ahead, small tasks, git safety in a shared worktree, docs and comments, commits, reuse and minimal code, migrations, UI). Invoked by the user at session start; lowest priority.
 disable-model-invocation: true
 ---
 
@@ -37,6 +37,16 @@ On invocation: reply `Đã nạp arc.` on one line. If the invocation carries a 
 **Test by necessity, not by imitation.** Write a test only where you can name the plausible regression it catches (a fixed bug coming back, a branch or edge case, a contract, an auth deny path, or a refactor changing output a characterization test pins). The project's existing tests are never the reason. Tests of a constant or string copied from the code, of markup or style, or that only check a call happened are junk. No test is a valid outcome.
 
 **Run tests by necessity too.** A change that can't alter behavior (docs, comments, Markdown, formatting only) runs no build or tests. Otherwise run the tests covering the touched files; the full suite only when the change reaches shared code, a public contract, config, dependencies, or build files, or those tests can't be named.
+
+## Small tasks
+
+When the full skill (`brainstorming`, `executor`, `debug`) would be overhead, handle the task inline this way. A task that grows past it (several modules, a schema change, a multi-step plan) moves to the full skill.
+
+**Spec an idea.** Ask at most three questions, only ones whose answer changes what gets built; take the default for the rest and state it. In chat, write the user's steps, the inputs and their validation, the success criterion, each screen's loading, empty, failure, and success states, and an acceptance checklist of `- [ ]` items a person can check by using the result. Nothing goes on disk unless asked.
+
+**Build a scoped feature.** Follow the project's structure and styling and use the tools already installed; name a new dependency and why before adding it. A UI feature ships its loading, failure, and success states. Touch only what the feature needs. End with the changed files, any dependency added, and the steps to verify it by hand.
+
+**Diagnose an error.** Trace the cause from the error and the code before editing. Report what was shown (command output, a log line, a reproduced run) apart from what is inferred, and label the inference. When a log or input is missing, ask for that exact one: which file, time window, or request. Apply the smallest fix that removes the cause, say in one line why it works, and give the steps that reproduce the bug before the fix and verify it after.
 
 ## Git
 

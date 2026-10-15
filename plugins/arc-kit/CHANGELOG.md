@@ -2,6 +2,18 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.15.0] - 2026-10-15
+
+### Added
+
+- `arc`: a Small tasks section for work that doesn't need the full skill: spec an idea (at most three questions that change the build, user steps, inputs, success criterion, UI states, an acceptance checklist, in chat), build a scoped feature (existing structure and tools, UI states, changed files, dependencies, steps to verify by hand), and diagnose an error (shown apart from inferred, ask for the exact missing log, smallest fix and why it works, repro and verify steps).
+
+### Changed
+
+- `brainstorming`: a question whose every answer leads to the same build isn't asked; a UI feature settles the user's steps, inputs, and each screen's loading, empty, failure, and success states; Verification opens with an acceptance checklist.
+- `executor`: the summary lists the files changed, any dependency added and why, and the steps to verify by hand.
+- `debug`: the fix is the smallest change that removes the cause; the report adds what is still unconfirmed, why the fix works, and the repro.
+
 ## [1.14.0] - 2026-10-14
 
 ### Added

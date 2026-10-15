@@ -26,6 +26,7 @@ Start from a high-level description of what the user wants to build and the curr
   - **Answerable from the codebase?** (installed deps, patterns in use, available APIs) → Resolve it yourself and state it as a resolved constraint, not a question
   - **Answerable from an external dependency?** (see Research) → Resolve it yourself the same way
   - **A preference, trade-off, scope, or judgment call only the user can decide?** ("Approach A or B?", "Async or sync?", "Is this in scope?") → Ask the user
+  - **Would every answer lead to the same build?** → Don't ask; take the default and state it in the design
 - **Surface what nobody asked.** The frontier holds only decisions someone knew to make. When the feature enters a domain the codebase hasn't handled yet (money, time zones, i18n, file uploads, permissions, offline sync), list the domain's decisions that usually bite later, each glossed in a few words, and put the ones that apply on the frontier
 - **Check the premise.** Before choosing an approach, ask yourself: is this the right problem, what does doing nothing cost, and does the request fix the pain or a proxy for it. Raise a doubtful premise in the first round; when the premise is sound, don't invent doubt
 - **Ask in rounds, frontier first.** The frontier is every open decision whose prerequisites are already settled. Ask the frontier with the AskUserQuestion tool, for preference/judgment questions only:
@@ -35,6 +36,7 @@ Start from a high-level description of what the user wants to build and the curr
   - Prefer multiple-choice options when possible; open-ended when the answer space is genuinely open
   - A fact still being looked up (codebase search, research) blocks only the decisions that depend on it; ask the rest of the frontier meanwhile
 - Focus on: purpose, constraints, success criteria
+- For a feature with UI, settle the user's steps, the inputs and their validation, and each screen's loading, empty, failure, and success states; `arc-design:ui-interaction`, when installed, holds the rules for each state
 - For performance work, record the current measurement and a target number before designing; "faster" is not a success criterion
 - **Done when** the frontier is empty: the purpose and success criterion are stated, every judgment call is answered or defaulted (see Handling Disagreement), and every fact the design relies on is Verified or listed as Assumed. Then present the design.
 
@@ -104,7 +106,7 @@ The saved design doc describes the target state only. When a draft element is dr
   ## Design               architecture, components, data flow, error handling
   ## Implementation Plan  one line per file: path + what changes + the check that proves it
   ## Assumptions          what the plan relies on that is not verified yet, and how to verify each
-  ## Verification         tests to write or run, what counts as done, and the inputs and failure modes a user would hit that the goal doesn't name (empty, huge, malformed, duplicate, concurrent), each with the Implementation Plan line whose check covers it
+  ## Verification         an acceptance checklist of `- [ ]` items, each observable by running or using the result; tests to write or run; the UI states named in Design; and the inputs and failure modes a user would hit that the goal doesn't name (empty, huge, malformed, duplicate, concurrent), each with the Implementation Plan line whose check covers it
   ## Out of scope         what the user excluded, one line each, as a boundary ("Leaves the billing module untouched")
   ```
 
