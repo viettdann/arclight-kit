@@ -59,7 +59,7 @@ A grey button that does nothing and says nothing is a dead end. `disabled` remov
 ## Layout stability
 
 - Every `<img>`, `<video>`, and `<iframe>` reserves its box before it loads: `width` and `height` attributes, or `aspect-ratio` on the element or its wrapper. Content that arrives later (ads, embeds, banners) gets reserved space or appears below the viewport, never pushing visible content down.
-- After an action, nothing is inserted above what the user is looking at: a banner, validation summary, notification, consent bar, or fetched result goes into a slot that already has its size, an overlay or toast, or below the viewport. A shift more than 500ms after the input counts against CLS like a load shift (ui-check `layout-shift-input`).
+- After an action, nothing is inserted above what the user is looking at: a banner, validation summary, notification, consent bar, or fetched result goes into a slot that already has its size, an overlay or toast, or below the viewport. A shift more than 500ms after the input counts against CLS like a load shift (ui-check `layout-shift-input`). The one exception is a submit error summary that takes focus and is scrolled into view in the same frame it renders (`forms.md`), because the view moves to it; a summary that doesn't take focus follows the rule.
 
 ## Mobile web and locale
 

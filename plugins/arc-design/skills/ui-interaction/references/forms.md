@@ -2,8 +2,16 @@
 
 ## Structure
 
-- A visible label sits above every field, helper text below it. A placeholder is an example value, never the label.
-- Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Emails, usernames, and codes also get `autocapitalize="none"`, `autocorrect="off"`, and `spellcheck="false"`, or the phone keyboard capitalizes the first letter and "corrects" the value into a different one.
+- Every field has a real `<label for>` that stays visible when the field is empty, focused, and filled.
+- Default: the label sits above the field, with helper text below.
+- A floating label is allowed. The label sits inside the empty field and moves to the field's top edge on focus or when the field has a value. Conditions:
+  - It is a `<label>`, never the `placeholder` attribute.
+  - Floated, it is at least 12px and passes 4.5:1 against the field fill.
+  - The field is tall enough that the floated label and the value never overlap.
+  - The float is driven by field state, not by focus alone: `:focus`, `:not(:placeholder-shown)` with `placeholder=" "`, and `:autofill`. That way it also floats when the browser autofills or code sets the value.
+  - Because the placeholder holds the blank `" "`, a floating-label field shows any example value in its helper text, not in a placeholder.
+- On a field with a label above, a placeholder is only an example value. It disappears on input, so a format or requirement the user needs while typing goes in helper text, never only in the placeholder.
+- Every field has the right `type`, `inputmode`, `autocomplete`, and `name` (`email`, `tel`, `current-password`, `new-password`, `one-time-code`, `given-name`, `postal-code`, `cc-number`, ...). Emails, usernames, and codes also get `autocapitalize="none"`, `autocorrect="off"`, and `spellcheck="false"`, or the phone keyboard capitalizes the first letter and "corrects" the value into a different one. Codes use `inputmode`, not `type="number"` (see Codes and identifiers).
 - `enterkeyhint` names what the keyboard's Enter key does (`search`, `send`, `go`, `next` on a field followed by another, `done` on the last), so the label on the phone keyboard matches the action it triggers.
 - Inputs, selects, and textareas render at 16px or larger on touch: iOS Safari zooms the page into any focused field under 16px and leaves it zoomed. Keep the dense size for fine pointers only: 16px under `@media (pointer: coarse)`, or `text-base sm:text-sm`, which approximates touch by width and misses a large tablet. Never fix it with `maximum-scale=1` in the viewport meta, which also blocks the pinch zoom low-vision users need.
 - Group fields by meaning (Personal, Shipping, Payment). The gap inside a group is at most half the gap between groups, so no divider lines are needed.
@@ -12,12 +20,24 @@
 
 ## Validation timing
 
-- First validation runs on blur (or on submit for fields never touched), never on every keystroke.
-- Once a field has shown an error, re-validate it live so the error disappears the moment it is fixed.
+- First validation runs on blur after the user edited the field, or on submit for a field never touched. Never validate on keystrokes before that.
+- Once a field shows an error, it re-validates on every input until it is valid, so the error clears the moment it is fixed.
+- Once valid again, the field returns to on-blur validation.
 - Rules that guide input (password requirements) are visible up front and tick live as the user types. That is guidance, not an error.
 - A success mark is for checks the user can't see themselves (username availability, async verification), not for every field.
 - An error is color plus icon plus text saying what is wrong and how to fix it, anchored under the field, wired with `aria-invalid` and `aria-describedby`.
-- On a submit with errors, move focus to the first invalid field. Long forms also get a summary at the top linking to each field.
+
+## Errors
+
+- **Message slot:** every field has one message slot under it, reserved at the height of one line of helper text even when empty. The error replaces the helper text in that slot, so an error appearing moves neither the fields below nor the submit button. Write messages to fit that one line. When a message still wraps (a narrow screen, a longer translation), only that slot grows, downward: nothing above the field moves, while the fields below and the submit button may move down.
+- **Submit button:** it stays where it is and stays enabled (`## Submit`).
+- **Error summary:** on a submit with errors, every form, short ones too, shows an error summary at the top of the form with:
+  - a heading with the count, e.g. "Fix 3 fields";
+  - one entry per broken field, in form order, with the same text as that field's inline error;
+  - each entry a link (`href="#<field-id>"`) that moves focus to the input.
+- **Summary focus:** the summary container has `tabindex="-1"`. In the same frame it renders, focus moves to it and it is scrolled into view. Client-side validation renders it synchronously on submit; a server-side validation response does the same when it arrives. This summary is the exception to the layout-stability rule against inserting above the viewport (`baseline.md`, Layout stability), because the view moves to it.
+- Inline errors show under each field at the same time as the summary.
+- The summary's content changes only on the next submit, and the summary is removed when a submit passes validation.
 
 ## Submit
 
@@ -30,6 +50,8 @@
 
 - **Password:** show/hide toggle, paste allowed, requirements shown live, length favored over symbol rules. `autocomplete="new-password"` lets password managers generate one.
 - **OTP:** one string in state, the boxes are just a view of it. Paste into any box strips non-digits and fills all boxes. Focus advances on entry, and Backspace on an empty box moves back. Set `inputmode="numeric"` and `autocomplete="one-time-code"`. Resend is throttled behind a visible countdown. A wrong code clears the boxes, refocuses, and says so.
+- **Codes and identifiers:** `type="number"` is only for quantities a user would step up or down. OTP, PIN, CVC, postal/ZIP, card, account, phone, and ID numbers use `type="text"` (`tel` for phone) with `inputmode="numeric"`, plus `autocomplete` where one applies. `type="number"` breaks codes: the mouse wheel over a focused field and the arrow keys change the value; leading zeros are dropped; `e`, `+`, `-`, and `.` are accepted; `maxlength` is ignored; spinners are drawn; `.value` is `""` for input the browser can't parse.
+- **Autofill:** browsers paint autofilled fields with their own fill and text color and ignore the theme, which leaves a bright block in dark mode. Style the state on `input:autofill` plus `input:-webkit-autofill` (Safari), including the `:hover` and `:focus` combinations. Fill: an inset shadow covering the box in the field's own surface color, e.g. `box-shadow: 0 0 0 1000px var(--field-bg) inset`. Text: `-webkit-text-fill-color: var(--text)` and `caret-color: var(--text)`. If the focus ring is a box-shadow, list it in the same `box-shadow` after the inset fill so autofill doesn't erase it; an `outline` ring needs nothing. The autofilled field matches the normal field surface in every theme, and its text passes 4.5:1 against that surface. A floating label is floated in this state.
 - **Masked input (card, phone, IBAN):** display formatted, store raw. The caret stays after the character just typed when a separator is inserted. Pasted separators are cleaned, not rejected. Card brand shows from the leading digits. Validate on blur.
 - **Date:** date ranges lead with presets (Today, Last 7 days, Last 30 days, This quarter) and keep a custom range for the rest. Show two months side by side for ranges. The date can be typed. The grid is keyboard navigable (arrows, Page Up/Down for month, Enter, Escape). On mobile use a full-screen sheet or the native input.
 - **Slider:** filled track, live value readout, snaps to steps, hit area spans the row height, arrows/Home/End/Page keys work, two thumbs for ranges. Pair with a number input when exact values matter.
@@ -60,10 +82,14 @@
 
 ## Checks
 
-- [ ] Every input has a visible label, the correct `type`, and `autocomplete`.
+- [ ] Every input has a label that stays visible when filled, the correct `type`, and `autocomplete`.
 - [ ] On touch every field is at least 16px with zoom left enabled; email, username, and code fields don't autocapitalize or autocorrect.
 - [ ] The network-failure and server-error branches keep all values and show distinct messages with a retry.
-- [ ] Errors appear on blur, not while typing, and clear live once fixed.
+- [ ] Errors appear on blur, re-check on every input while shown, and go back to on-blur once fixed.
+- [ ] Every field reserves its message slot, so showing a one-line error moves neither the fields below nor the submit button.
+- [ ] A submit with errors shows a top summary that links every broken field and takes focus in the frame it renders.
+- [ ] Autofilled fields keep the theme's surface and readable text in every theme.
+- [ ] No code or identifier uses `type="number"`.
 - [ ] Submit is never disabled for validity, and a double submit is impossible.
 - [ ] Paste works in password, OTP, and masked fields.
 - [ ] Switches are pills with a round knob, an off track at 3:1, and a sliding knob that skips the first render and reduced motion; segmented controls have no border on the track or the selected option.

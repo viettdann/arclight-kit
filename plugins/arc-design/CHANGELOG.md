@@ -2,6 +2,22 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] - 2026-10-20
+
+### Changed
+
+- `ui-interaction`: every field keeps a real `<label for>` visible when empty, focused, and filled; the label sits above by default and a floating label is allowed under conditions (a `<label>`, 12px, 4.5:1, no overlap with the value, floats on `:autofill` and `:not(:placeholder-shown)`, example value in helper text). A placeholder is only an example value, and formats go in helper text.
+- `ui-interaction`: validation runs on blur after an edit (or on submit for an untouched field), re-checks on every input while an error shows, and returns to on-blur once valid.
+- `ui-interaction`: a submit with errors shows a top error summary on every form, not only long ones, and focus moves to the summary instead of the first invalid field.
+- `ui-interaction`, `ui-check`: layout-stability rules (`baseline.md`, `layout-shift-input`, `perf.md`) exempt a submit error summary that takes focus and is scrolled into view in the same frame it renders; a summary that doesn't take focus is still flagged.
+
+### Added
+
+- `ui-interaction`: every field reserves one message slot at the height of a helper-text line, so an error moves neither the fields below nor the submit button; a wrapping message grows only its own slot, downward.
+- `ui-interaction`: the error summary has a count heading, one same-text link per broken field in form order, `tabindex="-1"`, and renders and takes focus in the same frame.
+- `ui-interaction`: autofill styling on `:autofill` and `:-webkit-autofill` (inset box-shadow fill, `-webkit-text-fill-color`, `caret-color`, a box-shadow focus ring kept) so autofilled fields match the theme.
+- `ui-interaction`: codes and identifiers (OTP, PIN, CVC, postal, card, account, phone, ID) use `type="text"` or `tel` with `inputmode="numeric"`; `type="number"` is for steppable quantities only.
+
 ## [1.11.0] - 2026-10-19
 
 ### Changed

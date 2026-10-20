@@ -35,4 +35,4 @@ Read before reporting a timing, a Core Web Vital, or the effect of a fix, whethe
 
 ## Layout shift after an interaction
 
-- Chrome treats shifts within 500ms of an input as expected and leaves them out of CLS. Later shifts count like a load shift. The usual cause is an async result, banner, or validation summary inserted above the viewport (`layout-shift-input`); fix it per `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`, Layout stability.
+- Chrome treats shifts within 500ms of an input as expected and leaves them out of CLS. Later shifts count like a load shift. The usual cause is an async result, banner, or validation summary inserted above the viewport (`layout-shift-input`); fix it per `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`, Layout stability. A form error summary that takes focus and is scrolled into view in the same frame it renders is the exception: drop the finding.
