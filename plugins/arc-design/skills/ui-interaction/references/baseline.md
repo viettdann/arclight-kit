@@ -22,9 +22,10 @@ Contents: semantics · keyboard and focus · pointer and touch · unavailable ac
 
 ## Pointer and touch
 
-- Under `@media (pointer: coarse)`, primary controls have a 44×44px hit area; with a fine pointer every target is at least 24×24px (a dense tool's 28–36px controls meet this).
-- The hit area is not the visual size. Reach 44px with an absolutely positioned `::before` at a negative inset (the control `position: relative`) or with spacing the layout already has, and keep the control's height, padding, glyph (16–20px), and the surrounding layout unchanged. Neighbouring hit areas don't overlap; where they would, the gap between the controls counts toward the target.
-- Never meet the target with a global `min-height`/`min-width: 44px`, a bigger size token, or taller rows just to clear a ui-check warning. A control that should look bigger on touch is a design decision made in the tokens, not a fix.
+- The floor is 24×24px for every target at every pointer (WCAG 2.2 AA, 2.5.8), the gap to a neighbour counting toward it. Below the floor is a defect; above it, size is a design choice.
+- On touch, 32–36px controls are comfortable and 28px is fine for secondary and inline icon buttons, so a dense tool keeps its 28–36px controls on phones. Apple's 44pt and Material's 48dp are platform guidelines for native apps, not a minimum for the web; don't grow a control toward them.
+- The hit area is not the visual size. Where a target sits under 24px (under 28px on touch), extend it with an absolutely positioned `::before` at a negative inset (the control `position: relative`) or with spacing the layout already has, and keep the control's height, padding, glyph (16–20px), and the surrounding layout unchanged. Neighbouring hit areas don't overlap.
+- Never meet a target with more padding, a global `min-height`/`min-width`, a bigger size token, or taller rows: each one changes the control's look and the layout around it. A control that should look bigger on touch is a design decision made in the tokens, not a fix.
 - Hover styles that move, scale, or reveal content live under `@media (hover: hover) and (pointer: fine)`: some touch devices report hover, and a tapped card stays lifted until the next tap. Color-only tints may use `(hover: hover)` alone, which is what Tailwind v4's `hover:` compiles to (v3 needs `future.hoverOnlyWhenSupported`). Touch-only hit areas and spacing live under `@media (pointer: coarse)`. Never branch on user agent.
 - Hover may reveal extras only. Every primary action is reachable by tap and keyboard without hover.
 
@@ -109,6 +110,7 @@ Client-side checks exist for speed, not trust: the server re-runs validation and
 - [ ] Focus rings survive effect wrappers; decorative layers are `pointer-events: none` and `aria-hidden`.
 - [ ] Live regions exist empty before their first message; every image's alt matches its job; anything moving or updating past 5 seconds can be paused.
 - [ ] No action depends on hover, right-click, or swipe alone.
+- [ ] Every target reaches 24px, extended without changing its visual size; no control grew taller or wider for touch.
 - [ ] Every moving animation or transition has a `prefers-reduced-motion: reduce` override.
 - [ ] No scroll listener or per-frame value held in component state.
 - [ ] No state is conveyed by color alone.

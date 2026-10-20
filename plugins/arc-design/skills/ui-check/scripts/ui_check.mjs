@@ -299,14 +299,14 @@ function audit({ mobile, phone, spacing }) {
     const small = Math.min(hit.width, hit.height);
     const size = `${Math.round(hit.width)}×${Math.round(hit.height)}px`;
     if (small < 24) add('target', el, `${size}, under the 24px minimum`);
-    else if (coarse && small < 44) touch.push({ el, small, size });
+    else if (coarse && small < 28) touch.push({ el, small, size });
   }
-  // The script can't tell primary controls from secondary ones, so one line lists the smallest and the shot decides which are primary.
+  // 28px is a comfortable web touch size; 44pt and 48dp are native-app guidelines, and chasing them inflates dense layouts.
   if (touch.length) {
     touch.sort((a, b) => a.small - b.small);
     const rest = touch.slice(1, 3).map((t) => `${sel(t.el)} ${t.size}`).join(', ');
-    add('target-touch', touch[0].el, `${touch.length} control(s) with a hit area under 44px under pointer: coarse, smallest ${touch[0].size}`
-      + (rest ? `; next: ${rest}` : '') + '; only primary controls need 44px, padded without changing their size', true);
+    add('target-touch', touch[0].el, `${touch.length} control(s) with a hit area under 28px under pointer: coarse, smallest ${touch[0].size}`
+      + (rest ? `; next: ${rest}` : '') + '; extend the hit area with a ::before, never more padding or a bigger control', true);
   }
 
   // Cursor is inherited, so only the element that sets it counts; a pointer or listener on a wrapper of real controls is fine.
@@ -400,7 +400,7 @@ function audit({ mobile, phone, spacing }) {
     const range = document.createRange();
     range.selectNodeContents(el);
     const r = range.getBoundingClientRect(), edge = Math.min(r.left, vw - r.right);
-    if (body && len > 30 && edge >= 0 && edge < 16) some('edge-flush-text', el, `text ${Math.round(edge)}px from the viewport edge, under 16px`);
+    if (body && len > 30 && edge >= 0 && edge < 12) some('edge-flush-text', el, `text ${Math.round(edge)}px from the viewport edge, under 12px`);
     if (s.display.startsWith('inline') || len <= 80) continue;
     ctx.font = s.font;
     const ch = ctx.measureText('0').width || size / 2, rows = [];

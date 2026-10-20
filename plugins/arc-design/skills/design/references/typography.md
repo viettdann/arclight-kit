@@ -27,7 +27,7 @@ All three pass 4.5:1 on every surface they sit on; check them with the design sk
 
 ## Weight
 
-- Two weights: 400 to read (body, cells, descriptions), 600 to scan (headings, key values, the label that anchors a row).
+- Two weights by default: 400 to read (body, cells, descriptions), 600 to scan (headings, key values, the label that anchors a row). A project scale with a third (500 for labels and buttons is common) keeps it; the rule is a small fixed set, not these two numbers.
 - Weight marks single elements. A bold paragraph, a bold table, or bold on every label leaves nothing to find.
 - No 500, and nothing above 600 unless the chosen style lists it.
 - A style that uses light weights (100–300) keeps them to display sizes of about 28px and up: below that the thin strokes break up on screen and fall under contrast even when the color passes.

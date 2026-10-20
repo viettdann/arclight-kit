@@ -2,6 +2,24 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] - 2026-10-19
+
+### Changed
+
+- All skills: the numbers in the references are defaults for a project without its own system; existing tokens and shared components (radius, weights, spacing, control sizes, edges) win, and restyle removes tells instead of replacing values that merely differ from the defaults.
+- `ui-interaction`, `ui-check`: touch targets have one floor, 24px (WCAG 2.5.8); 28–36px controls are good touch sizes, 44pt/48dp are native guidelines, not a web minimum. `target-touch` reports hit areas under 28px instead of 44px, and fixes extend the hit area without more padding or a bigger control. The switch keeps 36×20px on touch.
+- `design`, `restyle`: removing a shadow no longer adds a border; a card takes a hairline only on a surface of the same value, and a screen's lines are counted (no line inside or beside another line, none between groups the gap already separates). The minimal style separates with space first.
+- `restyle`: the radius and weight values apply only without a project scale; 500 is a normal weight. `scan_tells.py` no longer flags `font-medium`/500, flags thin weights only, and its bold, large-radius, and shadow labels say when the hit is fine.
+- `design`: control clearance defaults tightened to 8px between bordered controls and 16px between borderless glyphs.
+- `ui-interaction`, `design`, `restyle`: the borderless segmented control and switch spec is for new controls; an existing one keeps its border.
+- `design`: tool rows keep one height by default; a comment or error cell may clamp to two lines, and rows that already wrap stay that way.
+- `restyle`: tables keep their column order; numeric-last and status-first are suggested in the report and applied only when asked.
+- `ui-check`: `edge-flush-text` reports body text under 12px from the viewport edge instead of 16px.
+
+### Added
+
+- `design`: icon-only buttons are square, as tall as the buttons beside them, with no text-button padding (`icons.md`).
+
 ## [1.10.0] - 2026-10-15
 
 ### Changed

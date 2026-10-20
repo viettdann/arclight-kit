@@ -15,10 +15,10 @@ Pick one edge per card from what it sits on, and use the same one for every card
 | Card sits on | Treatment |
 | --- | --- |
 | A background of the same value (white on white) | 1px border |
-| A tinted canvas (card lighter than the page) | Tool profile: 1px border. Marketing profile: one soft shadow, no border |
+| A tinted canvas (card lighter than the page) | Tool profile: the lightness step alone, plus a 1px hairline only when the step is too faint to see. Marketing profile: one soft shadow, no border |
 | A panel, modal, drawer, or any other surface | Flat: no border, no shadow; separated by spacing, a divider where spacing isn't enough |
 
-Never a full-strength border and a shadow together; the two edges read as a double outline. The materials themselves (hairline values, layered shadow) are in `materials.md`.
+Never a full-strength border and a shadow together; the two edges read as a double outline. Removing a shadow doesn't mean adding a border: the row above decides whether the card takes one. The materials themselves (hairline values, layered shadow) are in `materials.md`.
 
 ## Never nest
 

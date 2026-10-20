@@ -9,7 +9,7 @@ Document-like interfaces where typography and whitespace do the work and color i
 - **Palette:** warm or cool monochrome, chosen from the brand hue: an off-white canvas tinted a few points toward that hue, off-black text, one muted grey for secondary text. The accent appears on the primary action only (this overrides the global rule: the current selection uses a neutral fill).
 - **Category color:** when items need a category (tags, labels, callouts), use tint fills (`materials.md`). Never saturated fills.
 - **Type:** one sans with character for UI and body. A serif for display headings only when the product is genuinely editorial (publishing, writing, research); otherwise the sans at display size with tight tracking (-0.02 to -0.04em). Mono for shortcuts, ids, and metadata. Body line-height 1.6, prose width 60–70ch.
-- **Structure:** 1px hairline borders at 6–10% of the text color separate everything; no shadows on in-page surfaces. Radius overrides the profile's values: chips and tags 4px, buttons and inputs 6px, cards and panels 8px, no pills. Generous vertical space between groups; on marketing, content column `max-w-4xl`/`5xl`.
+- **Structure:** space separates first; a 1px hairline at 6–10% of the text color goes only where space can't (table rows, a card on a surface of the same value), and `layout.md`'s line count still holds; no shadows on in-page surfaces. Radius overrides the profile's values: chips and tags 4px, buttons and inputs 6px, cards and panels 8px, no pills. Generous vertical space between groups; on marketing, content column `max-w-4xl`/`5xl`.
 - **Motion:** almost invisible: 150–250ms fades and 8–12px rises, hover changes surface value, nothing loops.
 
 ## Signature moves (examples)

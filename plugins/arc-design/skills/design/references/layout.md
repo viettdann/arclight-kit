@@ -7,11 +7,12 @@ Contents: Grouping · Control clearance · Container queries · Adapting across 
 ## Grouping
 
 - Group with space first, a surface tint second, and a line last. A divider is only for places where space can't hold the structure (table rows, a long settings list, a dense tool panel), because every line is one more edge the eye has to read past.
+- Count the lines on a screen before adding one. Repeated row separators in one list count as one; past that, a screen rarely needs more than a few. Never a border inside a bordered surface, a divider right next to a border, or a line between groups the gap already separates.
 - The gap between groups is at least twice the gap inside a group: 8px inside means 16px or more between, 16px inside means 32px between. With equal gaps, a label attaches to the wrong field and a heading floats between two sections (`typography.md`, Space around headings).
 
 ## Control clearance
 
-- When neither `DESIGN.md` nor the theme defines a density token, start from these gaps: 12px between adjacent bordered or filled controls, 24px between the visible glyphs of borderless icon or text buttons (their own padding counts toward it), and 24px or more between unrelated control groups (a toolbar's edit set and its view set). Borderless controls need the larger gap because nothing else shows where one ends.
+- When neither `DESIGN.md` nor the theme defines a density token, start from these gaps: 8px between adjacent bordered or filled controls, 16px between the visible glyphs of borderless icon or text buttons (their own padding counts toward it, so 32px icon buttons with 16px glyphs can sit edge to edge), and 24px or more between unrelated control groups (a toolbar's edit set and its view set). Borderless controls need the larger gap because nothing else shows where one ends.
 - A project's density scale replaces these numbers. Go tighter only while hit areas don't overlap (`${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md`, Pointer and touch) and each control still reads as separate.
 
 ## Container queries
@@ -46,7 +47,7 @@ Contents: Grouping · Control clearance · Container queries · Adapting across 
 
 ## Checks
 
-- [ ] Groups are separated by space, the gap between groups is at least twice the gap inside them, and dividers appear only where space can't carry the structure.
+- [ ] Groups are separated by space, the gap between groups is at least twice the gap inside them, and dividers appear only where space can't carry the structure; no line sits inside or beside another line.
 - [ ] Control spacing comes from the project's density scale or the defaults here, and no hit areas overlap.
 - [ ] Reusable components adapt through container queries on their own wrapper, no element carries both `@container` and an `@` variant, and viewport queries are used only for page-level layout.
 - [ ] Horizontal rows show part of the next item, and every disclosure says what it hides and how many.

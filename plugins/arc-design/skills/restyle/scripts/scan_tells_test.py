@@ -188,6 +188,12 @@ class ScanTellsTest(unittest.TestCase):
         self.assertNoTell("a.tsx", '<div className="transition-opacity ease-in-out" />\n', "ease-in on a UI transition")
         self.assertNoTell("a.css", ".a { transition: opacity 150ms var(--ease-in); }\n", "ease-in on a UI transition")
 
+    def test_weights(self):
+        self.assertTell("a.tsx", '<p className="font-light">x</p>\n', "thin weight")
+        self.assertTell("a.css", ".a { font-weight: 300; }\n", "thin weight")
+        self.assertNoTell("a.tsx", '<p className="font-medium">x</p>\n', "thin weight")
+        self.assertNoTell("a.css", ".a { font-weight: 500; }\n", "thin weight")
+
     def test_off_scale_spacing(self):
         self.assertTell("a.tsx", '<div className="p-[13px]">x</div>\n', "off the spacing scale")
         self.assertTell("a.tsx", '<div className="md:-mt-[6px] gap-4">x</div>\n', "off the spacing scale")

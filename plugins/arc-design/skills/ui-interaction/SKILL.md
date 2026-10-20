@@ -42,4 +42,4 @@ Data safety, then accessibility, then preserving the user's input and place, the
 
 ## Project overrides
 
-If `DESIGN.md` or existing components already define a behavior (toast position, blur-to-save, confirmation policy), follow the project. Flag it only when it breaks data safety or accessibility.
+If `DESIGN.md` or existing components already define a behavior (toast position, blur-to-save, confirmation policy), follow the project. Flag it only when it breaks data safety or accessibility. The same holds for sizes: the numbers in the references are defaults for a project without its own, so existing control heights, paddings, gaps, and component looks stay unless they fall under a measured floor (a 24px target, 3:1 for a boundary).

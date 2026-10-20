@@ -10,18 +10,19 @@
 
 ## 1. Class mappings
 
-Values are for tool surfaces; on marketing surfaces take radius from the marketing profile (button and input `rounded-lg`, chip `rounded-md`, band inside the container `rounded-2xl`). Sizes are Tailwind defaults standing in for the project's type scale, and zinc literals stand in for the dark tokens: in a project with tokens use `bg`/`surface`, `text`/`text-muted`/`text-subtle`, and `border` instead.
+The left column is the tell; a value the project's tokens or shared components already set consistently (a radius, a weight, a border treatment) isn't one, so leave it. Values are for tool surfaces; on marketing surfaces take radius from the marketing profile (button and input `rounded-lg`, chip `rounded-md`, band inside the container `rounded-2xl`). Sizes are Tailwind defaults standing in for the project's type scale, and zinc literals stand in for the dark tokens: in a project with tokens use `bg`/`surface`, `text`/`text-muted`/`text-subtle`, and `border` instead.
 
 | Tell | Replace with |
 |---|---|
 | `bg-gradient-to-r from-violet-600 to-blue-500` (header/surface) | same surface as page (`bg-zinc-950`) + `border-b border-white/10` |
 | gradient button | the project's primary token, flat: `bg-primary text-primary-foreground hover:bg-primary/90` in shadcn projects (where `accent` is the neutral hover grey), otherwise `bg-accent text-on-accent` |
 | `bg-clip-text text-transparent bg-gradient-*` | `text-zinc-50` (or `text-zinc-900` light) |
-| `rounded-2xl` / `rounded-3xl` on card | `rounded-xl` |
-| `rounded-xl`/`rounded-full` on text input | `rounded-md` (same step as the button beside it) |
-| `rounded-xl`/`rounded-full` on button | `rounded-md` |
-| `shadow-md/lg/xl/2xl` on card/button | remove; add `border border-white/10` (dark) / `border-zinc-200` (light) |
-| `shadow-*` on input/select | remove; add `border border-white/35` (dark) / `border-zinc-500` (light), 3:1 against the surface |
+| `rounded-2xl` / `rounded-3xl` on card, with no radius scale in the project | `rounded-xl` |
+| `rounded-xl`/`rounded-full` on text input beside a `rounded-md` button | `rounded-md` (same step as the button beside it) |
+| `rounded-xl`/`rounded-full` on button, with no radius scale in the project | `rounded-md` |
+| `shadow-md/lg/xl/2xl` on card | remove; add `border border-white/10` (dark) / `border-zinc-200` (light) only when the card sits on a surface of the same value (`cards.md`); on a tinted canvas or inside a panel, nothing |
+| `shadow-*` on button | remove; no border (a filled button needs none, an outline button already has one) |
+| `shadow-*` on input/select | remove; keep its border, raised to 3:1 against the surface (`border-white/35` dark, `border-zinc-500` light) if it falls short |
 | `shadow-violet-500/30`, `ring` glows | remove |
 | `backdrop-blur-*` + `bg-white/5` on in-page card | `bg-zinc-900 border border-white/10` (opaque) |
 | icon tile `p-2 rounded-lg bg-blue-500/10 text-blue-400` next to title | remove the tile + icon |
@@ -160,7 +161,7 @@ function Sparkline({ data, className = "h-8 w-32 text-accent" }: { data: number[
 
 ## 5. Tables and numbers
 
-- Numeric columns: `text-right tabular-nums`; header of that column also `text-right`. Order columns `Status | Customer | Date | Amount` — status at the leading edge, the numeric column last at the right edge. Status cell: `<span class="inline-flex items-center gap-1.5 text-zinc-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Paid</span>` (dot color carries the state; text stays neutral except for errors).
+- Numeric columns: `text-right tabular-nums`; header of that column also `text-right`. Keep the existing column order (SKILL.md, principle 5); `Status | Customer | Date | Amount` is the order to suggest, or to use for a new table. Status cell: `<span class="inline-flex items-center gap-1.5 text-zinc-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Paid</span>` (dot color carries the state; text stays neutral except for errors).
 - Column widths: let `table-auto` size columns from content, or give proportional widths; don't pin status/date/amount to narrow fixed widths so the name column absorbs all spare space.
 - Row separation: `divide-y divide-white/10` on `tbody`, not zebra stripes + shadows.
 - Currency with consistent decimals in a column (`$86.00`, not `$86`).
@@ -169,4 +170,4 @@ function Sparkline({ data, className = "h-8 w-32 text-accent" }: { data: number[
 
 - Secondary chart: neutral stroke (`stroke-zinc-300` / `#d4d4d8`), 1.5px, no gradient fill, faint horizontal gridlines (`stroke-white/5`), muted axis labels.
 - Only the hero series gets the accent.
-- Range toggles (7d/30d/90d): segmented control, track `rounded-md p-0.5` with no border, items `rounded`. Dark: track `bg-white/5`, active item `bg-white/10 text-zinc-50`, others `text-zinc-400`. Light: track `bg-zinc-100`, active item `bg-white shadow-sm text-zinc-900 font-semibold`, others `text-zinc-500`. A border on the track or the active item is a tell; remove it.
+- Range toggles (7d/30d/90d): segmented control, track `rounded-md p-0.5` with no border, items `rounded`. Dark: track `bg-white/5`, active item `bg-white/10 text-zinc-50`, others `text-zinc-400`. Light: track `bg-zinc-100`, active item `bg-white shadow-sm text-zinc-900 font-semibold`, others `text-zinc-500`. When the project has no segmented control of its own, build it without a border on the track or the active item; an existing one keeps its border.

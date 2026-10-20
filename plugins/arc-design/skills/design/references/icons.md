@@ -14,7 +14,8 @@ Contents: library · size · color · stroke · variants · accessible names · 
 ## Size in em
 
 - An icon next to text is sized in `em`, 1em to 1.25em of the adjacent font size (`size-[1.125em]`, `width: 1.125em; height: 1.125em`). It then scales with the text under zoom, a larger label, or a denser variant; a fixed `16px` icon next to text that grew to 20px looks shrunken.
-- Standalone icons (icon-only buttons, empty states) use the size tokens of the component: 16 or 20px inside a 32–40px hit area, never the icon filling the target.
+- Standalone icons (icon-only buttons, empty states) use the size tokens of the component: 16 or 20px inside a 28–40px button, never the icon filling the target.
+- An icon-only button is square: one size for width and height (`size-8`, or `h-8 w-8`) with the glyph centered and no padding of its own, never a text button's padding (`px-3 py-2`), which stretches it into a rectangle. Its size matches the text buttons beside it in height, and it takes the button radius, or `full` when round (`radius.md`).
 - `flex-shrink: 0` on the icon, so a long label wraps instead of squeezing the icon to a sliver.
 
 ## Color
@@ -70,6 +71,6 @@ Geometric centering is wrong for some shapes; the eye centers mass, not the boun
 - [ ] `currentColor` everywhere; no hardcoded fills; visible in `forced-colors`.
 - [ ] Rendered stroke matches adjacent text weight (~1.5 / 2 / 2.5px) and is equal across icon sizes on one row (`absoluteStrokeWidth` or `non-scaling-stroke`).
 - [ ] Outline by default, filled only as the active state, with ARIA state alongside.
-- [ ] Every icon-only button has an accessible action name; its SVG is `aria-hidden`.
+- [ ] Every icon-only button is square, as tall as the buttons beside it, and has an accessible action name; its SVG is `aria-hidden`.
 - [ ] Play triangles and trailing chevrons checked at 2x zoom and nudged where off-center.
 - [ ] State swaps crossfade only where infrequent; tab and nav icons change instantly.
