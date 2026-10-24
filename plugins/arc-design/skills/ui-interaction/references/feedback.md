@@ -1,6 +1,6 @@
 # Feedback: Loading, Errors, Success, Notifications
 
-Contents: loading · generated content · optimistic updates · errors · success · empty states · notifications (badges, sound) · copy to clipboard · autosave · microcopy · checks
+Contents: loading · generated content · optimistic updates · errors · success · empty states · notifications (badges, sound) · copy to clipboard · autosave · microcopy · checks · agent turns: `agent.md`
 
 ## Loading by what you know about the wait
 
@@ -25,6 +25,7 @@ For output a model writes while the user waits (chat replies, summaries, drafts,
 - Actions the model proposes that send, delete, pay, or change permissions wait for an explicit confirmation that shows what will happen (`destructive.md`); applying with one click is only for reversible changes.
 - The prompt box grows with its content up to a cap, then scrolls; Enter sends, Shift+Enter adds a line, and Enter during IME composition does neither.
 - A failure or stop mid-stream keeps the partial text, says it is incomplete, and offers retry; the prompt is never lost.
+- Agent turns (turn status, tool steps, reasoning, approvals, diffs, context, background tasks) follow `agent.md`.
 
 ## Optimistic updates
 

@@ -44,7 +44,7 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - [ ] The stored theme is applied before first paint; no flash on reload; switching themes suppresses transitions for that frame.
 - [ ] `color-scheme` set per theme; `theme-color` matches the page; native selects readable in dark.
 - [ ] No `#000` surface and no opaque `#FFF` text; surfaces step up in lightness by what they sit on.
-- [ ] No shadow on in-page surfaces; floating layers are lighter plus a hairline.
+- [ ] No shadow on in-page surfaces (glass-style panes excepted, `styles/glass.md`); floating layers are lighter plus a hairline.
 - [ ] Three inks as alphas of one white, each passing 4.5:1 on the lightest surface it sits on; body text on dark has slightly more line-height and tracking.
 - [ ] Accent calmed in chroma, with `on-accent` re-checked.
 - [ ] Hairlines are alpha; input boundaries pass 3:1.

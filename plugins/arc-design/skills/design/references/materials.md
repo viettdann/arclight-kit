@@ -2,13 +2,13 @@
 
 A material is how a surface is made: what fills it, what edges it, how it lifts, and what texture it carries. Each one says something about its layer (part of the page, raised, floating, special), so choose it from that meaning and use one per context. Profiles and styles pick materials from this file and set their parameters; the rules here (where a material belongs, fallbacks, contrast, `prefers-*`) hold for every profile and style.
 
-Contents: choosing · solid and hairline · lightness layers · shadow · glass · scrim · gradient and glow · texture · tint fill · style materials (double bezel, solid lip, hard offset shadow, inversion) · checks.
+Contents: choosing · solid and hairline · lightness layers · shadow · glass · scrim · gradient and glow · texture · tint fill · style materials (double bezel, solid lip, hard offset shadow, lit edge, inversion, pane) · checks.
 
 ## Choosing
 
 | Layer | Tool profile | Marketing profile | Dark theme |
 | --- | --- | --- | --- |
-| In the page (card, panel, table, section) | Solid and hairline | Solid; a card on a tinted canvas may take one layered shadow (`cards.md`) | Lightness step and alpha hairline |
+| In the page (card, panel, table, section) | Solid and hairline; glass-style panes (`styles/glass.md`) | Solid; a card on a tinted canvas may take one layered shadow (`cards.md`) | Lightness step and alpha hairline |
 | Floating (menu, popover, modal, toast, tooltip) | Raised solid and overlay shadow | Same | One step lighter and hairline; shadow optional |
 | Over moving content (sticky header, floating nav, controls over media) | Solid, or glass | Glass or solid | Glass or solid |
 | Behind a modal or sheet | Scrim | Scrim | Scrim |
@@ -31,7 +31,7 @@ The default material: an opaque surface token with a 1px hairline where it meets
 Depth from surface value instead of shadow: base, surface, raised, and floating (a layer opened from a raised one), each one step above what it sits on.
 
 - The step follows what a layer sits on, not what kind of element it is: a card sits one step above the page, a popover one step above what it opens from, a menu inside a modal one step above the modal.
-- Dark themes raise with lightness only. A black shadow on a near-black page is invisible, so it can't be the elevation cue. In-page surfaces carry no shadow; floating layers are told apart by their lighter surface plus a hairline, and a shadow may stay under them for overlap, not as the signal. Steps and inks are built in `dark-mode.md`.
+- Dark themes raise with lightness only. A black shadow on a near-black page is invisible, so it can't be the elevation cue. In-page surfaces carry no shadow (glass-style panes excepted, `styles/glass.md`); floating layers are told apart by their lighter surface plus a hairline, and a shadow may stay under them for overlap, not as the signal. Steps and inks are built in `dark-mode.md`.
 
 ## Shadow
 
@@ -40,12 +40,13 @@ Shadow means "this is above the page". Elevation tokens are levels 0–3 (`token
 - **Overlay shadow:** menus, popovers, dialogs, toasts, tooltips, in every profile. Keep these.
 - **Layered shadow** (marketing): a tight contact shadow plus a soft ambient one, tinted toward the background hue rather than pure black, only where lift carries meaning. Example: `0 1px 2px oklch(0.3 0.02 <hue> / 0.08), 0 8px 24px oklch(0.3 0.02 <hue> / 0.08)`.
 - **Diffused shadow** (premium): large blur, low opacity, small offset, tinted the same way, plus a 1px highlight on the top edge of lifted objects. Most surfaces stay flat, so depth still marks what matters.
-- Not on in-page surfaces in the tool profile, never colored glows as shadows, never on every card, input, and button.
+- Not on in-page surfaces in the tool profile (glass-style panes excepted, `styles/glass.md`), never colored glows as shadows, never on every card, input, and button.
 
 ## Glass
 
 A translucent layer that blurs what passes behind it. It says "this floats above content that keeps moving" and keeps the reader's place in that content (the page under a sticky header, the map under a sheet). The generated-look version is glass on cards over a static gradient: nothing moves behind it, so the blur only lowers contrast. Minimal and brutalist use no glass.
 
+- **Glass style:** panes of the glass style (`styles/glass.md`) are glass in the page; that file sets their placement, opacity, blur, and layer count, and of this section only Fallback and Contrast apply to them.
 - **Where:** sticky or fixed headers and navigation, floating toolbars and tab bars, sheets, popovers, and menus over imagery or a map, captions and controls over video or a photo. Not on in-page surfaces (cards, panels, pricing tiers, form groups, stat tiles), never glass inside glass.
 - **Budget:** one or two glass layers per view, each small relative to the viewport. Every glass layer repaints when the content behind it moves, which is costly on phones; a blurred layer covering most of the screen stutters.
 - **When the brief asks for glass** ("glassy", "frosted", "glassmorphism"), glass is the identity of the page, not an accent: it must be the first thing a visitor notices, so the rules above set how glass is done well, not whether it appears. Give it something real to blur (a moving or image-rich backdrop: a live map, a canvas, media, slow-drifting brand color fields), carry it on the hero's main object and on a few key in-page panels, keep at most two glass layers overlapping in any view, and keep every fallback and contrast check below. The backdrop must visibly show through in the first viewport, otherwise the page reads as white cards: panels without long text can go down to 55–70% opaque when their text passes contrast over the lightest and darkest backdrop, and long text stays at 70–85%. List the in-page glass as a brief-driven departure in the summary.
@@ -89,13 +90,14 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - **Solid lip** (playful, bubbly): a 3–4px band of a darker shade of the fill under buttons and cards, drawn as a hard shadow (`0 4px 0 <darker step>`); press removes it and moves the element down by the same distance.
 - **Hard offset shadow** (playful, neo-brutal): an unblurred shadow in the ink color (`4px 4px 0 var(--ink)`) with a 2–3px ink border; press translates the element into its shadow.
 - **Lit edge** (technical): a 1px inset top highlight plus a tight contact shadow (`inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(<canvas> / 0.3)`) on the primary button only, so the one filled control reads as a physical key on a flat page. No border with it.
+- **Pane** (glass): layout columns, cards, popovers, menus, and dialogs are panes of smoky glass whose finish is at the edge, drawn with `box-shadow` only and `border-width: 0`: `inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px var(--glass-inner), 0 0 0 1px var(--glass-edge), 0 1px 2px var(--glass-contact), 0 12px 32px -14px var(--glass-shade)`. Depth is thickness: panel < card < popover and dialog, each more opaque than the one below. Values, fallback, and the popover stack are in `styles/glass.md`.
 - **Inversion** (brutalist): a solid block in the text color with the canvas color as text, for the one thing that matters on the screen. Depth in brutalist comes from rules and inversion only.
 
 ## Checks
 
 - [ ] One material per layer per context; no border plus shadow on one element (style materials excepted).
-- [ ] Shadows only on floating layers (and marketing lift with meaning); none in-page in the tool profile; dark themes raise with lightness.
-- [ ] Glass only on layers over moving content (or, when the brief asks for glass, clearly visible on the hero and key panels over a real backdrop), at most two overlapping per view, 70–85% opaque with long text (55–70% allowed on a glassy brief's short-text panels, backdrop visible in the first viewport), passing contrast over the lightest and darkest backdrop, opaque without `backdrop-filter` and solid under `prefers-reduced-transparency` and `prefers-contrast: more`.
+- [ ] Shadows only on floating layers (and marketing lift with meaning); none in-page in the tool profile; dark themes raise with lightness. Glass-style panes follow `styles/glass.md`.
+- [ ] Glass only on layers over moving content (or, when the brief asks for glass, clearly visible on the hero and key panels over a real backdrop), at most two overlapping per view, 70–85% opaque with long text (55–70% allowed on a glassy brief's short-text panels, backdrop visible in the first viewport), passing contrast over the lightest and darkest backdrop, opaque without `backdrop-filter` and solid under `prefers-reduced-transparency` and `prefers-contrast: more`. Glass-style panes follow `styles/glass.md`.
 - [ ] Gradients and glow only where the profile or style allows, never under body text.
 - [ ] Texture removed under `prefers-contrast: more` (and frozen under reduced motion if it moves); body text outside it or passing with it on.
 - [ ] Input boundaries pass 3:1; hairlines are alpha in dark themes.

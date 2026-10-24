@@ -2,6 +2,20 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] - 2026-10-24
+
+### Changed
+
+- `design`: `materials.md` lets glass-style panes be glass and carry shadow in the page (Choosing, Lightness layers, Shadow, Glass, Checks), adds the `pane` style material, and lists lit edge in its contents; `dark-mode.md` checks except glass-style panes from the no-in-page-shadow rule.
+- `design`, `redesign`, `restyle`: `glass` joins the style lists (descriptions, argument hints, step 0, the design step 4 table); restyle treats in-page glass panes in a `glass`-style project as its material, not a tell, in `SKILL.md` and `tailwind.md`.
+- README: the style table lists `glass`, and the ui-interaction row names agent UI.
+- `ui-interaction`: the routing table sends agent turns to `references/agent.md`, and `feedback.md` Generated content points there.
+
+### Added
+
+- `design`: `glass` style (`references/styles/glass.md`) after Solid Glass: smoky glass panes whose finish is at the edge (rim, inner ring, hairline ring, contact and shade shadows), depth as thickness (panel < card < popover), one state for hover, selected, and open, blur only on overlays and on light-theme panels and single cards, dark canvas by default, opaque fallback without `backdrop-filter` or under `prefers-reduced-transparency` and `prefers-contrast: more`, and a default palette for projects without a brand; tool profile, marketing secondary.
+- `ui-interaction`: `references/agent.md` for agent turns: turn status, tool steps, reasoning, questions and approvals, diffs, context meter, background tasks, the composer while the agent runs, and scroll anchoring.
+
 ## [1.12.0] - 2026-10-20
 
 ### Changed

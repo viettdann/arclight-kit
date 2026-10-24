@@ -24,7 +24,7 @@ The left column is the tell; a value the project's tokens or shared components a
 | `shadow-*` on button | remove; no border (a filled button needs none, an outline button already has one) |
 | `shadow-*` on input/select | remove; keep its border, raised to 3:1 against the surface (`border-white/35` dark, `border-zinc-500` light) if it falls short |
 | `shadow-violet-500/30`, `ring` glows | remove |
-| `backdrop-blur-*` + `bg-white/5` on in-page card | `bg-zinc-900 border border-white/10` (opaque) |
+| `backdrop-blur-*` + `bg-white/5` on in-page card (not in a `glass`-style project) | `bg-zinc-900 border border-white/10` (opaque) |
 | icon tile `p-2 rounded-lg bg-blue-500/10 text-blue-400` next to title | remove the tile + icon |
 | label `text-base font-medium text-white` | `text-sm text-zinc-400` |
 | value `text-2xl font-bold` | primary: `text-3xl font-semibold tracking-tight tabular-nums` (the largest step in use); secondary: `text-xl font-semibold tabular-nums` |

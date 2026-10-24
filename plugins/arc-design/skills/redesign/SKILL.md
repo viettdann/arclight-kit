@@ -1,7 +1,7 @@
 ---
 name: redesign
-description: "Give an existing product, site, or screen a new visual language while keeping its content, information architecture, URLs, and behavior. Use when the user wants to redesign, revamp, overhaul, modernize, or refresh the look of something that already exists, change its style or direction (\"làm lại giao diện\", \"đổi phong cách\", \"make it feel premium/minimal/brutalist/cinematic/playful/technical\"), or apply a new brand look to current pages. Not for a screen that doesn't exist yet (use design), and not for removing the generated look while keeping the layout (use restyle)."
-argument-hint: "[minimal|premium|brutalist|cinematic|playful|technical|none] [target]"
+description: "Give an existing product, site, or screen a new visual language while keeping its content, information architecture, URLs, and behavior. Use when the user wants to redesign, revamp, overhaul, modernize, or refresh the look of something that already exists, change its style or direction (\"làm lại giao diện\", \"đổi phong cách\", \"make it feel premium/minimal/brutalist/cinematic/playful/technical/glass\"), or apply a new brand look to current pages. Not for a screen that doesn't exist yet (use design), and not for removing the generated look while keeping the layout (use restyle)."
+argument-hint: "[minimal|premium|brutalist|cinematic|playful|technical|glass|none] [target]"
 ---
 
 # Redesign
@@ -24,7 +24,7 @@ Read the target the user named and the sources the design skill allows (`${CLAUD
 
 ## Workflow
 
-0. If the skill was invoked with arguments and the first word is a style name (`minimal`, `premium`, `brutalist`, `cinematic`, `playful`, `technical`; the old `editorial-minimal` and `soft-premium` mean `minimal` and `premium`) or `none`, that is the style (`none` means no style); the rest is the target (file, folder, or page). Otherwise a path-like word (a file, folder, or route) is the target and the remaining words are the brief, from which step 3 takes the style.
+0. If the skill was invoked with arguments and the first word is a style name (`minimal`, `premium`, `brutalist`, `cinematic`, `playful`, `technical`, `glass`; the old `editorial-minimal` and `soft-premium` mean `minimal` and `premium`) or `none`, that is the style (`none` means no style); the rest is the target (file, folder, or page). Otherwise a path-like word (a file, folder, or route) is the target and the remaining words are the brief, from which step 3 takes the style.
 1. **Snapshot the original** before any edit. Copy the source folder the rebuild may touch, including shared components and layouts (e.g. `src`, not the repo root), to a fresh temp dir; step 7 compares against the printed path:
    ```bash
    s=<src>; d=$(mktemp -d) && cp -R "${s%/}" "$d/" && echo "$d/$(basename "${s%/}")"
