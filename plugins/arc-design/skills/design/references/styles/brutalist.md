@@ -2,22 +2,22 @@
 
 Raw, mechanical interfaces: visible grids, extreme type scale, zero ornament. Reads as honest and technical; fails when the raw look becomes costume (fake scanlines, decorative crosshairs) over content that isn't structured.
 
-**Fits:** "brutalist", "Swiss", "raw", "terminal", "blueprint", developer tools, infrastructure, data products, portfolios and editorial sites that want edge. **Profiles:** tool (terminal mode suits dense data) and marketing.
+**Fits:** "brutalist", "Swiss", "raw", "terminal", "blueprint", "poster", "playbill", "broadside", developer tools, infrastructure, data products, portfolios and editorial sites that want edge. **Profiles:** tool (terminal mode suits dense data) and marketing. **Posture:** committed, in all three modes.
 
 ## Pick one mode and commit
 
-| | Swiss print | Terminal |
-| --- | --- | --- |
-| Canvas | Light newsprint off-white | Near-black (dark by nature: choose it only when the brief wants dark) |
-| Type | Heavy grotesk display, uppercase, huge | Mono everywhere, sans only for long prose |
-| Accent | One signal color (red is classic) used for alerts and the main action | One phosphor-like color (green, amber, or the brand's) at readable contrast |
-| Density | Asymmetric, lots of negative space | High, tabular |
+| | Swiss print | Terminal | Poster |
+| --- | --- | --- | --- |
+| Canvas | Light newsprint off-white | Near-black (dark by nature: choose it only when the brief wants dark) | Buff paper or solid ink |
+| Type | Heavy grotesk display, uppercase, huge | Mono everywhere, sans only for long prose | Condensed wood-type caps (Six Caps or Anton class) at weight 400, uppercase, line-height 0.88, each display line its own `white-space: nowrap` element sized in `cqi` to fill its column; a slab face for section heads, a narrow sans for reading |
+| Accent | One signal color (red is classic) used for alerts and the main action | One phosphor-like color (green, amber, or the brand's) at readable contrast | One vermilion for one band and the primary action |
+| Density | Asymmetric, lots of negative space | High, tabular | Stacked bill blocks, rules at 1px and 5px only, photographs in a double-rule frame |
 
-Never mix the two modes on one surface.
+Never mix modes on one surface.
 
 ## Decisions
 
-- **Type (overrides `typography.md` for display):** display weight 700–900, `clamp(3rem, 8vw, 10rem)`, tracking -0.03 to -0.05em, line-height 0.9 (uppercase, so no descenders), uppercase. Micro labels in mono 11–13px with +0.05em tracking. Body text stays readable: at least 14px mono or 16px sans, 4.5:1.
+- **Type (overrides `typography.md` for display):** display weight 700–900, `clamp(3rem, 8vw, 10rem)`, tracking -0.03 to -0.05em, line-height 0.9 (uppercase, so no descenders), uppercase. Poster sets display weight 400, line-height 0.88, a display size in `cqi` that fills the column instead of the clamp, and tracking 0 (the face's default), since negative tracking on condensed wood type makes the letters collide. Micro labels in mono 11–13px with +0.05em tracking. Body text stays readable: at least 14px mono or 16px sans, 4.5:1.
 - **Grid:** the grid is visible: 1–2px solid rules between cells and sections, aligned to real columns. Lines organize content; a line that separates nothing is removed.
 - **Shape and depth:** radius 0 everywhere except the `full` roles (avatars, dots, toggles); no shadows, no gradients, no glass. Depth comes from rules and inversion (`materials.md`, Style materials).
 - **Numbers:** large numerals only for real quantities (metrics, prices, counts), tabular.
@@ -30,7 +30,14 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - A viewport-bleeding headline or numeral that the grid is built around.
 - Bracketed labels (`[ STATUS ]`, `> run`) in terminal mode, for real commands and states only.
 - Inverted blocks (solid text-color background) for the one thing that matters on the screen.
-- Analog texture (halftone, dither, scanlines) per `materials.md` (Texture).
+- Analog texture: one family, halftone or scanline, per `texture.md` (one family per page).
+
+## Range
+
+- **Figures:** a viewport-bleeding numeral of a real quantity, tabular, that the grid is built around.
+- **Steps:** numbered cells on real columns between the mode's rules: bracketed mono labels in terminal mode, stacked bill blocks in Poster mode.
+- **Rows and forms:** rows divided by solid rules, square inputs, and the mode's one accent on the main action only.
+- **Bands:** an inverted block (solid text-color ground) for the one thing that matters, or in Poster mode the one vermilion band.
 
 ## Avoid
 

@@ -60,17 +60,7 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 
 ### 3. Hierarchy, not identical cards
 **Tell:** a uniform grid of N separately floating, decorated cards with the same size, weight, and structure when their importance isn't equal (the 2×2 or 4-across KPI row is the classic).
-**Decide in this order** (a billing page usually matches the first two):
-
-1. **Is this a state page?** When a page exists to show the user's current situation (billing, subscription, account, usage), that state is the primary: put a summary block at the top with the plan/tier name and price (or the key quantity) large, plus the next relevant fact (renewal date, next invoice) and the main action. Don't fold it into a subtitle line. Then apply 2 or 3 to what sits below it.
-2. **Are the items ordered peers?** Items that are *compared against each other* and have a natural order (pricing tiers, steps, versions, time periods) keep their sequence side by side (Starter | Pro | Enterprise), because position itself tells the reader where each sits. Mark the current/recommended one in place (accent border or small label) instead of pulling it out of the row; replacing the comparison with a list is not OK.
-3. **Otherwise, does the primary have more to say?** Hierarchy needs substance. A primary block is justified only when the most important item carries *real extra content* the others don't (a breakdown, a chart, a target, an absolute baseline value) already present in the data.
-   - **Yes** → one primary block, the rest secondary. The primary gets the large value plus that extra content; secondaries are compact (label, value, delta), stacked beside it or in a row beneath.
-   - **No**: every item is just label + value + delta → keep them equal. A single bordered strip divided into cells (`divide-x`, or `gap-px` over a border-colored background) is the honest layout; put the most important metric first, since reading order already carries priority. The decoration made the original look generated, not the equal sizes; enlarging one cell with nothing to fill it only adds empty space.
-
-**Size follows content, and the row ends flush.** A primary is as big as its content, never padded out with empty space. Blocks side by side share top and bottom edges: stacked secondaries divide the primary's height between them (`grid auto-rows-fr`, or `flex-1` on each), so neither column ends with blank space under it.
-
-**Type carries the rest of the hierarchy.** Sizes come from one scale, weights from the project's set (two or three, 400 and 600 when it has none; 500 is a normal choice), and rank inside a row comes from text color (`text`, `text-muted`, `text-subtle`), not another size. Text slots survive long values (`min-w-0` on flex items, middle-cut emails and file names, `overflow-wrap: anywhere`); when you change the type scale or fix truncation, read `${CLAUDE_PLUGIN_ROOT}/skills/design/references/typography.md` (Size scale, Long text). Bold on every label and a new size for every element are the type versions of identical cards. Display tracking stays at -0.04em or looser, body text is never justified, and body copy, lists, and long text stay left-aligned even when a heading is centered.
+Decide the primary, peers, and type rank with `references/hierarchy.md`.
 
 **One primary action per view.** **Tell:** two or more solid accent buttons competing in one view, the same action visible twice at once (a "New project" button in the header and again in the toolbar), a row of equal buttons for actions of unequal frequency. **Fix:** one solid primary for the main task; the others become secondary (outline or ghost), and rarely used ones move into a "…" menu (build it with `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/overlays.md`), keeping their handlers. Of two visible copies of one action, keep the one closest to where the user works. Don't hide an action the task needs on every visit behind a menu.
 
@@ -114,7 +104,7 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 - Keep icons that help navigation or actions.
 - Never propose a new typeface unless the user asks for a type change.
 - Keep overlay shadows, and glass on floating layers that meets `materials.md`.
-- If `DESIGN.md` records a style (premium, cinematic, playful, technical, glass), the values its Decisions set (a multi-hue palette, display weights, hard offset shadows, glass, a dark canvas, mono numbers) are intentional; remove only what its Avoid list or the tells outside it cover.
+- If `DESIGN.md` records a style (premium, cinematic, playful, technical, glass, print, gallery), the values its Decisions set (a multi-hue palette, display weights, hard offset shadows, glass, a dark canvas, mono numbers) are intentional; remove only what its Avoid list or the tells outside it cover.
 - Don't add a centered max-width container to an app shell that filled the width before.
 - Don't flatten hierarchy that was already right, and don't restyle things outside the requested scope without saying so.
 - Don't resize controls: heights, paddings, and gaps stay unless they are a tell (marketing-scale padding in a tool). Touch targets follow `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/baseline.md` (Pointer and touch), which never grows a control; an icon-only button stays square (`${CLAUDE_PLUGIN_ROOT}/skills/design/references/icons.md`).
@@ -122,5 +112,6 @@ Semantic colors (red/amber/green) are allowed only for real status (error, warni
 
 ## References
 - `references/tailwind.md`: class-level before/after mappings, a token setup snippet, the primary+secondary metric layout, and an inline SVG sparkline. Read it when applying fixes in Tailwind code.
+- `references/hierarchy.md`: the order for deciding a state page, ordered peers, or one primary block, plus size and type rank. Read it for principle 3.
 - `references/critique.md` for critique only; `references/requests.md` for a before/after, a named reference, or a score.
 - The design skill's references named in the principles above, each read when its principle says so, plus `color.md` (its palette audit) before merging or replacing colors.

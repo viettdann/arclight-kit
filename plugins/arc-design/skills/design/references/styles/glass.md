@@ -2,7 +2,7 @@
 
 Smoky glass panes for a tool: a neutral grey face, a lit edge drawn in `box-shadow`, depth read as thickness, and one small clear pane for every state. Reads as tactile, calm, and dense enough to work in; fails when the face gets a gradient or glow, when panes stack blur on blur, or when each state invents its own look.
 
-**Fits:** "glass", "Solid Glass", "smoky glass", "frosted panes", "material", "tactile", AI apps and agent workspaces, dashboards and consoles that live in panes. **Profile:** tool. On a marketing surface it applies its palette, panes, and radius on top of the marketing profile and keeps that profile's space and motion.
+**Fits:** "glass", "Solid Glass", "smoky glass", "frosted panes", "material", "tactile", AI apps and agent workspaces, dashboards and consoles that live in panes. **Profile:** tool. On a marketing surface it applies its palette, panes, and radius on top of the marketing profile and keeps that profile's space and motion. **Posture:** restrained.
 
 ## Decisions
 
@@ -57,6 +57,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - **The thickness ladder** (`materials.md`, Style materials, Pane) as the only hierarchy cue between layout columns, cards, and overlays: no borders, no extra shadows, only more opaque as a layer rises.
 - **A sidebar as a pane standing on its edge,** lit along the side facing the page: `inset -1px 0 0 var(--glass-edge), inset 0 1px 0 var(--glass-inner)`.
 - **The one-state pane on agent work:** steps, ask cards, and turn status wear the same small clear pane for hover, selected, and held open; their behavior comes from `${CLAUDE_PLUGIN_ROOT}/skills/ui-interaction/references/agent.md`.
+
+## Range
+
+- **Figures:** a number on one card pane at 14px radius in `--foreground`, with a status dot in its hue beside the text label.
+- **Steps:** a column of card panes, one per step, separated only by the thickness ladder; the current step wears the one-state clear pane.
+- **Rows and forms:** rows as repeated cards with tint and edge and no `backdrop-filter`; inputs on `--border-strong`; the primary a solid ink fill with its top rim.
+- **Bands:** in the light theme, two or three soft fields of the brand hue behind the panes; in the dark theme, the flat canvas. Never a gradient on a face.
 
 ## Avoid
 

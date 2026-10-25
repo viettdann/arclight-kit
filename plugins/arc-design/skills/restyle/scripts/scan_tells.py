@@ -120,11 +120,20 @@ def pulsing_dot(line):
     return "animate-pulse" in line and PULSE_DOT(line)
 
 
+ACCENTED = re.compile(r"<h[1-3]\b[^>]*>([^<]*)<(span|em|i|strong|b)\b([^>]*)>\s*[\w'’-]*[A-Za-z][\w'’-]*\s*</\2>([^<]*)", re.I)
+
+
+def accented_word(line):
+    """One word styled apart from visible heading text; a wrapper around the whole heading, a screen-reader label, or print's misregistered word is not."""
+    return any(re.search(r"\w", m[1] + m[4]) and not re.search(r"data-text|sr-only", m[3]) for m in ACCENTED.finditer(line))
+
+
 WIDE_SHADOW_TW = r"(?<![\w-])shadow-(?:xl|2xl)(?![\w-])|(?<![\w-])shadow-\[(?:-?[\d.]+(?:px)?_){2}(?:2[4-9]|[3-9]\d|\d{3})px"
 HAIRLINE_SHADOW_TW = same_string(r"(?<![\w:-])border(?![\w-])", WIDE_SHADOW_TW)
 WIDE_SHADOW_CSS = re.compile(r"box-?[sS]hadow:\s*['\"]?(?:inset\s+)?(?:-?[\d.]+(?:px|rem)?\s+){2}(?:2[4-9]|[3-9]\d|\d{3})px")
 NEG_EM = r"-(?:0?\.(?:04\d*[1-9]|0[5-9]|[1-9])\d*|[1-9]\d*(?:\.\d+)?)em"
-STOCK = r"\b(?:built for|meet your new|the future of)\b"
+APOS = r"(?:'|’|&apos;|&#39;|&rsquo;)?"
+STOCK = rf"\b(?:built for|meet your new|the future of|whether you{APOS}re|it{APOS}s not just|say goodbye to|in today{APOS}s)\b"
 
 # Test helpers and loggers quote strings no user reads.
 # Case-sensitive and call-shaped, so copy such as "error." or "save it." still counts as copy.
@@ -158,6 +167,7 @@ RULES = [
     ("1-color", "gradient", re.compile(r"\bbg-gradient-to-\w+|\bbg-(?:linear|radial|conic)(?:-[\w\[]|\b)|(?:linear|radial|conic)-gradient\(|\bbg-clip-text\b")),
     ("1-color", "glow/colored shadow", re.compile(r"\bshadow-(?:[a-z]+)-\d{3}(?:/\d+)?\b|drop-shadow-\[|\bshadow-\[0_0_[1-9]|(?<!\d\s)\b0 0 [1-9]\d*px\s+(?:rgba?\(|hsla?\(|#|oklch\()")),
     ("1-color", "pure black surface (near-black + layers?)", re.compile(r"^(?!.*(?<![\w-])(?:bg-)?opacity-\d).*?(?<![\w/-])bg-black(?![\w/-])|(?:background(?:-color)?:\s*|backgroundColor:\s*['\"]|bg-\[)(?:#000(?:000)?\b|black\b|rgb\(\s*0[\s,]+0[\s,]+0\s*\))")),
+    ("1-color", "framework default violet as the brand (fine when the project committed to it)", re.compile(r"(?<![\w-])(?:bg|text|border|ring)-(?:indigo|violet|purple)-(?:500|600)(?![\w-])|(?i:#(?:6366f1|4f46e5|8b5cf6|7c3aed|a855f7|9333ea))\b")),
     ("2-decoration", "tinted tile/pill (decorative icon box or delta pill?)", re.compile(r"\bbg-" + COLORS + r"-\d{2,3}/(?:[5-9]|1\d|20)\b|\bbg-" + COLORS + r"-(?:50|100)\b(?=[^\"'`]*\btext-" + COLORS + r"-[4-8]00\b)")),
     ("3-hierarchy", "arbitrary font size (on the scale?)", re.compile(r"\btext-\[(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em)\]|\bfontSize:\s*['\"]?\.?\d")),
     ("3-hierarchy", "off the spacing scale (4px grid: p-3, gap-4, or a spacing token?)", Check(off_scale_spacing)),
@@ -176,7 +186,8 @@ RULES = [
     ("4-surface", "glass on an in-page surface? (fine on fixed, sticky, or overlay layers)", re.compile(r"\bbackdrop-blur(?:-\w+)?\b|backdrop-filter:")),
     ("5-copy", "greeting / filler", re.compile(r"welcome back|good (?:morning|afternoon|evening)|here'?s what'?s happening|\bhello,|hi there|>\s*(?:hi|hey|hello)\b[\s,!]", re.I)),
     ("5-copy", "emoji in UI text", EMOJI),
-    ("5-copy", "filler verb", re.compile(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer)\b", re.I)),
+    ("5-copy", "filler verb", copy_check(r"\b(?:elevate|seamless(?:ly)?|unleash|supercharge|next-gen|revolutioni[sz]e|game-?changer|robust|empower(?:s|ing)?"
+                                         r"|effortless(?:ly)?|world-class|best-in-class|industry-leading|mission-critical|future-proof|reimagine[ds]?)\b")),
     ("5-copy", "placeholder name/text", re.compile(r"lorem ipsum|\bjohn doe\b|\bjane doe\b|(?<![@\w/-])acme\b(?![/-])", re.I)),
     ("5-copy", "'successfully' in UI copy (the past tense says it: 'Changes saved')", copy_check(r"(?:>[^<>]*\bsuccessfully\b|(['\"`])(?:(?!\1).)*\bsuccessfully\b)")),
     ("5-copy", "'Oops' / 'Something went wrong' (say what failed and the next step)", copy_check(r"(?:>[^<>]*|(['\"`])(?:(?!\1).)*)\b(?:oops|whoops|something went wrong)\b")),
@@ -188,6 +199,11 @@ RULES = [
     ("6-marketing", "'Learn more' as the CTA label (name what the click gets)", re.compile(r">\s*learn more\s*(?:→|&rarr;|›|&rsaquo;|»|&raquo;|&gt;)?\s*<|\b(?:label|text|cta|title)\s*[:=]\s*['\"`]learn more['\"`]", re.I)),
     ("6-marketing", "numbered eyebrow / tile counter", re.compile(r">\s*0\d{1,2}\s*(?:[/·.]|&middot;)\s*[A-Za-z]")),
     ("6-marketing", "scroll cue", re.compile(r"\bscroll\s+(?:down|to\s+(?:explore|discover|learn|see|continue|begin|start|view))\b|↓\s*scroll|>\s*scroll\s*<", re.I)),
+    ("6-marketing", "accented word in a heading (one word styled apart; a clause is fine)", Check(accented_word)),
+    # A label-free arrow (an aria-hidden icon span) is the fix, so the label needs a letter.
+    ("6-marketing", "arrow glued to a label (the label alone, or an aria-hidden icon)", re.compile(r">(?!\s*learn more\b)(?=[^<>]*[A-Za-z])[^<>]{1,40}?(?:→|&rarr;|->|-&gt;|›|&rsaquo;)\s*<", re.I)),
+    ("6-marketing", "drawn browser window (traffic-light colors; a real screenshot instead)", re.compile(r"#(?:ff5f57|febc2e|28c840|ff5f56|ffbd2e|27c93f)\b", re.I)),
+    ("6-marketing", "drawn browser window (red and amber dots; a real screenshot instead)", Check(same_string(r"(?<![\w-])rounded-full(?![\w-])", r"(?<![\w-])bg-red-\d{3}(?![\d-])"))),
     ("6-marketing", "saving as a percent (write it in money)", re.compile(r"\bsave\s+(?:up\s+to\s+)?\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?\s?%\s+off\b|>\s*[-−]\s?\d{1,2}\s?%\s*<", re.I)),
     ("7-code", "100vh (h-dvh for a fixed app shell, min-h-svh for a full-height section)", re.compile(r"(?<![\w-])(?:min-|max-)?h-(?:screen\b|\[100vh\])|(?<![\w-])(?:min-|max-)?height:\s*100vh")),
     ("7-code", "scroll event listener", re.compile(r"addEventListener\(\s*['\"]scroll|\bonscroll\s*=")),
@@ -277,6 +293,8 @@ REQUIRE_NEAR = [
     ("blinking cursor", re.compile(r"caret|cursor(?!\s*:)|typ(?:ing|ewriter)|animate-"), 0, 0, True),
     ("balance on a paragraph", PARAGRAPH, 0, 0, "rule"),
     ("unselectable text", TEXT_ROOT, 0, 0, "rule"),
+    # One red dot is a status or notification badge; red beside amber is window chrome.
+    ("drawn browser window (red", re.compile(r"(?<![\w-])bg-(?:yellow|amber)-\d{3}(?![\d-])"), 0, 2, False),
 ]
 FILE_CHECKS = [rx for table in (SUPPRESS_NEAR, REQUIRE_NEAR) for _, rx, _, _, scope in table if scope == "file"]
 # label -> [(skip the hit when the context check returns this value, regex, before, after, scope)]
@@ -298,6 +316,8 @@ DASH_MIN, DASH_MAX_CHARS = 8, 500
 EYEBROW = re.compile(r"\buppercase\b[^\"'`]*\btracking-(?:wide|wider|widest|\[)|\btracking-(?:wide|wider|widest|\[)[^\"'`]*\buppercase\b")
 NOT_EYEBROW = re.compile(r"<(?:th|td|dt|label|button|legend)\b", re.I)
 SECTION = re.compile(r"<section\b")
+STICKY_TOP = [re.compile(r"(?<![\w-])sticky(?![\w-])|position:\s*['\"]?sticky\b"), re.compile(r"(?<![\w-])top-0(?![\w.-])|(?<![\w-])top:\s*['\"]?0(?:px)?(?![\w.%])")]
+STICKY_CELL = re.compile(r"<t[hd]\b", re.I)
 TIER_CATEGORIES = [
     re.compile(r">\s*(?:most popular|popular|recommended|best value)\s*<", re.I),
     re.compile(r"\b(?:badge|label|tag)\s*[:=]\s*['\"](?:most popular|popular|recommended|best value)['\"]", re.I),
@@ -457,11 +477,16 @@ def scan(paths):
         # The file-level icon hit is reported ahead of this file's per-line hits, so output order stays stable.
         icon_at = len(hits.get("2-decoration", ()))
         dashes = []
+        sticky = []
         seen = set()
         for i, line in enumerate(lines, 1):
             if len(line) > MAX_LINE:
                 skipped += 1
                 continue
+            # A style file splits one rule over lines, and a row of sticky header cells is one element.
+            sticky_text = css_block(lines, i) if ext in STYLE_EXTS and "{" in line else "" if ext in STYLE_EXTS or STICKY_CELL.search(line) else line
+            if all(rx.search(sticky_text) for rx in STICKY_TOP):
+                sticky.append(i)
             for lib in ICON_IMPORT.findall(line):
                 icon_libs.setdefault(lib, i)
             snippet = line.strip()[:140]
@@ -490,6 +515,9 @@ def scan(paths):
         if len(dashes) >= DASH_MIN and len(text) <= DASH_MAX_CHARS * len(dashes):
             hits["6-marketing"].append({"file": path, "line": dashes[0], "tell": f"{len(dashes)} em/en dashes in copy, one per {len(text) // len(dashes)} chars (separators?)",
                                         "snippet": "lines " + ", ".join(map(str, sorted(set(dashes))[:8]))})
+        if len(sticky) >= 2:
+            hits["7-code"].append({"file": path, "line": sticky[0], "tell": "presentation: two sticky top-0 elements in one file (the second slides under the first)",
+                                   "snippet": "lines " + ", ".join(map(str, sticky[:8]))})
 
     for d, (sections, eyebrows) in dir_sections.items():
         if sections >= 3 and len(eyebrows) > -(-sections // 3):

@@ -2,7 +2,7 @@
 
 Engineered, evidence-first pages for a technical buyer: a dark layered canvas, one warm accent, small radii, flat surfaces, and measured numbers as the hero content. Reads as precise and honest; fails when the numbers have no source, or when the look turns into a costume (mono everywhere, fake terminals, neon glow).
 
-**Fits:** "technical", "engineered", "precise", "benchmark-led", "numbers-first", "spec sheet", CoralBricks-like pages, for APIs, infrastructure, inference, databases, and developer platforms whose claim can be measured. **Profile:** marketing (landing, pricing, model or plan pages). Not for tool screens; when the product's app takes this style, apply its palette, type, and radius on top of the tool profile (design skill, step 4).
+**Fits:** "technical", "engineered", "precise", "benchmark-led", "numbers-first", "spec sheet", CoralBricks-like pages, for APIs, infrastructure, inference, databases, and developer platforms whose claim can be measured. **Profile:** marketing (landing, pricing, model or plan pages). Not for tool screens; when the product's app takes this style, apply its palette, type, and radius on top of the tool profile (design skill, step 4). **Posture:** committed.
 
 Differs from cinematic dark tech: no light source, no glow, no viewport-scale type, no scroll story. The proof carries the page, not the atmosphere.
 
@@ -63,6 +63,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - **A working demo in the first two sections:** a real prompt box, request builder, or query that runs against the product, with the primary action inside it.
 - **A measured-number grid** right after the hero: three or four stat tiles with their sources, the page's proof in one glance.
 - **A rate card:** model or plan cards whose prices are mono and right-aligned with a dated source line, comparable at a glance.
+
+## Range
+
+- **Figures:** a measured-number grid of stat tiles: the value in mono in the accent or full ink, a line naming what it measures with its unit, a muted source line, and exactly as many cells as numbers.
+- **Steps:** the integration in order as real, copyable code (key, request, response), each block with a copy button.
+- **Rows and forms:** a rate card or comparison table with mono, right-aligned prices and a dated source line; inputs on surface with a border that passes 3:1.
+- **Bands:** the one light band, placed where the reader compares models, plans, or pricing; the accent goes to the hero's numbers and the accented headline clause.
 
 ## Avoid
 

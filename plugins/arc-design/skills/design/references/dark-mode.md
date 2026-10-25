@@ -39,6 +39,26 @@ A black background with white text is not a dark theme: `#000` and `#FFF` leave 
 - `<meta name="theme-color">` matching the page background, one per scheme (`media="(prefers-color-scheme: dark)"`); when a class sets the theme, update the meta with it.
 - Native `<select>` gets explicit `background-color` and `color`; Windows otherwise draws its dropdown in system colors that can clash with or vanish against the dark theme.
 
+## Default palette for a tool without a brand
+
+For a tool-profile dark theme when the project, the brief, and the chosen style give no palette. Technical and glass use their own default palettes (`styles/technical.md`, `styles/glass.md`). Chroma climbs slightly per layer (0.007 to 0.011) on purpose, against the same-chroma rule above, so the raised layers don't grey out.
+
+| Layer | Value | For |
+| --- | --- | --- |
+| sunken | `oklch(0.135 0.007 250)` | Code, logs, changed rows: one step below the page |
+| page | `oklch(0.17 0.008 250)` | The app background |
+| surface | `oklch(0.21 0.009 250)` | Panels, cards, the sidebar |
+| raised | `oklch(0.25 0.010 250)` | Controls and layers on a surface |
+| floating | `oklch(0.29 0.011 250)` | Menus, popovers, dialogs |
+
+- **Accent** `oklch(0.80 0.11 250)`, **on-accent** `oklch(0.18 0.04 250)`: on-accent on the accent 10.09:1 (Lc 68); the accent as text on floating 7.57:1 (Lc −63).
+- **Inks** are white at three alphas set for these layers: `text` `#ffffffde` (87%) 15.02:1 on sunken, 11.05:1 on floating; `text-muted` `#ffffffc7` (78%) 12.06:1 on sunken, 9.19:1 on floating; `text-subtle` `#ffffffb0` (69%) 9.49:1 on sunken, 7.54:1 on floating. Each passes with no `warn`; the alphas sit above the general ones (Three inks from one white) because APCA rates muted light-on-dark text lower than WCAG 2 does.
+- **Hairlines** follow the alpha rules above (Hairlines).
+- **No in-page shadow:** layers are told apart by lightness and hairlines; floating layers keep only an optional overlap shadow (`materials.md`, Lightness layers).
+- **Mono only for measured values and ids** (durations, sizes, hashes, keys); labels and running text stay in the UI face.
+
+Ratios measured with `scripts/contrast.mjs` (`"#ffffffb0|oklch(0.29 0.011 250)|text"`); remeasure any value you change.
+
 ## Checks
 
 - [ ] The stored theme is applied before first paint; no flash on reload; switching themes suppresses transitions for that frame.

@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """List hooks that existed before a redesign and are gone after it.
 
-Compares hrefs, ids, form field names, form actions, data-* attributes,
-<title>, meta descriptions, canonical URLs, and og:/twitter: share tags
-between two files or two directories.
+Compares two files or two directories; every file under a path is pooled,
+so an item that moved between files counts as kept.
+Wiring (FAIL): hrefs, ids, form field names, form actions, data-* attributes,
+<title>, meta descriptions, canonical URLs, og:/twitter: share tags, event
+handlers bound to a named function (`event=identifier`; arrow functions are
+checked by hand), <script> srcs, and static DOM query selector strings.
+Content (WARN): heading text, <img>/<Image> srcs, and currency or percent
+figures in text.
 Heuristic regex extraction: works on HTML, JSX/TSX, Vue, Svelte, Astro.
-Skipped as presentation: anything inside <svg>, `name` on icon components,
-and <link> hrefs for stylesheets, fonts, preloads, and icons.
+Skipped as presentation: anything inside <svg> (except handlers), `name` on
+icon components, and <link> hrefs for stylesheets, fonts, preloads, and icons.
 
 Usage: preserve_check.py <old-file-or-dir> <new-file-or-dir> [--json]
-Exits 1 if anything is missing, 2 if a path is missing or the original has no hooks.
+Exits 1 if wiring is missing, 0 if only content changed (still listed),
+2 if a path is missing or the original has no wiring.
 """
 import argparse
 import json
@@ -39,6 +45,22 @@ TAG_ATTR = re.compile(r"""([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{\s*["'`]([^"'
 META_API = re.compile(r"\b(?:export\s+const\s+metadata|generateMetadata|useHead|useSeoMeta|definePageMeta)\b")
 META_LINK = re.compile(r"""\brel\s*:\s*["'`]canonical["'`]\s*,\s*href\s*:\s*(["'`])((?:(?!\1)[^\\]|\\.)*)\1""")
 META_FIELD = re.compile(r"""\b(title|description|canonical)\s*:\s*(["'`])((?:(?!\2)[^\\]|\\.)*)\2""")
+HANDLERS = [
+    re.compile(r"\bon([A-Z]\w*)=\{\s*([\w.$]+)\s*\}"),  # JSX
+    re.compile(r'(?<![\w:-])(?:@|v-on:)([\w:-]+)(?:\.[\w-]+)*="\s*([\w.$]+)\s*[("]'),  # Vue: a name or the function called
+    re.compile(r"(?<![\w:-])on:([\w-]+)(?:\|[\w-]+)*=\{\s*([\w.$]+)\s*\}"),  # Svelte 4, modifiers allowed
+    re.compile(r"(?<![\w:.-])on([a-z]+)=\{\s*([\w.$]+)\s*\}"),  # Svelte 5
+    re.compile(r'\bon([a-z]+)="\s*(?:return\s+|void\s+)?([\w.$]+)\s*\('),  # HTML: the first function called
+]
+NOT_HANDLERS = {"true", "false", "null", "undefined"}
+SCRIPT = re.compile(r"<script\b[^>]*>", re.I)
+IMAGE = re.compile(r"<(?:img|Image)\b[^>]*>")
+SELECTOR = re.compile(r"""\b(?:querySelector(?:All)?|getElementById|closest|matches)\(\s*(["'`])((?:(?!\1)[^\\]|\\.)*)\1\s*\)""")
+HEADING = re.compile(r"<h([1-6])\b[^>]*>(.*?)</h\1\s*>", re.S | re.I)
+INNER_TAG = re.compile(r"<[^>]*>")
+TEXT_NODE = re.compile(r">([^<>]+)<")
+FIGURES = [re.compile(r"[$€£¥]\s?\d[\d,.]*"), re.compile(r"\d[\d,.]*\s?%")]
+WARN_KINDS = {"heading", "image", "figure"}
 TAG_NAME = re.compile(r"<([\w.:-]+)")
 CANONICAL_REL = re.compile(r"""\brel\s*=\s*["'{`]*\s*canonical\b""", re.I)
 ASSET_REL = re.compile(r"""\brel\s*=\s*["'{`]*\s*(?:stylesheet|preconnect|preload|modulepreload|prefetch|dns-prefetch|(?:apple-touch-|mask-|shortcut )?icon)\b""", re.I)
@@ -93,7 +115,8 @@ def files(path):
 
 
 def extract(path):
-    found = {k: set() for k in [*PATTERNS, "title", "meta description", "canonical", "share tags"]}
+    kinds = [*PATTERNS, "title", "meta description", "canonical", "share tags", "handler", "script", "selector", "heading", "image", "figure"]
+    found = {k: set() for k in kinds}
     for f in files(path):
         try:
             with open(f, encoding="utf-8", errors="ignore") as fh:
@@ -130,6 +153,29 @@ def extract(path):
                 found[{"title": "title", "description": "meta description"}.get(field, "canonical")].add(value)
             for _, value in META_LINK.findall(text):
                 found["canonical"].add(value)
+        for rx in HANDLERS:
+            for event, value in rx.findall(text):
+                if value not in NOT_HANDLERS:
+                    found["handler"].add(f"{event.lower()}={value}")
+        for tag in SCRIPT.findall(markup):
+            src = tag_attrs(tag).get("src", "")
+            if static(src):
+                found["script"].add(src)
+        for quote, value in SELECTOR.findall(text):
+            if value and not (quote == "`" and "${" in value):
+                found["selector"].add(value)
+        for _, inner in HEADING.findall(markup):
+            heading = " ".join(INNER_TAG.sub(" ", inner).split())
+            if heading and "{" not in heading:
+                found["heading"].add(heading)
+        for tag in IMAGE.findall(markup):
+            src = tag_attrs(tag).get("src", "")
+            if static(src):
+                found["image"].add(src)
+        for node in TEXT_NODE.findall(markup):
+            if "{" not in node:
+                # A sentence-final period or comma is punctuation, not part of the figure.
+                found["figure"].update(m.rstrip(".,") for rx in FIGURES for m in rx.findall(node))
     return found
 
 
@@ -144,23 +190,33 @@ def main():
             ap.error(f"no such file or directory: {p}")
 
     old, new = extract(args.old), extract(args.new)
-    total = sum(len(v) for v in old.values())
-    if total == 0:
+    if not any(old[k] for k in old if k not in WARN_KINDS):
         print(f"No hooks found in {args.old}: is it the snapshot of the source folder?", file=sys.stderr)
         sys.exit(2)
-    missing = {k: sorted(old[k] - new[k]) for k in old if old[k] - new[k]}
+    total = sum(len(v) for v in old.values())
+    lost = {k: sorted(old[k] - new[k]) for k in old if old[k] - new[k]}
+    missing = {k: v for k, v in lost.items() if k not in WARN_KINDS}
+    warn = {k: v for k, v in lost.items() if k in WARN_KINDS}
+    kept = {k: [len(old[k] & new[k]), len(old[k])] for k in old if old[k]}
     if args.json:
-        json.dump({"missing": missing}, sys.stdout, indent=2, ensure_ascii=False)
+        json.dump({"missing": missing, "warn": warn, "kept": kept}, sys.stdout, indent=2, ensure_ascii=False)
         print()
-    elif not missing:
-        print(f"All {total} hooks from the original are still present.")
     else:
-        print("Present before, missing after (restore, or report as an intentional change):\n")
-        for kind, values in missing.items():
-            print(f"== {kind} ==")
-            for v in values:
-                print(f"  {v}")
-            print()
+        for kind, (n, m) in kept.items():
+            print(f"Kept {n}/{m} {kind}")
+        print()
+        if not lost:
+            print(f"All {total} hooks from the original are still present.")
+        for header, group in (("Present before, missing after (restore, or report as an intentional change):", missing),
+                              ("Changed content (check each is intended):", warn)):
+            if not group:
+                continue
+            print(header + "\n")
+            for kind, values in group.items():
+                print(f"== {kind} ==")
+                for v in values:
+                    print(f"  {v}")
+                print()
     sys.exit(1 if missing else 0)
 
 

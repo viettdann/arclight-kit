@@ -2,7 +2,7 @@
 
 How to build the ramps, which step does which job, what to call the tokens, and how to audit a palette that already exists. The basics of OKLCH scales and tinted neutrals are in `tokens.md` (Building color scales); the dark set is in `dark-mode.md`. This file adds the numbers those two leave open.
 
-Contents: ramps · roles per step · brand color · several hues · naming · gamut · increased contrast · mid-lightness surfaces · palette audit · checks.
+Contents: ramps · roles per step · brand color · several hues · posture · naming · gamut · increased contrast · mid-lightness surfaces · palette audit · checks.
 
 ## Ramps
 
@@ -52,6 +52,17 @@ Generate the steps the roles call for. Radix numbers steps by role, so `9` is th
 - **Status hues at least 15° of OKLCH hue from the accent.** Closer, and success, warning, or danger reads as the brand (a teal success beside a teal accent looks like a link). When convention leaves no room, such as a red brand with a red danger, keep the hue and give destructive actions a different treatment: outlined button, icon, explicit label.
 - Status ramps need only the roles they render: usually `-bg`, `-border`, a fill, and `-fg` (`tokens.md`). Text steps on dark are lighter than fills (`dark-mode.md`).
 - Where a status meaning flips by market (gains are red in Chinese finance UIs), make gain and loss their own tokens per locale, not `success` and `danger`.
+
+## Posture
+
+Posture names how much of the screen brand color covers. Each style sets one (its `**Posture:**` line); a project without a style picks one and records it in `DESIGN.md`.
+
+- **Restrained:** the accent marks the primary action and the current selection, about 5% of the screen or less. Everything else is neutral.
+- **Committed:** restrained plus one band or the hero's figure in brand color.
+- **Full-palette:** several hues as category and surface colors (as in playful), with one hue reserved as the action accent and never used for a category.
+- **Drenched:** the page ground is a mid-chroma brand color and text takes a light step. Keep the ground's lightness outside the mid-lightness band (Mid-lightness surfaces, L about 0.55–0.75): with light text, below about L 0.45. Check the ground and its text pair with `scripts/contrast.mjs` like any other pair.
+
+In every posture one hue is the action accent per view: more brand area is never a second accent.
 
 ## Naming
 
@@ -129,6 +140,7 @@ Both numbers are a floor for reading, not a recipe for color. Between two passin
 - [ ] Same step has the same L across hues; chroma is the same share of each hue's sRGB maximum.
 - [ ] Every role in the step table maps to one step and one semantic token; input boundaries pass 3:1.
 - [ ] The brand value is exact on its step; any text on it passes 4.5:1, or fills moved one step darker, or text on it is dark.
+- [ ] Posture matches the style's; one hue is the action accent per view.
 - [ ] Status hues at least 15° from the accent, or destructive actions distinguished by treatment.
 - [ ] Tokens follow `--color-{bg|text|border}-{variant}-{state}` (in Tailwind v4, without the property word); brand is `accent`; `separator` and `border` are separate; no hue, value, or component names in the semantic tier.
 - [ ] sRGB value first, P3 override inside `@media (color-gamut: p3)`.

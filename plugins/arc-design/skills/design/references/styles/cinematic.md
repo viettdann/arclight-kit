@@ -2,7 +2,7 @@
 
 Immersive, paced pages where imagery, scale, and scroll tell a story. Reads as directed and crafted; fails when motion becomes the content (preloaders, scroll hijacking, every element animating in) and the page turns slow, hard to read, or nauseating.
 
-**Fits:** "immersive", "cinematic", "Awwwards", "storytelling", campaigns, portfolios and studios, product launches, film, music, games, fashion. Also "dark tech" launch pages (Vercel, Raycast) as its dark mode. **Profile:** marketing. Not for tool screens or long-form reading.
+**Fits:** "immersive", "cinematic", "Awwwards", "storytelling", campaigns, portfolios and studios, product launches, film, music, games, fashion. Also "dark tech" launch pages (Vercel, Raycast) as its dark mode. **Profile:** marketing. Not for tool screens or long-form reading. **Posture:** committed.
 
 ## Decisions
 
@@ -43,6 +43,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - A full-bleed video or image band carrying a single line of type.
 - Section changes by color or image cross-fade instead of borders.
 - Dark tech: one light source behind the product, the rest of the page unlit.
+
+## Range
+
+- **Figures:** a number at viewport scale as one beat of its own, a single line of type over a quiet section, visible at first paint and never counted up.
+- **Steps:** one pinned section whose chapter is derived from the scroll position, one step per chapter; phones and reduced motion get the steps stacked.
+- **Rows and forms:** a quiet beat after a dense one: plain rows and a short form on the canvas at 17–18px, with no choreographed movement in that section.
+- **Bands:** section changes by a color cross-fade instead of borders, each band one beat carrying a single line of display type; in dark tech, the one light source sits behind it.
 
 ## Avoid
 

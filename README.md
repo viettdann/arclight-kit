@@ -42,11 +42,13 @@ Claude Code marketplace with three plugins:
 | --- | --- |
 | `minimal` | Calm, document-like, Notion/Linear feel; tool or marketing |
 | `premium` | Premium consumer, soft radii, diffused depth, slow motion; marketing |
-| `brutalist` | Swiss print or terminal, visible grid, zero ornament; tool or marketing |
+| `brutalist` | Swiss print, terminal, or poster; visible grid, zero ornament; tool or marketing |
 | `cinematic` | Immersive, scroll-paced storytelling, viewport-scale type, full-bleed imagery, dark tech; marketing |
 | `playful` | Bubbly or neo-brutal, saturated multi-hue palette, chunky type, springs; marketing or consumer app |
 | `technical` | Dark layered canvas, one warm accent, small radii, flat surfaces, sourced measured numbers and real code as proof; marketing |
 | `glass` | Smoky glass panes with lit edges, depth as thickness, one state; tool (marketing secondary) |
+| `print` | Two spot inks, no black, overprint, grain, heavy grotesk over a text serif; marketing |
+| `gallery` | Limewash paper, light serif, wall labels, card stock, one cool slate; marketing |
 
 No style named → the profile alone is the direction. Surface materials (solid and hairline, shadow, glass, scrim, gradient, texture) are shared by every style in `design/references/materials.md`; glass is a material for floating layers; the `glass` style makes in-page panes glass.
 

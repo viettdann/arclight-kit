@@ -71,10 +71,11 @@ The layer behind a modal, sheet, or drawer that dims the page (`overlay` token).
 
 ## Texture
 
-Grain, halftone, dither, scanlines: an analog surface over flat color. Used by cinematic (film grain) and brutalist (analog texture).
+Grain, halftone, misregistration, scanlines, a deckled edge: an analog surface over flat color. Used by cinematic (film grain), brutalist (analog texture), print (speck grain and one misregistered word), and gallery (fibre wash). Recipes are in `texture.md`.
 
-- A fixed `pointer-events: none` overlay, subtle: grain at 3–5% opacity, patterns light enough that edges stay crisp.
-- It lies over imagery, bands, and display type. Body text sits outside the textured area; when the texture covers the whole page, body text must still pass 4.5:1 measured with the texture on.
+- Budget: one artifact family per page (grain, halftone, misregistration, scanline, deckle; print's grain and misregistration count as one, gallery's fibre wash is grain). CSS or a data-URI SVG only.
+- A `pointer-events: none`, `aria-hidden="true"` overlay at `--texture-opacity` 0.05 or none wherever body text sits under it, a page-wide overlay included; where no body text sits under it, at most 0.08 page-wide and 0.15 inside one plate (a band, fill, photograph, or card), so edges stay crisp.
+- It lies over imagery, bands, and display type. Body text under a texture must still pass 4.5:1 measured with the texture on (`texture.md`, Accessibility).
 - Removed under `prefers-contrast: more`. A texture that moves (flicker, rolling scanlines) is also removed, or frozen, under `prefers-reduced-motion: reduce`.
 - No texture in the tool profile.
 
@@ -99,7 +100,7 @@ Belong to one style; use them only when that style is chosen, on the objects the
 - [ ] Shadows only on floating layers (and marketing lift with meaning); none in-page in the tool profile; dark themes raise with lightness. Glass-style panes follow `styles/glass.md`.
 - [ ] Glass only on layers over moving content (or, when the brief asks for glass, clearly visible on the hero and key panels over a real backdrop), at most two overlapping per view, 70–85% opaque with long text (55–70% allowed on a glassy brief's short-text panels, backdrop visible in the first viewport), passing contrast over the lightest and darkest backdrop, opaque without `backdrop-filter` and solid under `prefers-reduced-transparency` and `prefers-contrast: more`. Glass-style panes follow `styles/glass.md`.
 - [ ] Gradients and glow only where the profile or style allows, never under body text.
-- [ ] Texture removed under `prefers-contrast: more` (and frozen under reduced motion if it moves); body text outside it or passing with it on.
+- [ ] Texture: one artifact family per page, `--texture-opacity` within budget; removed under `prefers-contrast: more` (and frozen under reduced motion if it moves); body text outside it or passing with it on.
 - [ ] Input boundaries pass 3:1; hairlines are alpha in dark themes.
 - [ ] Text fields sit at or below their surface's value; photos carry the 1px alpha outline.
 - [ ] Style materials appear only with their style, on one or two objects where the style says so.

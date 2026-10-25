@@ -2,7 +2,7 @@
 
 Calm, expensive-feeling surfaces: soft radii, diffused light, slow confident motion, lots of air. Reads as considered and physical; fails when every element gets the same treatment and the page becomes a template of rounded cards.
 
-**Fits:** "premium", "luxury", "Apple-like", "expensive", "soft", wellness, consumer hardware, beauty, hospitality, high-end consumer apps. **Profile:** marketing (and consumer-app onboarding). Not for dense tool screens.
+**Fits:** "premium", "luxury", "Apple-like", "expensive", "soft", wellness, consumer hardware, beauty, hospitality, high-end consumer apps. **Profile:** marketing (and consumer-app onboarding). Not for dense tool screens. **Posture:** restrained.
 
 ## Decisions
 
@@ -31,6 +31,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - **Pill CTA with a nested icon:** the trailing arrow sits in its own small circle flush with the button's inner padding and shifts slightly on hover.
 - **Floating pill navigation** detached from the top edge, in glass (`materials.md`).
 - A macro product crop filling a section, with type set small beside it.
+
+## Range
+
+- **Figures:** one number per section at display size, tightly tracked, with body text set small beside it and 96–160px of air around the pair.
+- **Steps:** one idea per section, each block a single 16px fade-up run once; the step that needs an object shows it in the double bezel.
+- **Rows and forms:** flat rows at 17–18px with relaxed leading; the form on one lifted card with the diffused shadow at 16px radius, its pill CTA the one accent.
+- **Bands:** a pale tinted or deep band picked from the brand, square when full-bleed and 20px inside the container.
 
 ## Avoid
 

@@ -2,7 +2,7 @@
 
 Document-like interfaces where typography and whitespace do the work and color is scarce. Reads as calm and deliberate; fails when it turns into an empty page with nothing specific on it.
 
-**Fits:** "minimal", "calm", "editorial", "clean like Notion/Linear", knowledge tools, docs, writing apps, B2B marketing that wants to feel quiet. **Profiles:** tool (docs, editors, settings-heavy apps) and marketing (editorial landing, changelog, about).
+**Fits:** "minimal", "calm", "editorial", "clean like Notion/Linear", knowledge tools, docs, writing apps, B2B marketing that wants to feel quiet. **Profiles:** tool (docs, editors, settings-heavy apps) and marketing (editorial landing, changelog, about). **Posture:** restrained.
 
 ## Decisions
 
@@ -20,6 +20,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - A flat bento: mixed cell sizes, hairline borders, no shadows, one cell carrying a real image or product crop.
 - Desaturated, warm-toned photography with generous margins around it.
 - Section breaks made of space and one hairline, not headings with eyebrows.
+
+## Range
+
+- **Figures:** a real quantity at display size in the sans with tight tracking, in the text color, over one line of muted grey saying what it counts; the accent stays on the primary action.
+- **Steps:** a numbered list read like a document: numerals in the sans, a short heading and one sentence per step, separated by space and at most one hairline.
+- **Rows and forms:** table rows on hairlines at 6–10% of the text color, inputs and buttons at 6px radius, the primary button the only accent on the screen.
+- **Bands:** a section break made of space and one hairline; a band is at most a neutral surface one value off the canvas, never saturated.
 
 ## Avoid
 

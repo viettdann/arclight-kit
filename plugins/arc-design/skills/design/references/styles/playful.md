@@ -2,7 +2,7 @@
 
 Bright, friendly interfaces: saturated color, chunky type, illustration, and motion with some bounce. Reads as warm and confident; fails when it turns into a toy (every color at once, everything bouncing) or a rainbow template.
 
-**Fits:** "playful", "fun", "friendly", "bold", "colorful", "neo-brutalism", Duolingo, Gumroad, Figma-like, consumer apps, education, games, creator tools, communities, family products. **Profiles:** marketing and consumer-app screens (onboarding, home, progress). Not for dense tool screens.
+**Fits:** "playful", "fun", "friendly", "bold", "colorful", "neo-brutalism", Duolingo, Gumroad, Figma-like, consumer apps, education, games, creator tools, communities, family products. **Profiles:** marketing and consumer-app screens (onboarding, home, progress). Not for dense tool screens. **Posture:** full-palette.
 
 ## Pick one mode and commit
 
@@ -33,6 +33,13 @@ These show the style's spirit; they are not a menu. Derive the surface's distinc
 - Neo-brutal cards with an ink border and a hard shadow that collapses on press.
 - A bubbly primary button with a solid lip that the press removes.
 - Real product UI in a playful frame (a sticker outline, a hand-drawn arrow pointing at the one feature).
+
+## Range
+
+- **Figures:** a number at the 700–800 display weight on a flat tint of one hue, with a label beside it, in whichever of the dark ink or white passes on that fill.
+- **Steps:** each step a card in its own category hue with a label or icon and spot illustration in the one consistent style; the action color stays off the steps.
+- **Rows and forms:** rows with tint category chips that carry a label; inputs in the mode's shape (bubbly rounded or neo-brutal ink border); the primary in the action color with a spring or offset press.
+- **Bands:** sections alternating flat brand hues, one hue plus ink per band.
 
 ## Avoid
 

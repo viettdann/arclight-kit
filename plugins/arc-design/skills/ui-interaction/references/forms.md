@@ -45,6 +45,7 @@
 - On failure every typed value stays. The message distinguishes network failure, validation rejection, and server error, and offers a retry.
 - The server recomputes prices and totals from its own data, never from the submitted values.
 - The label names the outcome ("Create account", "Send invoice"), not "Submit".
+- A form with no endpoint wired shows "Nothing was sent: this form isn't connected yet" on submit, never a success message, and the missing endpoint is listed in the summary. A success message follows only a response that confirms it.
 
 ## Specific inputs
 
@@ -91,6 +92,7 @@
 - [ ] Autofilled fields keep the theme's surface and readable text in every theme.
 - [ ] No code or identifier uses `type="number"`.
 - [ ] Submit is never disabled for validity, and a double submit is impossible.
+- [ ] A form with no endpoint says "Nothing was sent: this form isn't connected yet" on submit and is listed in the summary; success shows only after a confirming response.
 - [ ] Paste works in password, OTP, and masked fields.
 - [ ] Switches are pills with a round knob, an off track at 3:1, and a sliding knob that skips the first render and reduced motion; segmented controls have no border on the track or the selected option.
 - [ ] No step asks again for information an earlier step already collected.

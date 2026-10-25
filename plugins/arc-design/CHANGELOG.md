@@ -2,6 +2,30 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.14.0] - 2026-10-25
+
+### Added
+
+- `design`: `print` style (`references/styles/print.md`): two spot inks with no black, overprint as the third color, speck grain and one misregistered hero word, a heavy grotesk over a text serif, duotone photographs; marketing profile.
+- `design`: `gallery` style (`references/styles/gallery.md`): limewash paper, umber ink, one cool slate, a light display serif, wall labels, card stock with a fibre wash; marketing profile.
+- `design`: brutalist Poster mode (condensed wood-type caps filling the column, stacked bill blocks, one vermilion), routed by "poster", "playbill", and "broadside".
+- `design`: `references/texture.md` with the texture budget, six recipes (grain, halftone, misregistration, scanline, deckle, fibre wash), and accessibility rules.
+- `design`: posture in `color.md` (restrained, committed, full-palette, drenched), with each style's posture on its Fits line and a Range section (Figures, Steps, Rows and forms, Bands) in every style file.
+- `design`: a default dark palette for a tool without a brand in `dark-mode.md` (sunken, page, surface, raised, floating layers; white inks at 87%, 78%, 69%).
+- `restyle`: five scanner tells: an accented word in a heading, an arrow glued to a label, a drawn browser window, framework default violet as the brand, and two sticky top-0 elements in one file.
+- `redesign`: `preserve_check.py` checks handlers, script sources, and selector strings as wiring (exit 1), and headings, images, and figures as content (printed, exit 0), with a Kept line per kind.
+- `restyle`: `references/hierarchy.md` holds the primary, peers, and type-rank decisions moved out of `SKILL.md`.
+
+### Changed
+
+- `restyle`: the scanner's stock-phrase and filler-verb lists are longer, and filler verbs are matched in copy only.
+- `redesign`: runs the project's own typecheck, lint, build, and unit tests as a baseline and again at verify, fixes new failures without editing test assertions, and lists updated visual snapshots.
+- `ui-interaction`: `forms.md` says a form with no endpoint never shows success.
+- `design`: `profile-marketing.md` gathers material in the brief, captures the product's real screens for imagery, never invents a route, and adds the copy swap test, the eyebrow deletion test, and two tells; `materials.md` states the texture budget with `--texture-opacity` limits.
+- `design`, `redesign`, `restyle`: `print` and `gallery` join the style lists; README lists both and the brutalist poster mode.
+
+Ideas adapted from Hallmark (MIT, https://github.com/Nutlope/hallmark).
+
 ## [1.13.0] - 2026-10-24
 
 ### Changed

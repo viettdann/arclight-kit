@@ -375,6 +375,59 @@ class ScanTellsTest(unittest.TestCase):
         self.assertNoTell("a.ts", "const s = '2 days ago';\n", "hand-built relative time")
         self.assertNoTell("a.ts", "const s = rtf.format(-n, 'day');\n", "hand-built relative time")
 
+    def test_accented_word(self):
+        self.assertTell("a.tsx", '<h1 className="text-5xl">Ship <span className="text-indigo-600">faster</span></h1>\n', "accented word in a heading")
+        self.assertTell("a.html", "<h2>Work <em>smarter</em> today</h2>\n", "accented word in a heading")
+        self.assertNoTell("a.tsx", '<h1>Precise by default. <span className="text-accent">Fast when it counts.</span></h1>\n', "accented word")
+        self.assertNoTell("a.html", "<h4>Work <em>smarter</em></h4>\n", "accented word")
+        self.assertNoTell("a.tsx", '<h1 className="text-2xl"><span className="truncate">Settings</span></h1>\n', "accented word")
+        self.assertNoTell("a.tsx", '<h2>Orders <span className="badge">12</span></h2>\n', "accented word")
+        self.assertNoTell("a.html", '<h1>Prints that <span class="misregister" data-text="ship">ship</span> this week</h1>\n', "accented word")
+
+    def test_glued_arrow(self):
+        self.assertTell("a.html", '<a href="/signup">Get started →</a>\n', "arrow glued to a label")
+        self.assertTell("a.tsx", "<Button>View docs -> </Button>\n", "arrow glued to a label")
+        self.assertTell("a.html", '<a href="/next">Next page -&gt;</a>\n', "arrow glued to a label")
+        self.assertNoTell("a.html", '<a href="/x">Learn more →</a>\n', "arrow glued")
+        self.assertNoTell("a.html", '<a href="/signup">Get started <span aria-hidden="true">→</span></a>\n', "arrow glued")
+
+    def test_browser_chrome(self):
+        self.assertTell("a.css", ".dot-red { background: #FF5F57; }\n", "drawn browser window (traffic-light")
+        dots = '<span className="size-3 rounded-full bg-red-400" />\n<span className="size-3 rounded-full bg-amber-400" />\n'
+        self.assertTell("a.tsx", dots, "drawn browser window (red and amber")
+        self.assertNoTell("a.tsx", '<span className="size-2 rounded-full bg-red-500" />\n<p>3 alerts</p>\n', "drawn browser window")
+
+    def test_default_violet(self):
+        self.assertTell("a.tsx", '<button className="bg-indigo-600 text-white">Save</button>\n', "framework default violet")
+        self.assertTell("a.css", ":root { --brand: #4F46E5; }\n", "framework default violet")
+        self.assertNoTell("a.tsx", '<div className="bg-indigo-50 hover:bg-indigo-100">x</div>\n', "framework default violet")
+
+    def test_stock_phrases_extended(self):
+        for copy in ("Whether you're a startup or an enterprise", "It's not just a calendar", "Say goodbye to spreadsheets", "In today's fast-moving world"):
+            self.assertTell("a.html", f"<p>{copy}</p>\n", "stock headline phrase")
+        for copy in ("Whether you’re a startup", "It&apos;s not just a calendar"):
+            self.assertTell("a.tsx", f"<p>{copy}</p>\n", "stock headline phrase")
+        self.assertNoTell("a.ts", "// in today's build the cache is warm\n", "stock headline phrase")
+
+    def test_filler_extended(self):
+        self.assertTell("a.html", "<p>Robust and effortless</p>\n", "filler verb")
+        self.assertTell("a.tsx", "<h2>World-class tools that empower teams</h2>\n", "filler verb")
+        self.assertNoTell("a.ts", "// robust retry\n", "filler verb")
+        self.assertNoTell("a.ts", 'console.log("robust");\n', "filler verb")
+        self.assertNoTell("a.test.tsx", "<p>Robust and effortless</p>\n", "filler verb")
+
+    def test_two_sticky_tops(self):
+        header = '<header className="sticky top-0 z-10">x</header>\n'
+        thead = '<thead className="sticky top-0">y</thead>\n'
+        self.assertTell("a.tsx", header + thead, "two sticky top-0 elements")
+        self.assertTell("a.css", ".a { position: sticky; top: 0; }\n.b { position: sticky; top: 0; }\n", "two sticky top-0 elements")
+        self.assertNoTell("a.tsx", header + '<aside className="sticky top-16">y</aside>\n', "two sticky top-0")
+        self.assertNoTell("a.tsx", header, "two sticky top-0")
+        self.assertTell("b.css", ".a {\n  position: sticky;\n  top: 0;\n}\n.b {\n  position: sticky;\n  top: 0;\n}\n", "two sticky top-0 elements")
+        self.assertNoTell("b.css", ".a {\n  position: sticky;\n  top: 0;\n}\n", "two sticky top-0")
+        th = '<th className="sticky top-0">Name</th>\n<th className="sticky top-0">Email</th>\n'
+        self.assertNoTell("b.tsx", th, "two sticky top-0")
+
     def test_new_rules_skip_minified_lines(self):
         self.assertNoTell("a.css", ".a{line-height:24px}" + ".b{color:red}" * 200 + "\n", "line-height with a unit")
 

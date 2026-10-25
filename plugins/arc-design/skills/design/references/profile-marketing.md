@@ -10,7 +10,7 @@ Contents: Brief · Design read · Page structure · Layout rules · Pricing · I
 
 A landing page sells one thing to one audience against the reasons they'd say no. Without those, the page fills with generic claims.
 
-- Gather before markup: the one primary action, the offer, the audience (ideal customer) and the pain that brings them, their top three objections, where the traffic comes from (ad, search, email, referral), and the proof on hand (quotes, numbers, logos, case studies).
+- Gather before markup: the one primary action, the offer, the audience (ideal customer) and the pain that brings them, their top three objections, where the traffic comes from (ad, search, email, referral), the proof on hand (quotes, numbers, logos, case studies), and the material to show (screenshots or the running product to capture, real photos, real numbers).
 - When the brief lacks the primary action or the audience, ask once, and fold every other missing item into the same message. Whatever is still unanswered becomes a visible placeholder (`[top objection]`) or an assumption listed in the summary.
 - This applies to new marketing pages only. restyle and redesign keep the existing content and don't ask.
 
@@ -36,6 +36,7 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 - The objections section answers the brief's real objections before the final CTA: an FAQ in plain question-and-answer text (6–12 questions for a high-friction offer such as a paid plan or a migration), plus risk reversal. Trial, cancellation, and refund terms appear only when the user supplied them; otherwise write a visible placeholder like `[refund terms]`.
 - Aggregate numbers anywhere on the page (customer counts, "median close time", "% auto-matched", "9 in 10") appear only when the user supplied them. An invented plausible stat reads as proof and ships by accident; while drafting, write a visible placeholder like `[median close time]` and list it in the notes.
 - Benefits are outcomes, at most three per section. Annotate real product UI instead of an icon grid.
+- A link whose URL the brief didn't give points at an on-page anchor or a visible placeholder (`[docs URL]`) listed in the summary, never an invented route.
 - Pricing follows the Pricing section below.
 - The most important message goes first and last; the middle is remembered least.
 - Flows end on a success screen with a next step, not a flat confirmation.
@@ -65,15 +66,17 @@ Before markup, decide one line, and open the summary with it: **page kind · aud
 
 A marketing page is a visual product; text plus a gradient blob is a placeholder, not a hero.
 
-1. If an image-generation tool is available, generate section-specific assets at the section's aspect ratio.
-2. Otherwise use real assets from the brief, or seeded placeholders (`https://picsum.photos/seed/<section-context>/1600/1000`).
-3. If neither fits, leave labeled slots (`<!-- hero product photo, 1600×1000 -->`) and list them in the summary.
+1. When the product can be reached (a URL, or a dev server already running), capture its real screens with `node ${CLAUDE_PLUGIN_ROOT}/skills/design/scripts/screenshot.mjs <url> <out.png>` (`--selector` for one panel), confirm no personal data is on screen, and never frame a capture in a drawn browser window.
+2. If an image-generation tool is available, generate section-specific assets at the section's aspect ratio.
+3. Otherwise use real assets from the brief, or seeded placeholders (`https://picsum.photos/seed/<section-context>/1600/1000`).
+4. If neither fits, leave labeled slots (`<!-- hero product photo, 1600×1000 -->`) and list them in the summary.
 
-Never draw a fake product screenshot from styled `div`s (fake task lists, dashboards, terminals). Use a real screenshot, a generated image, or an actual working mini version of the component. Logo walls use real SVG logos (Simple Icons, devicon) and nothing else, no category label under each logo.
+Never draw a fake product screenshot from styled `div`s (fake task lists, dashboards, terminals, browser windows with traffic-light dots). Use a real screenshot, a generated image, or an actual working mini version of the component. Logo walls use real SVG logos (Simple Icons, devicon) and nothing else, no category label under each logo.
 
 ## Copy
 
 - Re-read every visible string before finishing: headings, buttons, captions, alt text, footer. Rewrite anything grammatically off, with unclear referents, or "cute" wordplay that doesn't track. Plain functional copy beats clever AI copy.
+- Apply the copy swap test: a heading that would work on a competitor's page is rewritten around a noun only this product has.
 - One label per intent across the page: if the CTA is "Book a demo", the nav and footer don't say "Let's talk" or "Get in touch".
 - One register per page: don't mix terminal-style metadata, editorial prose, and ad punchlines unless the brand voice is that.
 - No em dashes (—) or en dashes used as separators in page copy; they are the most recognizable generated-copy fingerprint. Use a period, comma, colon, or hyphen.
@@ -88,12 +91,14 @@ Never draw a fake product screenshot from styled `div`s (fake task lists, dashbo
 | "Trusted by 10,000+" above anonymous grey logos | One attributable quote with a result and a unit |
 | Three cards, icon in a circle, one word each | A product screenshot with three annotations |
 | Glass cards over a static background, glow on everything, emoji section headings | Solid surfaces, one elevation style, plain headings; glass only on layers floating over moving content, unless the brief asks for a glassy look (`materials.md`) |
-| Small uppercase eyebrow above every section heading | The heading alone; at most one eyebrow per three sections |
+| Small uppercase eyebrow above every section heading | The heading alone; at most one eyebrow per three sections. Apply the deletion test: delete the line; if nothing is lost but a name for what follows, it was an eyebrow. A figurative heading under it takes the plain label as its heading instead |
 | Numbered eyebrows (`001 · Capabilities`, `06 / How it works`), `01 / 04` on tiles | Plain topic heading, or nothing |
 | Section header split into big headline left, small paragraph floating right | Headline with the paragraph directly beneath it |
 | Version tags in the hero (`v0.6`, `BETA`, `Invite-only`) when it isn't a launch | Nothing |
 | "Scroll to explore", bouncing chevrons | Nothing; the fold is not a problem to label |
 | Stock headline openers ("Built for…", "Meet your new…", "The future of…") | The concrete outcome, in the reader's words |
+| One word styled apart in a heading (italic, accent color, gradient) | One weight and one color per heading; a style's own move is the exception (technical's accented headline clause, print's misregistered hero word) |
+| An arrow glued to a label (`Get started →`) | The label alone |
 | "Learn more" as a CTA label | What the click gets ("See pricing", "Read the API docs") |
 | City, local time, or weather strips; `Brand · No. 01` micro-meta; build numbers in the footer | Nothing, or a real contact address once |
 | Pills or credit captions laid over photos (`Plate 03 · Archive`) | The image alone, or a one-line caption below it |
