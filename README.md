@@ -71,12 +71,11 @@ Optional runtimes: `node` for `design`'s contrast checker, Node 22+ and Chrome, 
 
 ## Hooks
 
-`arc-kit` registers `comment-lint` (`PostToolUse` on `Edit|Write`): it flags newly added comments that are wrapped across lines, longer than the width limit, banners or dividers, multi-line `/* */` blocks, or narrative Markdown headings (`Rationale`, `Background`, `Alternatives`), and exits 2 so Claude fixes them. It reports once per tool call even if the same script version is registered elsewhere (e.g. `~/.claude/settings.json`); check active hooks with `/hooks`.
+`arc-kit` registers `comment-lint` (`PostToolUse` on `Edit|Write`): it flags newly added comments that are wrapped across lines, longer than 200 columns, banners or dividers, multi-line `/* */` blocks, or narrative Markdown headings (`Rationale`, `Background`, `Alternatives`), and exits 2 so Claude fixes them. It reports once per tool call even if the same script version is registered elsewhere (e.g. `~/.claude/settings.json`); check active hooks with `/hooks`.
 
 | Option | Default | Effect |
 | --- | --- | --- |
 | `comment_lint_enabled` | `true` | Turn the hook off without disabling the plugin. |
-| `comment_lint_width` | `150` | Max columns for a single-line comment (80–300). |
 | `test_guard_enabled` | `true` | Turn the test guard off without disabling the plugin. |
 | `destructive_guard_enabled` | `false` | Turn on the destructive-command guard. |
 

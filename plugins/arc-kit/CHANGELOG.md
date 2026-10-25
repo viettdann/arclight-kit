@@ -2,6 +2,18 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.16.1] - 2026-10-25
+
+### Changed
+
+- `arc`: lint, format, and type-check run after any code change; tests run only when the change touches logic they cover, once after the edits; the full suite only on request or for shared modules, public contracts, schema, dependencies, or build config.
+- `executor`: a task validates once its edits are done, running only tests covering logic it changed; a task that can't alter behavior runs none.
+- `comment-lint`: the width limit is fixed at 200 columns.
+
+### Removed
+
+- `comment_lint_width` option.
+
 ## [1.16.0] - 2026-10-15
 
 Tuned for Claude Opus 5.5 as the session model and Sonnet 5.5 and Haiku 5.5 as workers.

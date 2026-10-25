@@ -9,7 +9,7 @@ import time
 from added_lines import SKIP_PATH, edit_added, write_added
 from plugin_options import option
 
-DEFAULT_WIDTH = 150
+WIDTH = 200
 WRAP_MIN = 60
 MAX_BYTES = 2_000_000
 LOCK_TTL = 3600
@@ -19,15 +19,6 @@ LOCK_DIR = os.path.join(tempfile.gettempdir(), f"comment-lint-{os.getuid() if ha
 def lint_enabled():
     return option("comment_lint_enabled", "true").lower() not in ("false", "0", "no", "off")
 
-
-def lint_width():
-    try:
-        return max(int(float(option("comment_lint_width", str(DEFAULT_WIDTH)))), WRAP_MIN)
-    except ValueError:
-        return DEFAULT_WIDTH
-
-
-WIDTH = lint_width()
 
 SLASH_EXTS = {
     ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".go", ".rs",

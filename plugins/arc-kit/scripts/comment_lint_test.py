@@ -9,8 +9,7 @@ import unittest
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "comment-lint.py")
 WRAP_A = "  // Validate the edge list against the group's mission id set: each endpoint must"
 WRAP_B = "  // be a member, with no self-loops and no duplicates."
-LONG = "  // " + "x" * 150
-MID = "  // " + "x" * 100
+LONG = "  // " + "x" * 200
 
 
 def run(tool, tool_input, options=None, **payload):
@@ -57,16 +56,7 @@ class CommentLintTest(unittest.TestCase):
     def test_long_comment_nudges(self):
         r = self.edit("a.ts", "const a = 1\n", "const a = 1\n", f"{LONG}\nconst a = 1\n")
         self.assertEqual(r.returncode, 2)
-        self.assertIn("a.ts:1: comment 155 cols > 150 \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"", r.stderr)
-
-    def test_width_option_overrides_default(self):
-        path = os.path.join(self.root, "a.ts")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(f"{MID}\n")
-        self.assertEqual(run("Write", {"file_path": path}).returncode, 0)
-        r = run("Write", {"file_path": path}, {"CLAUDE_PLUGIN_OPTION_COMMENT_LINT_WIDTH": "100"})
-        self.assertEqual(r.returncode, 2)
-        self.assertIn("comment 105 cols > 100", r.stderr)
+        self.assertIn("a.ts:1: comment 205 cols > 200 \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...\"", r.stderr)
 
     def test_disabled_option_passes(self):
         path = os.path.join(self.root, "a.ts")
