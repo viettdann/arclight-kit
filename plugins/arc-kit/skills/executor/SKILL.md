@@ -150,7 +150,7 @@ Whoever runs a task (you inline, or the sub-agent for its group) follows:
 
 1. **Explore**: read target files, understand current state, inspect related code, check the types/interfaces the task needs.
 2. **Implement**: write the code, following TDD mode when it is on. Follow project conventions from CLAUDE.md if it exists. If not, infer conventions from existing code style in the files being modified.
-3. **Validate**: after meaningful changes, run lint and the tests that cover the files you changed, and fix failures immediately. A sub-agent never runs the project-wide build or type-check: other groups' half-written files make them fail. Inline work may run them. Phase 4 runs both, and the full suite, once every group has finished.
+3. **Validate**: once the task's edits are done, run lint and the tests that cover logic the task changed, and fix failures immediately; a task that can't alter behavior runs none. A sub-agent never runs the project-wide build or type-check: other groups' half-written files make them fail. Inline work may run them. Phase 4 runs both, and the full suite, once every group has finished.
 
 **Parallel execution rules:**
 
