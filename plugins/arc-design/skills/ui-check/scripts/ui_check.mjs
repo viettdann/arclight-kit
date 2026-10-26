@@ -380,7 +380,8 @@ function audit({ mobile, phone, spacing }) {
     // A row's cell gives its link context (WCAG 2.4.4), so a column of "Edit" links isn't ambiguous.
     if (a.closest('td, th, [role=cell], [role=gridcell]')) continue;
     let u;
-    try { u = new URL(a.href); } catch { continue; }
+    // An SVG <a>'s href is an SVGAnimatedString, not a URL, so the attribute is resolved instead.
+    try { u = new URL(a.getAttribute('href'), document.baseURI); } catch { continue; }
     if (u.origin !== location.origin) continue;
     if (!byName.has(n)) byName.set(n, new Map());
     byName.get(n).set(u.pathname + u.search, a);
@@ -458,7 +459,7 @@ function audit({ mobile, phone, spacing }) {
 
   // An absolutely positioned menu or popover is cut only by overflow on its containing block or an ancestor of it.
   for (const el of all) {
-    if (getComputedStyle(el).position !== 'absolute' || !visible(el) || !el.innerText.trim()) continue;
+    if (getComputedStyle(el).position !== 'absolute' || !visible(el) || !el.innerText?.trim()) continue;
     const r = box(el);
     for (let a = el.offsetParent; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
       const s = getComputedStyle(a);
@@ -700,7 +701,7 @@ function collectLinks() {
     const raw = a.getAttribute('href').trim();
     if (!raw || raw.startsWith('#') || /^(mailto|tel|sms|javascript|data|blob):/i.test(raw)) continue;
     let u;
-    try { u = new URL(a.href); } catch { continue; }
+    try { u = new URL(raw, document.baseURI); } catch { continue; }
     u.hash = '';
     if (u.origin !== location.origin || skip.test(u.pathname + u.search) || urls.has(u.href)) continue;
     urls.set(u.href, window.__cssPath(a));
@@ -837,7 +838,7 @@ function prepareFocus() {
 // over the backdrop pixel behind it, since a captured glyph pixel at body sizes is mostly an antialiased blend that reads as half the real contrast.
 const mediaContrast = async (i) => {
   const m = await evaluate(`(() => { const el = window.__uiMedia[${i}]; el.scrollIntoView({ block: 'center', behavior: 'instant' });
-    const b = el.getBoundingClientRect(), s = getComputedStyle(el), t = el.innerText.trim().replace(/\\s+/g, ' '), x = Math.max(0, b.left), y = Math.max(0, b.top);
+    const b = el.getBoundingClientRect(), s = getComputedStyle(el), t = (el.innerText ?? el.textContent).trim().replace(/\\s+/g, ' '), x = Math.max(0, b.left), y = Math.max(0, b.top);
     const size = parseFloat(s.fontSize), weight = Number(s.fontWeight) || 400;
     // The fill resolved to sRGB through a canvas, which parses any CSS color; transparent (gradient text) falls back to the captured pixels.
     const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
@@ -946,7 +947,11 @@ for (const width of widths) for (const scheme of schemes) {
         if (!opt.json) console.log(`at ${where}: --click ${css} has no size here (hidden?), skipped`);
         continue;
       }
-      await evaluate(`window.__uiInput.clickAt.push(performance.now()); window.__uiInput.clicked.push(${JSON.stringify(css)})`);
+      // An earlier click that navigated left a document without the input watcher; the clicks after it belong to the old page.
+      if (!(await evaluate(`!!window.__uiInput && (window.__uiInput.clickAt.push(performance.now()), window.__uiInput.clicked.push(${JSON.stringify(css)}), true)`))) {
+        if (!opt.json) console.log(`at ${where}: an earlier click navigated away, so --click ${css} and the ones after it were skipped`);
+        break;
+      }
       const covered = await realClick(cdp, css);
       if (covered && !opt.json) console.log(`click ${css}: the pointer lands on ${covered}, which covers it`);
       await sleep(100);

@@ -2,6 +2,15 @@
 
 All notable changes to `arc-design` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.14.1] - 2026-10-26
+
+### Fixed
+
+- `ui-check`: the clipped-popover check no longer stops the run on an absolutely positioned `<svg>`, which has no `innerText`.
+- `ui-check`: text over an image, gradient, or glass inside MathML no longer stops the run.
+- `ui-check`: a `--click` that navigates no longer stops the run at the next `--click`; the clicks after it are skipped with a note.
+- `ui-check`: links inside SVG are now checked by `--links` and the link-purpose check instead of being skipped.
+
 ## [1.14.0] - 2026-10-25
 
 ### Added
