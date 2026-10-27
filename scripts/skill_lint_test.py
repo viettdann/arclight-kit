@@ -92,12 +92,13 @@ class SkillLintTest(unittest.TestCase):
 
     def test_description_budget(self):
         # The skill menu renders description and when_to_use together; agents are listed separately.
+        # User-invoked skills (disable-model-invocation) are kept out of the model's menu, so they don't count.
         total = 0
         for plugin, name, path in components():
             fm = parse_frontmatter(read(path))
             menu = len(fm["description"]) + len(fm.get("when_to_use", ""))
             self.assertLessEqual(menu, DESCRIPTION_MAX, f"skill-lint: {plugin}:{name} description and when_to_use are {menu} chars")
-            if "/skills/" in path:
+            if "/skills/" in path and fm.get("disable-model-invocation") != "true":
                 total += menu
         self.assertLessEqual(total, CATALOG_MAX, f"skill-lint: skill menu totals {total} chars")
 

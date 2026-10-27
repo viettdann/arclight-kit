@@ -39,7 +39,7 @@ Give the user, in this order, about 15 to 25 lines in all (omit a section that h
 
 A comment that says something is fixed ("fixed in commit X", "rule updated") is a claim: check it against the repo when the repo is local, and say "claimed, not verified" when it isn't.
 
-Then hand off when the user wants to go on: a bug to `arc-kit:debug` with the repro, a feature or task to `arc-kit:brainstorming` (unclear design) or `arc-kit:executor` (clear steps). Search the repo for names the item mentions (endpoints, classes, spec files, agent names) before stating where the change goes. When the current directory isn't the right repo, name the likely one (from the pull requests' repositories, or the paths the item mentions) and ask for its local path; don't search the whole disk or clone.
+When the user wants to go on, a bug goes on with its repro, a feature or task with the done conditions; `mgi-kit:work-brief` scans the code it touches. Search the repo for names the item mentions (endpoints, classes, spec files, agent names) before stating where the change goes. When the current directory isn't the right repo, name the likely one (from the pull requests' repositories, or the paths the item mentions) and ask for its local path; don't search the whole disk or clone.
 
 ## Rules
 

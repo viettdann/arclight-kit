@@ -18,7 +18,7 @@
     {
       "name": "mgi-kit",
       "source": "./plugins/mgi-kit",
-      "description": "Skills for the MGI .NET, TypeScript, Azure and Azure DevOps stack: api-contract, dotnet-upgrade, efcore-review, ado-pipelines-advisor, ado-work-item, azure-diagnose, and the dotnet-guard hook."
+      "description": "Skills for the MGI .NET, TypeScript, Azure and Azure DevOps stack: api-contract, dotnet-upgrade, efcore-review, ado-pipelines-advisor, ado-work-item, azure-diagnose, work-brief, and the dotnet-guard hook."
     }
   ]
 }

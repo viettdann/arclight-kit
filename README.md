@@ -4,7 +4,7 @@ Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
 - `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
-- `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, EF Core query review, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics) and the `dotnet-guard` hook.
+- `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, EF Core query review, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics, read-only task briefs for another agent) and the `dotnet-guard` hook.
 
 ## Which skill
 
@@ -35,6 +35,7 @@ Claude Code marketplace with three plugins:
 | Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion; why a run failed | `mgi-kit:ado-pipelines-advisor` |
 | Start work from an Azure DevOps work item: the current ask, repro, parent context, merged PRs, attachments | `mgi-kit:ado-work-item` |
 | An Azure app, function, container, or PostgreSQL server misbehaving live, or an audit of what is failing, at risk, unlogged, or costing more across a tenant | `mgi-kit:azure-diagnose` |
+| Before handing optimize, refactor, migration, or fix work to another agent: scan only the code the task touches and brief it (scope, contracts, confirmed and suspected weak points, open questions, done conditions) without trying anything or wandering into infra | `/mgi-kit:work-brief` (user-invoked only) |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 

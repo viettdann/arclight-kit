@@ -2,6 +2,17 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-27
+
+### Added
+
+- `work-brief`: scans the code one task touches (the change site, its direct callers and callees, tests, config, and public contract) and writes a brief a planner or another agent can work from: task, scope, current state, points to watch tagged confirmed or suspected with `path:line`, constraints, open questions, decisions for the orchestrator (options, what the code does today, a default, what a wrong pick breaks), checks that settle suspicions, and done conditions with the commands the executor runs. It never stops to ask; keeps the current host unless the task names a new one; treats a rewrite's old code as the spec with a do-not-port list; greps for setting names, never secret values. Read-only: no edits, builds, test runs, installs, or probes. Anything outside the task (unrelated secrets, CI/CD, pipelines, deploy, microservices, HA, Kubernetes) stays out of the brief unless the task names it. User-invoked only (`/mgi-kit:work-brief`).
+
+### Changed
+
+- Skill lint: user-invoked skills (`disable-model-invocation: true`) no longer count toward the skill menu budget, since Claude Code keeps their descriptions out of context.
+- `ado-work-item`, `ado-pipelines-advisor`, `azure-diagnose`: no longer hand off to `arc-kit` skills, so mgi-kit works without arc-kit installed.
+
 ## [0.8.0] - 2026-10-15
 
 ### Changed

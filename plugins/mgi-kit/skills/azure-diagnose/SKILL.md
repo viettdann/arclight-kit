@@ -1,6 +1,6 @@
 ---
 name: azure-diagnose
-description: "Read-only az CLI diagnosis of live App Service, Functions, Container Apps, PostgreSQL flexible, Service Bus: why one resource errors, slows or won't start, or an audit of a whole tenant, cost included. Use when a deployed app or Azure resource misbehaves (\"app lỗi 500\", \"Azure có gì đáng lo\", \"audit tenant\", \"chi phí Azure tăng\"). Not for a failed pipeline run (see mgi-kit:ado-pipelines-advisor) or a bug that reproduces locally (see arc-kit:debug)."
+description: "Read-only az CLI diagnosis of live App Service, Functions, Container Apps, PostgreSQL flexible, Service Bus: why one resource errors, slows or won't start, or an audit of a whole tenant, cost included. Use when a deployed app or Azure resource misbehaves (\"app lỗi 500\", \"Azure có gì đáng lo\", \"audit tenant\", \"chi phí Azure tăng\"). Not for a failed pipeline run (see mgi-kit:ado-pipelines-advisor) or a bug that reproduces locally."
 argument-hint: "[resource name and symptom | audit [tenant]]"
 ---
 
@@ -106,7 +106,7 @@ App Insights masks the client IP (`0.0.0.0`); to find who sends a burst of faili
 
 1. **Cause**: one sentence, marked **confirmed** (the evidence explains every symptom and its timing) or **suspected**, with the evidence lines or numbers, their timestamps (UTC, and local time when the user gave theirs), and the time window searched.
 2. **Confidence**: what would prove it wrong, other explanations still open, and anything not checked (Resource Health, metrics, logs, activity log, deploys).
-3. **Fix**: in code (hand off to `arc-kit:debug` with the stack and request), in config (the exact az command or portal setting, for the user to run), or capacity (current SKU and numbers against the limit). Say how the user will know it worked.
+3. **Fix**: in code (the stack and the request that reproduces it), in config (the exact az command or portal setting, for the user to run), or capacity (current SKU and numbers against the limit). Say how the user will know it worked.
 4. **Gaps**: a log source this resource lacks, if it would have shortened the investigation, as one line on what to enable. For a .NET app without App Insights: `Azure.Monitor.OpenTelemetry.AspNetCore` with `builder.Services.AddOpenTelemetry().UseAzureMonitor()`, and `APPLICATIONINSIGHTS_CONNECTION_STRING` as an app setting rather than in `appsettings.json`.
 
 Notes:
