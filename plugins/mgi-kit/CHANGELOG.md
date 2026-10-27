@@ -2,6 +2,12 @@
 
 All notable changes to `mgi-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.9.2] - 2026-10-27
+
+### Changed
+
+- `work-brief`: the brief hands over the best way to do the task the evidence supports, not only what must not break. Every choice goes through four steps: the evidence picks (an option at least as good on every axis, or the others break a MUST or keep a defect) and it becomes a fix; only running code can tell, so the better option is taken with a Check; cheap to undo, so the brief takes the better option and says how to switch back; only what is left is a Decision (a trade-off people weigh differently, hard to undo, or a fact only the user knows). Decisions carry a recommendation instead of a default, never today's behavior just because it is the smaller change, and each option, keeping today's behavior included, states its effect in full sentences (what changes, for which input, who notices) instead of a "what a wrong pick breaks" field. Results the user or another agent supplied are evidence. A keep names what keeping costs. Done when carries the measured gain of each fix. A speed-up that keeps work inside a limit ranks with wrong results. Points are referred to by name, not number. A self-check before replying settles any Decision the writer would bet on. Constraints list only what a consumer, test, or spec depends on, naming who; other behavior kept is a keep with its cost.
+
 ## [0.9.1] - 2026-10-27
 
 ### Changed
