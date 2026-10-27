@@ -53,6 +53,8 @@ Name the skill the executor runs when the task falls in its area: restructuring 
 
 Do the reading yourself: the brief rests on judgment across files, and a summary from another agent hides what it skipped. When the scope spans several projects or the callers of a symbol are hard to find, hand only the locating to parallel `Explore` subagents (where X is called, which projects reference Y), then read the files they return.
 
+Earlier briefs (`docs/brief-*` and any file this skill wrote before) are skipped by default: not read, not cited, not handed to `Explore`, since a stale brief would pass its old findings off as facts about today's code. Read one only when the user names it.
+
 Best effort: stop when every scoped file is read and every callers chain is followed, or when more reading only repeats what you have. Say what you didn't read.
 
 Search for consumers across every file type (XML, JSON, YAML, config, scripts), not only source code. "Not found", "no caller", and "nothing assigns X" are claims too: name the pattern and paths searched, and tag them suspected unless the search covered the whole repo.
@@ -73,9 +75,9 @@ Split a point whose parts carry different tags: the placeholder key is confirmed
 
 ## 5. Brief
 
-The reply starts with `## Task` and ends with **Done when**, one `Not read:` line, and one `Report:` line; nothing before or after, not a status line, not advice.
+The reply is one ` ```markdown ` fenced block holding the whole brief from `## Task` through **Done when**, one `Not read:` line, and one `Report:` line; nothing outside the fence, not a status line, not advice, and no brief text rendered as plain chat. Inside it, no fenced code block and no blockquote: many renderers break a fence or quote nested in a fence, so commands, paths, settings, and quoted docs lines stay inline in single backticks or double quotes, and a multi-line snippet becomes a `path:line` citation. When the request asks for a file in any language (file, save, write to, `.md`, a path, "ghi file", "lưu", "xuất file"), write the brief to `docs/brief-YYYY-MM-DD-<slug>.md`, or to the path the user gave, without asking first; the file drops the outer fence, and the reply is only the file path, the `Not read:` line, and the `Report:` line. An existing file at that path gets a `-2` suffix rather than being overwritten.
 
-`Report: <model id>, effort <level> | <date time zone> | <repo> @ <short commit> (clean or dirty)`, from `date` and `git rev-parse --short HEAD` plus `git status --porcelain`. The model id and effort come from your own context; write `unknown` for either rather than guess. The orchestrator weighs the brief by who wrote it and checks the `path:line` citations against that commit. Write it in the user's language, filled from what you read; omit a section that has nothing. For a rewrite, **Scope** names the old code as the spec and **Not to port** lists what stays behind. Write it to `docs/brief-YYYY-MM-DD-<slug>.md` only when the user asks for a file.
+`Report: <model id>, effort <level> | <date time zone> | <repo> @ <short commit> (clean or dirty)`, from `date` and `git rev-parse --short HEAD` plus `git status --porcelain`. The model id and effort come from your own context; write `unknown` for either rather than guess. The orchestrator weighs the brief by who wrote it and checks the `path:line` citations against that commit. Write it in the user's language, filled from what you read; omit a section that has nothing. For a rewrite, **Scope** names the old code as the spec and **Not to port** lists what stays behind.
 
 ```markdown
 ## Task

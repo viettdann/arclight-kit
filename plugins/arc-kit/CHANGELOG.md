@@ -2,6 +2,12 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.17.1] - 2026-10-27
+
+### Changed
+
+- `task-brief`: the reply is one `markdown` fenced block holding the whole brief, nothing rendered outside it, with no nested code block or blockquote inside (commands and quotes stay inline). A request that asks for a file ("save", "ghi file", a path) writes `docs/brief-YYYY-MM-DD-<slug>.md` without asking, and the reply is only the path, `Not read:`, and `Report:`. The scan skips earlier `docs/brief-*` files unless the user names one.
+
 ## [1.17.0] - 2026-10-27
 
 ### Added
