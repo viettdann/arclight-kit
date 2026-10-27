@@ -13,7 +13,7 @@
     {
       "name": "arc-kit",
       "source": "./plugins/arc-kit",
-      "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks."
+      "description": "The user's daily session defaults (arc), standalone planning and review skills (brainstorming, plan-auditor, executor, verifier), supervise, debug, research, writing, handoff, task-brief, refactor, conventions, fresh-air, the test-runner, worker, and reviewer agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks."
     },
     {
       "name": "mgi-kit",

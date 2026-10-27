@@ -2,6 +2,12 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.17.0] - 2026-10-27
+
+### Added
+
+- `task-brief`: stack-neutral copy of `mgi-kit:work-brief`. Scans the code one task touches, read-only, and writes a brief an orchestrator or another agent plans from (task, scope, current state, points to watch tagged confirmed or suspected with `path:line`, constraints, decisions with defaults, checks, done conditions, Report line). Names `arc-kit:refactor`, `arc-kit:debug`, `arc-kit:research`, and `arc-kit:verifier` where the task calls for them. User-invoked only (`/arc-kit:task-brief`).
+
 ## [1.16.1] - 2026-10-25
 
 ### Changed

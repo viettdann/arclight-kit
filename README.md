@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, task-brief, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
 - `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, EF Core query review, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics, read-only task briefs for another agent) and the `dotnet-guard` hook.
 
 ## Which skill
@@ -29,13 +29,14 @@ Claude Code marketplace with three plugins:
 | Work has to continue somewhere this session can't follow (a later session after `/clear`, another repo or harness, a colleague, a forked side task); `resume` picks it up. Same task in this session with a full context: `/compact <what to keep>` instead | `/arc-kit:handoff` (user-invoked only) |
 | Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `/arc-kit:conventions` (user-invoked only) |
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
+| Before handing optimize, refactor, migration, or fix work to another agent: scan only the code the task touches and brief it (scope, contracts, confirmed and suspected weak points, decisions with defaults, done conditions) without trying anything or wandering into infra | `/arc-kit:task-brief` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI, or Azure Functions from in-process to isolated | `mgi-kit:dotnet-upgrade` |
 | An EF Core endpoint or job is slow or runs too many queries, or a query or model change is about to merge: N+1, in-memory filtering, saves in loops, Include explosion, index-defeating predicates, paging, tracking, overlapping contexts | `mgi-kit:efcore-review` |
 | Write, optimize, review, or preview Azure DevOps pipeline YAML and templates; a pipeline that doesn't trigger, skips a stage, or fails at expansion; why a run failed | `mgi-kit:ado-pipelines-advisor` |
 | Start work from an Azure DevOps work item: the current ask, repro, parent context, merged PRs, attachments | `mgi-kit:ado-work-item` |
 | An Azure app, function, container, or PostgreSQL server misbehaving live, or an audit of what is failing, at risk, unlogged, or costing more across a tenant | `mgi-kit:azure-diagnose` |
-| Before handing optimize, refactor, migration, or fix work to another agent: scan only the code the task touches and brief it (scope, contracts, confirmed and suspected weak points, open questions, done conditions) without trying anything or wandering into infra | `/mgi-kit:work-brief` (user-invoked only) |
+| The MGI .NET/Azure version of `arc-kit:task-brief`, same brief format: scan only the code a task touches and brief another agent | `/mgi-kit:work-brief` (user-invoked only) |
 
 `design` combines a **profile** (tool or marketing: density, type size, depth) with an optional **style** (visual language):
 
