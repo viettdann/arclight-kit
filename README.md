@@ -3,7 +3,7 @@
 Claude Code marketplace with three plugins:
 
 - `arc-design`: UI design, redesign, restyle, rendering checks, interaction rules, and state-check audits.
-- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, task-brief, refactor, conventions, fresh-air, the `test-runner`, `worker`, and `reviewer` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
+- `arc-kit`: daily session defaults (`arc`), standalone planning and review skills, supervise, debug, research, writing, handoff, task-brief, security-audit, refactor, conventions, fresh-air, the `test-runner`, `worker`, `reviewer`, and `security-reader` agents, and the comment-lint, test-guard, arc-compact, destructive-guard, and agent-git-guard hooks.
 - `mgi-kit`: MGI .NET, TypeScript, Azure and Azure DevOps skills (API breaking change detection, .NET version upgrades, EF Core query review, Azure Pipelines YAML and failed runs, work item briefs, live Azure diagnostics, read-only task briefs for another agent) and the `dotnet-guard` hook.
 
 ## Which skill
@@ -30,6 +30,7 @@ Claude Code marketplace with three plugins:
 | Existing codebase: write its unwritten conventions into path-scoped `.claude/rules/` files so new code matches, or refresh them | `/arc-kit:conventions` (user-invoked only) |
 | Block a project's own skills, commands, and CLAUDE.md, or restore them | `/arc-kit:fresh-air` (user-invoked only) |
 | Before handing optimize, refactor, migration, or fix work to another agent: scan only the code the task touches and brief it (scope, contracts, confirmed and suspected weak points, decisions with defaults, done conditions) without trying anything or wandering into infra | `/arc-kit:task-brief` (user-invoked only) |
+| Security audit of a whole repository, some paths, or a diff: coverage ledger, hunters per unit, a fresh verifier refuting every candidate, `findings.json` and a report. Reads source only, runs nothing; leads that need running code come back as `needs_validation` with a test for you to run | `/arc-kit:security-audit` (user-invoked only) |
 | ASP.NET controller or DTO change: check it against its TypeScript/JavaScript consumers | `mgi-kit:api-contract` |
 | Move a .NET solution to a newer target framework with its packages, SDK pin, Docker images, and CI, or Azure Functions from in-process to isolated | `mgi-kit:dotnet-upgrade` |
 | An EF Core endpoint or job is slow or runs too many queries, or a query or model change is about to merge: N+1, in-memory filtering, saves in loops, Include explosion, index-defeating predicates, paging, tracking, overlapping contexts | `mgi-kit:efcore-review` |

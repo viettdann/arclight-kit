@@ -2,6 +2,13 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.18.0] - 2026-11-01
+
+### Added
+
+- `security-audit`: source-only security audit of a repository, some paths, or a diff. Reconnaissance seeds a coverage ledger, hunters work ledger units with the attack-class and companion references, coverage critics find gaps, a fresh verifier tries to refute every candidate, and records are verified again before `REPORT.md`, `FINDINGS-DETAIL.md`, and `NEEDS-VALIDATION.md` are written. Nothing in the target is built, tested, or run: `confirmed` needs a complete source trace with every control shown not to stop it and carries a reproduction for the owner; a fact only running code or a deployment can settle is `needs_validation` with a `test` or `deployment` plan. Git history and dependency advisories go through parent lookups. Profiles `quick` (default), `standard`, `deep`, an optional agent budget, and additive prior runs. `findings.json` and `coverage-ledger.json` are checked by bundled Node validators. User-invoked only (`/arc-kit:security-audit`).
+- `security-reader` agent: the only agent `security-audit` delegates to; it has Read, Grep, and Glob and nothing else, so it can't run commands, edit files, or reach the network.
+
 ## [1.17.2] - 2026-10-27
 
 ### Changed
