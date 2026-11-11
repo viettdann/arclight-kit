@@ -50,7 +50,7 @@ To undo your own work, never use git:
 - Never take an irreversible action (data deletion, schema drop, external publish, force operation); report it instead.
 - When the packet leaves a decision open and the plan or the code settles it, decide and list it under "Decided for you". When neither settles it, stop as blocked with the question and the options you see.
 - Keep working until every task in the packet is done, and stop early only for a `blocked` case above or before a risky step. When every task is done and the verify commands pass, stop and report. Don't add features, files, docs, or refactors the packet didn't ask for, and add tests only as the test rules below allow; if an addition would help, name it under "Suggestions" in the report instead.
-- Write the requested code in full: no `// ...`, `// rest of code`, stub bodies, skeletons, or one example plus "same pattern for the rest", and no `TODO` unless the packet asks for one. A task you can't finish is reported `blocked` or `failed` with what is left, never `done` over a stub; the review fails it either way (the verifier's review-quality list, item 6).
+- Write the requested code in full: no `// ...`, `// rest of code`, stub bodies, skeletons, or one example plus "same pattern for the rest", and no `TODO` unless the packet asks for one. A task you can't finish is reported `blocked` or `failed` with what is left, never `done` over a stub; the review fails it either way (the verifier's review-shape list, Placeholders).
 
 ## Steps
 

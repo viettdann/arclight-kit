@@ -1,10 +1,10 @@
-# Correctness, security, and tests review
+# Logic, contracts, and tests review
 
-Trace each changed code path with concrete inputs; style is out of scope. Category `correctness` for items 1-7 and 10, `security` for item 8, `tests` for item 9. For items 1-7, report only defects with an input or state that triggers them, and name that input or state in `issue`.
+Trace each changed code path with concrete inputs; style and size are out of scope, and security goes to its own reviewer. Category `correctness` for items 1-7 and 11, `contract` for items 8-9, `tests` for item 10. For items 1-7, report only defects with an input or state that triggers them, and name that input or state in `issue`.
 
 ## Guards are run, not read
 
-A guard the diff adds (a validator, authorization check, regex, lint rule, hook, or CI check) is verified by making it fire: create a directory with `mktemp -d "${TMPDIR:-/tmp}/verifier-guard.XXXXXX"`, copy in the input it guards and the config and paths it reads, break the copy the way the guard exists to catch, and run the guard on it. A guard that passes its own violation is a high finding, category `security` for an authentication, authorization, injection, or secrets guard and `correctness` otherwise; put the command in `issue`. Only when the guard still cannot run outside the repository, list it under `not_verified` with the reason. Never write inside the repository; `git status --short` must match at the start and the end.
+A guard the diff adds (a validator, regex, lint rule, hook, or CI check) is verified by making it fire: create a directory with `mktemp -d "${TMPDIR:-/tmp}/verifier-guard.XXXXXX"`, copy in the input it guards and the config and paths it reads, break the copy the way the guard exists to catch, and run the guard on it. A guard that passes its own violation is a high `correctness` finding; put the command in `issue`. Only when the guard still cannot run outside the repository, list it under `not_verified` with the reason. Never write inside the repository; `git status --short` must match at the start and the end. Authentication, authorization, injection, and secrets guards belong to the security reviewer.
 
 ## Checks
 
@@ -20,17 +20,9 @@ A guard the diff adds (a validator, authorization check, regex, lint rule, hook,
    - A down migration (`Down()` in EF Core) that does nothing or can't restore what `Up()` dropped
    - A backfill on a large table in one unbatched `UPDATE`
    - Old code running against the new schema during deploy: a column renamed or dropped while the previous release still reads or writes it, instead of add, migrate, then drop across releases
-8. **Security**:
-   - **Injection**: untrusted input reaching SQL, shell commands, HTML, file paths, or outbound URLs without parameterization, encoding, or validation
-   - **Access control**: a new endpoint or action without an authentication or authorization check, including access to another user's records; an unguessable ID (UUID) treated as authorization
-   - **Secrets**: secrets in code, logs, or error messages; a secret, token, or signature compared with `==` instead of a constant-time compare; tokens, IDs, or nonces from `Math.random`, `System.Random`, or another non-CSPRNG source
-   - **Webhooks**: an inbound webhook without signature verification, timestamp check against replay, or idempotency on the event ID
-   - **Deserialization**: untrusted data passed to `pickle`, `yaml.load`, `BinaryFormatter`, Newtonsoft `TypeNameHandling` other than `None`, or similar type-resolving deserializers
-   - **CI workflows**: `pull_request_target` or `workflow_run` that checks out or runs the untrusted head; `${{ }}` expressions holding event data (titles, branch names, bodies) interpolated into a `run:` script instead of passed through `env:`
-   - **LLM output**: model output written to the database, rendered as HTML, used as a URL to fetch, or run as code or a query without validation
-   - **Dependencies**: a dependency the diff adds whose exact package name does not exist in the registry, or that the ecosystem audit (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`) reports as high or critical; a version ceiling or pin the diff writes that excludes the registry's current release with no reason stated in the diff or plan (check with `npm view <pkg> version`, `dotnet package search <pkg> --exact-match`, or `pip index versions <pkg>`; bounds written from memory go stale)
-   - **Frontend sinks**: `dangerouslySetInnerHTML`, `innerHTML`, `v-html`, or Markdown rendered with raw HTML (`rehype-raw`) on data that isn't sanitized; an `href` or `src` built from user data without a scheme check (`javascript:`); auth tokens kept in `localStorage`; a `message` event handler that doesn't check `event.origin`; a redirect to a `returnTo` or `redirect` parameter without an allowlist
-9. **Tests**:
+8. **Contract breaks**: a changed exported signature, HTTP route, DTO or serialized field name, string enum value, ORM mapping, event name, or config key whose consumers the diff does not update. Search the whole repo for consumers, string-based lookups included; the build stays green when a serialized name changes. Fix: update the consumers, or restore the old name when the change was not planned.
+9. **API contract skill**: when the diff touches ASP.NET controllers or DTOs with TypeScript or JavaScript consumers, also call the Skill tool with `mgi-kit:api-contract` when it appears in your skill list; otherwise list this check under `not_verified`.
+10. **Tests**:
    - **Missing**: a bug fix with no regression test; a new or changed branch or contract with no test when a plausible regression in it can be named; an authorization check with no test for the denied case
    - **Junk**: tests that assert a constant or string copied from the code, markup or style (a border, a class, a label), only that a function or command was called, framework or language behavior, or what the type checker already proves; tests added to match the project's existing tests rather than to catch a named regression. A characterization test pinned before a refactor is not junk
    - **Weak**: tests that assert implementation details (mock call counts, private state) instead of observable behavior, or that pass whatever the code does, including an expected value computed by the code under test or its helpers instead of a hand-derived literal
@@ -38,4 +30,4 @@ A guard the diff adds (a validator, authorization check, regex, lint rule, hook,
    - **Nondeterministic**: a test that depends on the clock, the timezone, the order of unordered results, or the real network; a fixed sleep or delay standing in for "the async work has finished" instead of waiting on that condition with a timeout
    - **Test-only production code**: a method or property added to production code only for tests to call
    - **Wrong mocks**: a mock of the very side effect the test is meant to verify; a mock response missing fields the real API returns, so the code that reads them never runs under test
-10. **React**: when the diff touches React components, hooks, or stores, also check the rules marked (correctness) in `react-performance.md`, in the same directory as this checklist; a rule there that says to report under security goes under item 8
+11. **React**: when the diff touches React components, hooks, or stores, also check the rules marked (correctness) in `react-performance.md`, in the same directory as this checklist

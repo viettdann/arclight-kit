@@ -2,6 +2,19 @@
 
 All notable changes to `arc-kit` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.19.0] - 2026-11-12
+
+### Changed
+
+- `verifier`: the five reviewers become one per kind of reasoning.
+  - Shape (`review-shape.md`, absorbing quality, reuse, efficiency, and comments and docs) states each touched unit's contract from its callers, tests, and task, deletes what serves no entry, and rewrites the unit from the contract alone, reporting a smaller version as `simplify` with concept counts before and after. Findings carry a `rank` (`delete`, `simplify`, `optimize`); the highest that works wins, and a shared helper counts only when total code shrinks. Unsearchable names are `shape` findings without a rank; placeholders are `correctness` findings.
+  - Logic (`review-logic.md`) covers edge cases, error paths, concurrency, migrations, contract breaks, and tests. Security (`review-security.md`) runs alone. UI runs only on UI diffs. Small diffs fold Security, and UI when it would run, into Logic unless they touch auth, payments, secrets, or a data-deleting migration.
+  - Each reviewer reports one defect per finding, only in its own categories. `line` may be a range; the evidence check finds the quote near it instead of at an exact line.
+  - A fresh Verify agent (`review-verify.md`) tries to refute every high or medium correctness, contract, tests, and security finding without the finder's reasoning; rejected findings are listed with what stops them.
+  - Every `simplify` rewrite is asked before it is applied, gets a characterization test when nothing covers the unit, and is undone if its tests fail.
+  - "Harmless redundancy" no longer shields a function, parameter, type, state, or layer nothing needs.
+- `arc`: write the minimum, then check it: after writing a unit, point each function, parameter, branch, type, and piece of state at a need of its callers or the request, delete the rest, and rewrite to a version with fewer of them when one covers the same needs.
+
 ## [1.18.0] - 2026-11-01
 
 ### Added

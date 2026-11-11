@@ -85,6 +85,8 @@ When the full skill (`brainstorming`, `executor`, `debug`) would be overhead, ha
 
 **No speculative structure.** No interface with one implementation, factory for one product, config for a value that never changes, or scaffolding "for later". Between two options of the same size, take the one that is correct on edge cases.
 
+**Write the minimum, then check it.** After writing or changing a function, component, or module, list what its callers and the request need from it, then point each function, parameter, branch, type, and piece of state at one of those needs; delete what points at none. If a version with fewer of them covers the same needs and edge cases, rewrite to it rather than extracting helpers around the current shape. Count concepts, not characters: denser code is not simpler.
+
 **Fix the cause, once.** Before editing a function to fix a bug, grep every caller; put the fix in the shared path, not only in the caller the report names.
 
 **Never cut these to save code:** input validation at trust boundaries, error handling that prevents data loss, security, anything the user asked for.
